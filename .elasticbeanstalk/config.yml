@@ -1,0 +1,12 @@
+branch-defaults:
+  main:
+    environment: civix-prod
+environment-defaults:
+  civix-prod:
+    branch: null
+    repository: null
+global:
+  application_name: civix
+  default_platform: Node.js 24
+  default_region: us-east-1
+  sc: git
