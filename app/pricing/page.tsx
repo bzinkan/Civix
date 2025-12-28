@@ -6,11 +6,11 @@ export default function PricingPage() {
         Start with free compliance answers. Upgrade for detailed reports and
         expert guidance.
       </p>
-      <div className="card" style={{ marginTop: 24 }}>
+      <div className="card mt-6">
         <h2>Pro Report</h2>
         <p className="muted">One-time report tailored to your project.</p>
-        <p style={{ fontSize: 24, fontWeight: 600, marginTop: 12 }}>$79</p>
-        <a className="button" href="/dashboard" style={{ marginTop: 16 }}>
+        <p className="price-text mt-3">$79</p>
+        <a className="button mt-4" href="/dashboard">
           Get report
         </a>
       </div>
