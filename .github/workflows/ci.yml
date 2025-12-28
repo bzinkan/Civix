@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Verify Next binary
-        run: npx --no-install next --version
+        run: ./node_modules/.bin/next --version
       - name: List installed binaries
         run: ls -la node_modules/.bin | head -n 50
       - name: Build
