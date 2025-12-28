@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      NEXT_START_COMMAND: "node .next/standalone/server.js"
+      PORT: "3000"
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js 24
