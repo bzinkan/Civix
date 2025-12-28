@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
-export function GET() {
-  return NextResponse.json({ status: "ok", service: "civix" });
+export const runtime = "nodejs";
+
+export async function GET() {
+  return NextResponse.json({ ok: true, service: "civix" }, { status: 200 });
 }
+
