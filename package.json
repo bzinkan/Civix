@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postinstall": "next build",
     "start": "next start",
     "lint": "next lint",
     "ci:health": "node scripts/ci-health.mjs"
