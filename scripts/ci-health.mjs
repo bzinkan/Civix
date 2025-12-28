@@ -6,9 +6,13 @@ const healthUrl = `${baseUrl}/api/health`;
 const timeoutMs = 30000;
 const pollIntervalMs = 500;
 
+const startCommand =
+  process.env.NEXT_START_COMMAND?.trim() || `npx next start -p ${port}`;
+
 const startServer = () =>
-  spawn("npm", ["run", "start", "--", "-p", port], {
+  spawn(startCommand, {
     stdio: "inherit",
+    shell: true,
     env: {
       ...process.env,
       NODE_ENV: "production",
@@ -23,8 +27,8 @@ const waitForServer = async () => {
   while (Date.now() - start < timeoutMs) {
     try {
       const response = await fetch(healthUrl);
-      if (response.ok) {
-        return true;
+      if (response.ok && response.headers.get("content-type")?.includes("json")) {
+        return response;
       }
     } catch (error) {
       // Server not ready yet.
