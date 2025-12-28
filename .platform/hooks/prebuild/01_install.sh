@@ -1,6 +1,0 @@
-#!/bin/bash
-set -e
-
-cd /var/app/staging
-echo "Installing dependencies..."
-npm install
