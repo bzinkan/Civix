@@ -49,14 +49,9 @@ const main = async () => {
   process.on("SIGTERM", handleExit);
 
   try {
-    const ready = await waitForServer();
-    if (!ready) {
+    const response = await waitForServer();
+    if (!response) {
       throw new Error("Health check did not become available in time.");
-    }
-
-    const response = await fetch(healthUrl);
-    if (!response.ok) {
-      throw new Error(`Health check failed with status ${response.status}.`);
     }
 
     const body = await response.json();
