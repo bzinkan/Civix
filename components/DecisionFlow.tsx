@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { JsonValue } from "@/lib/json";
+import type { JsonValue } from "../lib/json";
 import type {
   DecisionInput,
   DecisionOutput
