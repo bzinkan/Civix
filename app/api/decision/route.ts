@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/db";
 import { toJsonValue } from "../../../lib/json";
@@ -49,7 +50,10 @@ export async function POST(request: Request) {
       zoneCode: normalizedBody.zoneCode,
       answers: {
         create: normalizedBody.answers.map((answer) => ({
-          value: answer.value,
+          value:
+            answer.value === null
+              ? Prisma.JsonNull
+              : (answer.value as Prisma.InputJsonValue),
           question: {
             connect: {
               id: answer.questionId
