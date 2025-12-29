@@ -29,238 +29,242 @@ async function main() {
 
   const subcategory =
     (await prisma.ruleSubcategory.findFirst({
-      where: { slug: "dangerous-breeds", categoryId: category.id }
+      where: { slug: "restricted-breeds", categoryId: category.id }
     })) ??
     (await prisma.ruleSubcategory.create({
       data: {
-        name: "Dangerous Breeds",
-        slug: "dangerous-breeds",
+        name: "Restricted Breeds",
+        slug: "restricted-breeds",
         categoryId: category.id
       }
     }));
 
   const flow =
     (await prisma.decisionFlow.findFirst({
-      where: { name: "Animal Permit Flow", jurisdictionId: jurisdiction.id }
+      where: { name: "Animals – Restricted Breeds", jurisdictionId: jurisdiction.id }
     })) ??
     (await prisma.decisionFlow.create({
       data: {
-        name: "Animal Permit Flow",
-        label: "Animal Permit Check",
+        name: "Animals – Restricted Breeds",
+        label: "Restricted Breed Check",
         description:
-          "Evaluate pet ownership requirements for Demo City residents.",
+          "Determine whether restricted dog breeds are permitted in Demo City.",
         jurisdictionId: jurisdiction.id
       }
     }));
 
-  const existingQuestions = await prisma.question.count({
-    where: { flowId: flow.id }
-  });
+  const questions = [
+    {
+      key: "animal_type",
+      prompt: "What type of animal are you registering?",
+      type: "select",
+      order: 1,
+      required: true,
+      options: [
+        { label: "Dog", value: "dog" },
+        { label: "Cat", value: "cat" },
+        { label: "Other", value: "other" }
+      ]
+    },
+    {
+      key: "is_restricted_breed",
+      prompt: "Is the animal a restricted breed?",
+      type: "boolean",
+      order: 2,
+      required: true,
+      helpText: "Restricted breeds require additional approval."
+    },
+    {
+      key: "grandfathered",
+      prompt: "Was the animal owned before the restriction took effect?",
+      type: "boolean",
+      order: 3,
+      required: true
+    },
+    {
+      key: "has_insurance",
+      prompt: "Do you have proof of required liability insurance?",
+      type: "boolean",
+      order: 4,
+      required: true
+    }
+  ];
 
-  if (existingQuestions === 0) {
-    await prisma.question.create({
-      data: {
+  for (const question of questions) {
+    await prisma.question.upsert({
+      where: {
+        flowId_key: {
+          flowId: flow.id,
+          key: question.key
+        }
+      },
+      update: {
+        prompt: question.prompt,
+        type: question.type,
+        order: question.order,
+        required: question.required,
+        helpText: question.helpText,
+        options: question.options
+      },
+      create: {
         flowId: flow.id,
-        prompt: "What type of animal are you registering?",
-        type: "select",
-        order: 1,
-        required: true,
-        options: [
-          { label: "Dog", value: "dog" },
-          { label: "Cat", value: "cat" },
-          { label: "Other", value: "other" }
-        ]
-      }
-    });
-    await prisma.question.create({
-      data: {
-        flowId: flow.id,
-        prompt: "Is the animal a restricted breed?",
-        type: "boolean",
-        order: 2,
-        required: true,
-        helpText: "Restricted breeds require special approval."
-      }
-    });
-    await prisma.question.create({
-      data: {
-        flowId: flow.id,
-        prompt: "How many dogs will be kept on the property?",
-        type: "number",
-        order: 3,
-        required: true
-      }
-    });
-    await prisma.question.create({
-      data: {
-        flowId: flow.id,
-        prompt: "Is the property zoned residential?",
-        type: "boolean",
-        order: 4,
-        required: true
+        key: question.key,
+        prompt: question.prompt,
+        type: question.type,
+        order: question.order,
+        required: question.required,
+        helpText: question.helpText,
+        options: question.options
       }
     });
   }
 
-  const questions = await prisma.question.findMany({
-    where: { flowId: flow.id },
-    orderBy: { order: "asc" }
-  });
-  const questionIds = questions.reduce<Record<number, string>>((acc, question) => {
-    acc[question.order] = question.id;
-    return acc;
-  }, {});
-
-  if (
-    !questionIds[1] ||
-    !questionIds[2] ||
-    !questionIds[3] ||
-    !questionIds[4]
-  ) {
-    throw new Error("Demo flow questions are missing.");
-  }
-
-  const existingRules = await prisma.rule.count({
+  await prisma.rule.deleteMany({
     where: { flowId: flow.id, jurisdictionId: jurisdiction.id }
   });
 
-  if (existingRules === 0) {
-    await prisma.rule.createMany({
-      data: [
-        {
-          name: "Restricted breed ban",
-          description: "Restricted dog breeds are prohibited in Demo City.",
-          reasoning:
-            "Demo City ordinance prohibits restricted dog breeds within city limits.",
-          outcome: "denied",
-          priority: 100,
-          condition: {
-            type: "and",
-            conditions: [
-              {
-                type: "comparison",
-                fact: `answers.${questionIds[1]}`,
-                operator: "eq",
-                value: "dog"
-              },
-              {
-                type: "comparison",
-                fact: `answers.${questionIds[2]}`,
-                operator: "eq",
-                value: true
-              }
-            ]
-          },
-          recommendations: [
-            "Consult the animal control office before acquiring a restricted breed."
-          ],
-          ordinanceCode: "ORD-100",
-          sourceUrl: "https://example.com/ordinance/100",
-          jurisdictionId: jurisdiction.id,
-          flowId: flow.id,
-          categoryId: category.id,
-          subcategoryId: subcategory.id
+  await prisma.rule.createMany({
+    data: [
+      {
+        name: "Non-dog animals allowed",
+        description: "Restrictions only apply to dogs.",
+        reasoning: "The restricted breed ordinance applies only to dogs.",
+        outcome: "approved",
+        priority: 100,
+        condition: {
+          type: "comparison",
+          fact: "answers.animal_type",
+          operator: "ne",
+          value: "dog"
         },
-        {
-          name: "Large dog household review",
-          description: "Households with more than three dogs require review.",
-          reasoning:
-            "An inspection is required if more than three dogs are kept.",
-          outcome: "needs_review",
-          priority: 80,
-          condition: {
-            type: "and",
-            conditions: [
-              {
-                type: "comparison",
-                fact: `answers.${questionIds[1]}`,
-                operator: "eq",
-                value: "dog"
-              },
-              {
-                type: "comparison",
-                fact: `answers.${questionIds[3]}`,
-                operator: "gt",
-                value: 3
-              }
-            ]
-          },
-          recommendations: [
-            "Schedule a property inspection with the health department."
-          ],
-          ordinanceCode: "ORD-220",
-          sourceUrl: "https://example.com/ordinance/220",
-          jurisdictionId: jurisdiction.id,
-          flowId: flow.id,
-          categoryId: category.id
+        recommendations: ["No restricted breed review is required."],
+        ordinanceCode: "RBC-100",
+        sourceUrl: "https://example.com/ordinance/restricted-breeds#scope",
+        jurisdictionId: jurisdiction.id,
+        flowId: flow.id,
+        categoryId: category.id,
+        subcategoryId: subcategory.id
+      },
+      {
+        name: "Non-restricted dogs allowed",
+        description: "Non-restricted dog breeds are permitted.",
+        reasoning: "Only restricted breeds are subject to the ban.",
+        outcome: "approved",
+        priority: 90,
+        condition: {
+          type: "and",
+          conditions: [
+            {
+              type: "comparison",
+              fact: "answers.animal_type",
+              operator: "eq",
+              value: "dog"
+            },
+            {
+              type: "comparison",
+              fact: "answers.is_restricted_breed",
+              operator: "eq",
+              value: false
+            }
+          ]
         },
-        {
-          name: "Cats generally allowed",
-          description: "Cats are permitted in residential zones.",
-          reasoning: "Cats are permitted with standard registration.",
-          outcome: "approved",
-          priority: 50,
-          condition: {
-            type: "and",
-            conditions: [
-              {
-                type: "comparison",
-                fact: `answers.${questionIds[1]}`,
-                operator: "eq",
-                value: "cat"
-              },
-              {
-                type: "comparison",
-                fact: `answers.${questionIds[4]}`,
-                operator: "eq",
-                value: true
-              }
-            ]
-          },
-          recommendations: ["Register the animal within 30 days."],
-          ordinanceCode: "ORD-310",
-          sourceUrl: "https://example.com/ordinance/310",
-          jurisdictionId: jurisdiction.id,
-          flowId: flow.id,
-          categoryId: category.id
+        recommendations: ["Maintain standard dog registration records."],
+        ordinanceCode: "RBC-210",
+        sourceUrl: "https://example.com/ordinance/restricted-breeds#allowed",
+        jurisdictionId: jurisdiction.id,
+        flowId: flow.id,
+        categoryId: category.id,
+        subcategoryId: subcategory.id
+      },
+      {
+        name: "Restricted dogs with grandfathering and insurance",
+        description:
+          "Grandfathered restricted breeds may stay with insurance proof.",
+        reasoning:
+          "Restricted breeds are conditionally allowed when grandfathered and insured.",
+        outcome: "conditional",
+        priority: 80,
+        condition: {
+          type: "and",
+          conditions: [
+            {
+              type: "comparison",
+              fact: "answers.animal_type",
+              operator: "eq",
+              value: "dog"
+            },
+            {
+              type: "comparison",
+              fact: "answers.is_restricted_breed",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.grandfathered",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.has_insurance",
+              operator: "eq",
+              value: true
+            }
+          ]
         },
-        {
-          name: "Non-residential animal allowance",
-          description:
-            "Non-residential zoning permits a wider range of animals.",
-          reasoning:
-            "Non-residential parcels may host animals when zoning allows.",
-          outcome: "approved",
-          priority: 40,
-          condition: {
-            type: "or",
-            conditions: [
-              {
-                type: "comparison",
-                fact: `answers.${questionIds[4]}`,
-                operator: "eq",
-                value: false
-              },
-              {
-                type: "comparison",
-                fact: `answers.${questionIds[1]}`,
-                operator: "eq",
-                value: "other"
-              }
-            ]
-          },
-          recommendations: [
-            "Verify zoning permissions before finalizing the permit."
-          ],
-          ordinanceCode: "ORD-410",
-          sourceUrl: "https://example.com/ordinance/410",
-          jurisdictionId: jurisdiction.id,
-          flowId: flow.id,
-          categoryId: category.id
-        }
-      ]
-    });
-  }
+        recommendations: [
+          "Provide proof of insurance and maintain grandfathering documentation."
+        ],
+        ordinanceCode: "RBC-305",
+        sourceUrl: "https://example.com/ordinance/restricted-breeds#exceptions",
+        jurisdictionId: jurisdiction.id,
+        flowId: flow.id,
+        categoryId: category.id,
+        subcategoryId: subcategory.id
+      },
+      {
+        name: "Restricted dogs without grandfathering",
+        description: "Restricted breeds without grandfathering are denied.",
+        reasoning:
+          "Restricted breeds must be grandfathered to be kept within city limits.",
+        outcome: "denied",
+        priority: 70,
+        condition: {
+          type: "and",
+          conditions: [
+            {
+              type: "comparison",
+              fact: "answers.animal_type",
+              operator: "eq",
+              value: "dog"
+            },
+            {
+              type: "comparison",
+              fact: "answers.is_restricted_breed",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.grandfathered",
+              operator: "eq",
+              value: false
+            }
+          ]
+        },
+        recommendations: [
+          "Contact animal control for guidance on restricted breeds."
+        ],
+        ordinanceCode: "RBC-402",
+        sourceUrl: "https://example.com/ordinance/restricted-breeds#ban",
+        jurisdictionId: jurisdiction.id,
+        flowId: flow.id,
+        categoryId: category.id,
+        subcategoryId: subcategory.id
+      }
+    ]
+  });
 }
 
 main()

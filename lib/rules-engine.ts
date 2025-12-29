@@ -2,7 +2,8 @@ import { prisma } from "./db";
 import type { JsonValue } from "./json";
 
 export type DecisionAnswer = {
-  questionId: string;
+  questionKey: string;
+  questionId?: string;
   value: JsonValue;
 };
 
@@ -12,6 +13,7 @@ export type DecisionInput = {
   answers: DecisionAnswer[];
   address?: string;
   zoneCode?: string;
+  debug?: boolean;
 };
 
 export type ComparisonOperator =
@@ -48,6 +50,7 @@ export type RuleCondition =
 
 export type DecisionOutcome =
   | "approved"
+  | "conditional"
   | "denied"
   | "needs_review"
   | "inconclusive";
@@ -70,10 +73,18 @@ export type DecisionOutput = {
   citations: DecisionCitation[];
   rulesApplied: DecisionRuleApplied[];
   recommendations: string[];
+  debug?: {
+    matchedRuleIds: string[];
+    failedRules: Array<{
+      ruleId: string;
+      failedCondition: RuleCondition;
+    }>;
+  };
 };
 
 type DecisionContext = {
   answers: Record<string, JsonValue>;
+  legacyAnswers: Record<string, JsonValue>;
   address?: string;
   zoneCode?: string;
 };
@@ -81,6 +92,7 @@ type DecisionContext = {
 const outcomeSeverity: Record<DecisionOutcome, number> = {
   denied: 3,
   needs_review: 2,
+  conditional: 2,
   approved: 1,
   inconclusive: 0
 };
@@ -89,6 +101,7 @@ const normalizeOutcome = (value: string): DecisionOutcome => {
   switch (value) {
     case "denied":
     case "needs_review":
+    case "conditional":
     case "approved":
     case "inconclusive":
       return value;
@@ -100,7 +113,14 @@ const normalizeOutcome = (value: string): DecisionOutcome => {
 const getFactValue = (fact: string, context: DecisionContext): unknown => {
   if (fact.startsWith("answers.")) {
     const key = fact.replace("answers.", "");
-    return context.answers[key];
+    if (Object.prototype.hasOwnProperty.call(context.answers, key)) {
+      return context.answers[key];
+    }
+    // TODO: Remove legacy answer ID support after migration to question keys.
+    if (Object.prototype.hasOwnProperty.call(context.legacyAnswers, key)) {
+      return context.legacyAnswers[key];
+    }
+    return undefined;
   }
 
   if (fact === "address") {
@@ -161,27 +181,53 @@ const compareValues = (
   }
 };
 
-const evaluateCondition = (
+const evaluateConditionDetailed = (
   condition: RuleCondition,
   context: DecisionContext
-): boolean => {
+): { matches: boolean; failedCondition?: RuleCondition } => {
   switch (condition.type) {
-    case "and":
-      return condition.conditions.every((child) =>
-        evaluateCondition(child, context)
-      );
-    case "or":
-      return condition.conditions.some((child) =>
-        evaluateCondition(child, context)
-      );
-    case "not":
-      return !evaluateCondition(condition.condition, context);
+    case "and": {
+      for (const child of condition.conditions) {
+        const result = evaluateConditionDetailed(child, context);
+        if (!result.matches) {
+          return {
+            matches: false,
+            failedCondition: result.failedCondition ?? child
+          };
+        }
+      }
+      return { matches: true };
+    }
+    case "or": {
+      let firstFailure: RuleCondition | undefined;
+      for (const child of condition.conditions) {
+        const result = evaluateConditionDetailed(child, context);
+        if (result.matches) {
+          return { matches: true };
+        }
+        if (!firstFailure) {
+          firstFailure = result.failedCondition ?? child;
+        }
+      }
+      return { matches: false, failedCondition: firstFailure };
+    }
+    case "not": {
+      const result = evaluateConditionDetailed(condition.condition, context);
+      if (result.matches) {
+        return {
+          matches: false,
+          failedCondition: result.failedCondition ?? condition.condition
+        };
+      }
+      return { matches: true };
+    }
     case "comparison": {
       const factValue = getFactValue(condition.fact, context);
-      return compareValues(condition.operator, factValue, condition.value);
+      const matches = compareValues(condition.operator, factValue, condition.value);
+      return matches ? { matches: true } : { matches: false, failedCondition: condition };
     }
     default:
-      return false;
+      return { matches: false, failedCondition: condition };
   }
 };
 
@@ -203,7 +249,16 @@ export async function evaluateDecision(
 ): Promise<DecisionOutput> {
   const answerMap = input.answers.reduce<Record<string, JsonValue>>(
     (acc, answer) => {
-      acc[answer.questionId] = answer.value;
+      acc[answer.questionKey] = answer.value;
+      return acc;
+    },
+    {}
+  );
+  const legacyAnswerMap = input.answers.reduce<Record<string, JsonValue>>(
+    (acc, answer) => {
+      if (answer.questionId) {
+        acc[answer.questionId] = answer.value;
+      }
       return acc;
     },
     {}
@@ -211,6 +266,7 @@ export async function evaluateDecision(
 
   const context: DecisionContext = {
     answers: answerMap,
+    legacyAnswers: legacyAnswerMap,
     address: input.address,
     zoneCode: input.zoneCode
   };
@@ -225,8 +281,30 @@ export async function evaluateDecision(
 
   const matchedRules = rules.filter((rule) => {
     const condition = rule.condition as RuleCondition;
-    return evaluateCondition(condition, context);
+    return evaluateConditionDetailed(condition, context).matches;
   });
+
+  const debug =
+    input.debug === true
+      ? rules.reduce(
+          (acc, rule) => {
+            const condition = rule.condition as RuleCondition;
+            const result = evaluateConditionDetailed(condition, context);
+            if (result.matches) {
+              acc.matchedRuleIds.push(rule.id);
+            } else if (result.failedCondition) {
+              acc.failedRules.push({
+                ruleId: rule.id,
+                failedCondition: result.failedCondition
+              });
+            }
+            return acc;
+          },
+          { matchedRuleIds: [], failedRules: [] } as NonNullable<
+            DecisionOutput["debug"]
+          >
+        )
+      : undefined;
 
   const rulesApplied: DecisionRuleApplied[] = matchedRules.map((rule) => ({
     ruleId: rule.id,
@@ -260,6 +338,7 @@ export async function evaluateDecision(
     reasoning,
     citations,
     rulesApplied,
-    recommendations
+    recommendations,
+    debug
   };
 }

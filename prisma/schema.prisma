@@ -91,6 +91,7 @@ model Question {
   id        String       @id @default(cuid())
   flowId    String
   flow      DecisionFlow @relation(fields: [flowId], references: [id])
+  key       String
   prompt    String
   type      String
   order     Int
@@ -103,6 +104,8 @@ model Question {
   updatedAt DateTime     @updatedAt
   ruleLinks RuleQuestion[]
   answers   Answer[]
+
+  @@unique([flowId, key])
 }
 
 model RuleQuestion {

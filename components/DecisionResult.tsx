@@ -8,6 +8,7 @@ type DecisionResultProps = {
 
 const outcomeLabels: Record<DecisionOutput["outcome"], string> = {
   approved: "Approved",
+  conditional: "Conditional",
   denied: "Denied",
   needs_review: "Needs review",
   inconclusive: "Inconclusive"
@@ -15,6 +16,7 @@ const outcomeLabels: Record<DecisionOutput["outcome"], string> = {
 
 const outcomeColors: Record<DecisionOutput["outcome"], string> = {
   approved: "#16a34a",
+  conditional: "#0f766e",
   denied: "#dc2626",
   needs_review: "#d97706",
   inconclusive: "#6b7280"
