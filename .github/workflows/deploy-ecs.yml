@@ -73,6 +73,7 @@ jobs:
           CLUSTER="${{ env.ECS_CLUSTER }}"
           # Trim any hidden CR/LF from the secret
           CONTAINER_NAME="$(printf '%s' "${{ env.ECS_CONTAINER_NAME }}" | tr -d '\r\n')"
+          export CONTAINER_NAME
           TASK_DEF_FILE="${{ steps.render-task-def.outputs.task-definition }}"
 
           # Register the rendered task def and capture the ARN
@@ -94,14 +95,17 @@ jobs:
           SUBNETS_JSON="$(printf '"%s",' "${SUBNETS[@]}" | sed 's/,$//')"
           SGS_JSON="$(printf '"%s",' "${SECURITY_GROUPS[@]}" | sed 's/,$//')"
 
-          # Build overrides JSON safely with python (proper escaping)
-          python3 - <<PY > overrides.json
+          # Build overrides JSON safely with python (no bash substitution)
+          python3 - <<'PY' > overrides.json
           import json
-          name = ${CONTAINER_NAME!r}
+          import os
+
+          name = os.environ["CONTAINER_NAME"]
+
           print(json.dumps({
             "containerOverrides": [{
               "name": name,
-              "command": ["npx","prisma","migrate","deploy"]
+              "command": ["npx", "prisma", "migrate", "deploy"]
             }]
           }))
           PY
