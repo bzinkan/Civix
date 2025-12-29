@@ -102,57 +102,56 @@ jobs:
           }))
           PY
 
-          # Build network configuration JSON safely (whitespace/CRLF tolerant)
-          python3 - <<'PY' > network-config.json
-          import json
-          import os
+          normalize_csv() {
+            local input="$1"
+            local -a items=()
+            local item
+            IFS=',' read -r -a raw <<< "$input"
+            for item in "${raw[@]}"; do
+              item="$(echo "$item" | xargs)"
+              if [ -n "$item" ]; then
+                items+=("$item")
+              fi
+            done
+            local joined
+            joined="$(printf '%s,' "${items[@]}")"
+            printf '%s' "${joined%,}"
+          }
 
-          def parse_list(value):
-            return [item.strip() for item in value.split(",") if item.strip()]
+          SUBNETS_CSV="$(normalize_csv "$ECS_SUBNETS")"
+          SECURITY_GROUPS_CSV="$(normalize_csv "$ECS_SECURITY_GROUPS")"
 
-          subnets = parse_list(os.environ.get("ECS_SUBNETS", ""))
-          sgs = parse_list(os.environ.get("ECS_SECURITY_GROUPS", ""))
+          if [ -z "$SUBNETS_CSV" ]; then
+            echo "ECS_SUBNETS is empty after parsing"
+            exit 1
+          fi
 
-          if not subnets:
-            raise SystemExit("ECS_SUBNETS is empty after parsing")
-          if not sgs:
-            raise SystemExit("ECS_SECURITY_GROUPS is empty after parsing")
-
-          print(json.dumps({
-            "awsvpcConfiguration": {
-              "subnets": subnets,
-              "securityGroups": sgs,
-              "assignPublicIp": "ENABLED"
-            }
-          }))
-          PY
+          if [ -z "$SECURITY_GROUPS_CSV" ]; then
+            echo "ECS_SECURITY_GROUPS is empty after parsing"
+            exit 1
+          fi
 
           echo "Running migration task..."
           aws ecs run-task \
             --cluster "$CLUSTER" \
             --launch-type FARGATE \
             --task-definition "$TASK_DEF_ARN" \
-            --network-configuration file://network-config.json \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS_CSV],securityGroups=[$SECURITY_GROUPS_CSV],assignPublicIp=ENABLED}" \
             --overrides file://overrides.json \
             --output json > run-task.json
 
-          TASK_ARN="$(python3 - <<'PY' < run-task.json
-          import json
-          import sys
+          FAILURES_COUNT="$(jq '.failures | length' run-task.json)"
+          if [ "$FAILURES_COUNT" != "0" ]; then
+            echo "Run-task failures:"
+            jq '.failures' run-task.json
+            exit 1
+          fi
 
-          data = json.load(sys.stdin)
-          failures = data.get("failures") or []
-          if failures:
-            print("Run-task failures:", file=sys.stderr)
-            print(json.dumps(failures, indent=2), file=sys.stderr)
-            sys.exit(1)
-          tasks = data.get("tasks") or []
-          if not tasks:
-            print("No tasks returned from run-task.", file=sys.stderr)
-            sys.exit(1)
-          print(tasks[0]["taskArn"])
-          PY
-          )"
+          TASK_ARN="$(jq -r '.tasks[0].taskArn // empty' run-task.json)"
+          if [ -z "$TASK_ARN" ]; then
+            echo "No tasks returned from run-task."
+            exit 1
+          fi
 
           echo "Task ARN: $TASK_ARN"
 
@@ -164,22 +163,7 @@ jobs:
             --output json)"
           echo "$ATTACHMENT_DETAILS_JSON"
 
-          ENI_ID="$(python3 - <<'PY' <<<"$ATTACHMENT_DETAILS_JSON"
-          import json
-          import sys
-
-          details = json.loads(sys.stdin.read())
-          eni_id = ""
-          for attachment in details:
-            for item in attachment:
-              if item.get("name") == "networkInterfaceId":
-                eni_id = item.get("value", "")
-                break
-            if eni_id:
-              break
-          print(eni_id)
-          PY
-          )"
+          ENI_ID="$(echo "$ATTACHMENT_DETAILS_JSON" | jq -r '.[0][] | select(.name=="networkInterfaceId") | .value' | head -n 1)"
 
           if [ -n "$ENI_ID" ]; then
             echo "ENI ID: $ENI_ID"
