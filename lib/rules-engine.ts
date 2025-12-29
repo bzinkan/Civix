@@ -14,6 +14,18 @@ export type DecisionInput = {
   zoneCode?: string;
 };
 
+export type ComparisonOperator =
+  | "eq"
+  | "ne"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "in"
+  | "not_in"
+  | "contains"
+  | "not_contains";
+
 export type RuleCondition =
   | {
       type: "and";
@@ -30,22 +42,9 @@ export type RuleCondition =
   | {
       type: "comparison";
       fact: string;
-      operator:
-        | "eq"
-        | "neq"
-        | "gt"
-        | "gte"
-        | "lt"
-        | "lte"
-        | "in"
-        | "contains"
-        | "exists";
+      operator: ComparisonOperator;
       value?: unknown;
     };
-
-type RuleOperator = RuleCondition extends { type: "comparison" }
-  ? RuleCondition["operator"]
-  : never;
 
 export type DecisionOutcome =
   | "approved"
@@ -115,15 +114,19 @@ const getFactValue = (fact: string, context: DecisionContext): unknown => {
   return context.answers[fact];
 };
 
+const assertNever = (value: never): never => {
+  throw new Error(`Unhandled operator: ${String(value)}`);
+};
+
 const compareValues = (
-  operator: RuleOperator,
+  operator: ComparisonOperator,
   left: unknown,
   right: unknown
 ): boolean => {
   switch (operator) {
     case "eq":
       return left === right;
-    case "neq":
+    case "ne":
       return left !== right;
     case "gt":
       return Number(left) > Number(right);
@@ -135,6 +138,8 @@ const compareValues = (
       return Number(left) <= Number(right);
     case "in":
       return Array.isArray(right) ? right.includes(left) : false;
+    case "not_in":
+      return Array.isArray(right) ? !right.includes(left) : false;
     case "contains":
       if (Array.isArray(left)) {
         return left.includes(right);
@@ -143,10 +148,16 @@ const compareValues = (
         return left.includes(right);
       }
       return false;
-    case "exists":
-      return left !== null && left !== undefined && left !== "";
-    default:
+    case "not_contains":
+      if (Array.isArray(left)) {
+        return !left.includes(right);
+      }
+      if (typeof left === "string" && typeof right === "string") {
+        return !left.includes(right);
+      }
       return false;
+    default:
+      return assertNever(operator);
   }
 };
 
