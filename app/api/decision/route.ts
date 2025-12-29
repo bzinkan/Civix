@@ -37,8 +37,12 @@ export async function POST(request: Request) {
       zoneCode: normalizedBody.zoneCode,
       answers: {
         create: normalizedBody.answers.map((answer) => ({
-          questionId: answer.questionId,
-          value: answer.value
+          value: answer.value,
+          question: {
+            connect: {
+              id: answer.questionId
+            }
+          }
         }))
       },
       decisionRules: {
