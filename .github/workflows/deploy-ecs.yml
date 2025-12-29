@@ -102,11 +102,30 @@ jobs:
 
           aws ecs wait tasks-stopped --cluster Civix --tasks "$TASK_ARN"
 
-          EXIT_CODE=$(aws ecs describe-tasks \
-            --cluster Civix \
-            --tasks "$TASK_ARN" \
-            --query "tasks[0].containers[0].exitCode" \
+          TASK_DESC=$(aws ecs describe-tasks --cluster Civix --tasks "$TASK_ARN")
+          TASK_DEF_ARN=$(echo "$TASK_DESC" | jq -r '.tasks[0].taskDefinitionArn')
+          CONTAINER_NAME=$(echo "$TASK_DESC" | jq -r '.tasks[0].containers[0].name')
+          TASK_ID=$(echo "$TASK_ARN" | awk -F'/' '{print $NF}')
+
+          LOG_GROUP=$(aws ecs describe-task-definition \
+            --task-definition "$TASK_DEF_ARN" \
+            --query "taskDefinition.containerDefinitions[?name=='$CONTAINER_NAME'].logConfiguration.options.\"awslogs-group\" | [0]" \
             --output text)
+          LOG_STREAM_PREFIX=$(aws ecs describe-task-definition \
+            --task-definition "$TASK_DEF_ARN" \
+            --query "taskDefinition.containerDefinitions[?name=='$CONTAINER_NAME'].logConfiguration.options.\"awslogs-stream-prefix\" | [0]" \
+            --output text)
+          LOG_STREAM="${LOG_STREAM_PREFIX}/${CONTAINER_NAME}/${TASK_ID}"
+
+          echo "Migration logs (last ~200 lines) from $LOG_GROUP:$LOG_STREAM"
+          aws logs get-log-events \
+            --log-group-name "$LOG_GROUP" \
+            --log-stream-name "$LOG_STREAM" \
+            --limit 200 \
+            --query 'events[].message' \
+            --output text | tr '\t' '\n'
+
+          EXIT_CODE=$(echo "$TASK_DESC" | jq -r '.tasks[0].containers[0].exitCode')
 
           echo "Migration exit code: $EXIT_CODE"
           test "$EXIT_CODE" = "0"
