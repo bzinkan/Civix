@@ -78,12 +78,14 @@ jobs:
         env:
           TASK_DEF_ARN: ${{ steps.register-task-def.outputs.task-def-arn }}
         run: |
+          OVERRIDES=$(printf '{"containerOverrides":[{"name":"%s","command":["node","./node_modules/.bin/prisma","migrate","deploy"]}]}' "${ECS_CONTAINER_NAME}")
+
           TASK_ARN=$(aws ecs run-task \
             --cluster "${ECS_CLUSTER}" \
             --launch-type FARGATE \
             --task-definition "${TASK_DEF_ARN}" \
             --network-configuration "awsvpcConfiguration={subnets=[${ECS_SUBNETS}],securityGroups=[${ECS_SECURITY_GROUPS}],assignPublicIp=DISABLED}" \
-            --overrides "{\"containerOverrides\":[{\"name\":\"${ECS_CONTAINER_NAME}\",\"command\":[\"node\",\"./node_modules/.bin/prisma\",\"migrate\",\"deploy\"]}]}" \
+            --overrides "${OVERRIDES}" \
             --query 'tasks[0].taskArn' \
             --output text)
 
