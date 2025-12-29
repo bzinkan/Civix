@@ -12,6 +12,8 @@ env:
   ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
   ECS_TASK_DEFINITION: ecs-task-definition.json
   ECS_CONTAINER_NAME: ${{ secrets.ECS_CONTAINER_NAME }}
+  ECS_SUBNETS: ${{ secrets.ECS_SUBNETS }}
+  ECS_SECURITY_GROUPS: ${{ secrets.ECS_SECURITY_GROUPS }}
 
 jobs:
   deploy:
@@ -63,10 +65,50 @@ jobs:
           environment-variables: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
 
+      - name: Register Amazon ECS task definition
+        id: register-task-def
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "task-def-arn=$TASK_DEF_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Run Prisma migrations in ECS
+        env:
+          TASK_DEF_ARN: ${{ steps.register-task-def.outputs.task-def-arn }}
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "${ECS_CLUSTER}" \
+            --launch-type FARGATE \
+            --task-definition "${TASK_DEF_ARN}" \
+            --network-configuration "awsvpcConfiguration={subnets=[${ECS_SUBNETS}],securityGroups=[${ECS_SECURITY_GROUPS}],assignPublicIp=DISABLED}" \
+            --overrides "{\"containerOverrides\":[{\"name\":\"${ECS_CONTAINER_NAME}\",\"command\":[\"node\",\"./node_modules/.bin/prisma\",\"migrate\",\"deploy\"]}]}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          if [ -z "${TASK_ARN}" ] || [ "${TASK_ARN}" = "None" ]; then
+            echo "Failed to start migration task." >&2
+            exit 1
+          fi
+
+          aws ecs wait tasks-stopped --cluster "${ECS_CLUSTER}" --tasks "${TASK_ARN}"
+
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster "${ECS_CLUSTER}" \
+            --tasks "${TASK_ARN}" \
+            --query "tasks[0].containers[?name=='${ECS_CONTAINER_NAME}'].exitCode" \
+            --output text)
+
+          if [ "${EXIT_CODE}" != "0" ]; then
+            echo "Migration task failed with exit code ${EXIT_CODE}." >&2
+            exit 1
+          fi
+
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+          task-definition: ${{ steps.register-task-def.outputs.task-def-arn }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
