@@ -32,6 +32,18 @@ export async function POST(request: Request) {
   }
 
   const incomingAnswers = Array.isArray(body.answers) ? body.answers : [];
+  const missingIdentifiers = incomingAnswers.some(
+    (answer) =>
+      typeof answer.questionKey !== "string" &&
+      typeof answer.questionId !== "string"
+  );
+
+  if (missingIdentifiers) {
+    return NextResponse.json(
+      { error: "Each answer must include questionKey or questionId." },
+      { status: 400 }
+    );
+  }
   const questionKeys = incomingAnswers
     .map((answer) =>
       typeof answer.questionKey === "string" ? answer.questionKey : null
@@ -76,7 +88,9 @@ export async function POST(request: Request) {
       : inputId
         ? idToKey.get(inputId)
         : undefined;
-    const questionId = hasInputKey ? keyToId.get(inputKey) : inputId;
+    const questionId = hasInputKey
+      ? keyToId.get(inputKey) ?? inputId
+      : inputId;
 
     return {
       questionKey,
