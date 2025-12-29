@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { JsonValue } from "@/lib/json";
 import type {
   DecisionInput,
   DecisionOutput
@@ -37,7 +38,7 @@ export default function DecisionFlow({
 }: DecisionFlowProps) {
   const [flow, setFlow] = useState<FlowResponse | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [answers, setAnswers] = useState<Record<string, JsonValue>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,7 +74,7 @@ export default function DecisionFlow({
     ? answers[currentQuestion.id]
     : undefined;
 
-  const updateAnswer = (value: unknown) => {
+  const updateAnswer = (value: JsonValue) => {
     if (!currentQuestion) return;
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }));
   };
@@ -103,7 +104,7 @@ export default function DecisionFlow({
       flowId,
       answers: questions.map((question) => ({
         questionId: question.id,
-        value: answers[question.id]
+        value: answers[question.id] ?? null
       }))
     };
 
@@ -134,7 +135,9 @@ export default function DecisionFlow({
         return (
           <select
             value={(currentValue ?? "") as string}
-            onChange={(event) => updateAnswer(event.target.value)}
+            onChange={(event) =>
+              updateAnswer(event.target.value === "" ? null : event.target.value)
+            }
           >
             <option value="" disabled>
               Select an option
@@ -157,7 +160,11 @@ export default function DecisionFlow({
           <input
             type="number"
             value={currentValue as number | string | undefined}
-            onChange={(event) => updateAnswer(Number(event.target.value))}
+            onChange={(event) =>
+              updateAnswer(
+                event.target.value === "" ? null : Number(event.target.value)
+              )
+            }
           />
         );
       case "boolean":
@@ -191,7 +198,9 @@ export default function DecisionFlow({
           <input
             type="text"
             value={(currentValue ?? "") as string}
-            onChange={(event) => updateAnswer(event.target.value)}
+            onChange={(event) =>
+              updateAnswer(event.target.value === "" ? null : event.target.value)
+            }
           />
         );
     }
