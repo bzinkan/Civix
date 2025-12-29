@@ -1,8 +1,9 @@
 import { prisma } from "./db";
+import type { JsonValue } from "./json";
 
 export type DecisionAnswer = {
   questionId: string;
-  value: unknown;
+  value: JsonValue;
 };
 
 export type DecisionInput = {
@@ -73,7 +74,7 @@ export type DecisionOutput = {
 };
 
 type DecisionContext = {
-  answers: Record<string, unknown>;
+  answers: Record<string, JsonValue>;
   address?: string;
   zoneCode?: string;
 };
@@ -189,7 +190,7 @@ const collectRecommendations = (value: unknown): string[] => {
 export async function evaluateDecision(
   input: DecisionInput
 ): Promise<DecisionOutput> {
-  const answerMap = input.answers.reduce<Record<string, unknown>>(
+  const answerMap = input.answers.reduce<Record<string, JsonValue>>(
     (acc, answer) => {
       acc[answer.questionId] = answer.value;
       return acc;
