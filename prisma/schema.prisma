@@ -7,6 +7,160 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Jurisdiction {
+  id        String           @id @default(cuid())
+  name      String
+  state     String
+  type      String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  zoning    ZoningDistrict[]
+  categories RuleCategory[]
+  flows     DecisionFlow[]
+  rules     Rule[]
+  decisions Decision[]
+}
+
+model ZoningDistrict {
+  id             String        @id @default(cuid())
+  code           String
+  name           String?
+  jurisdictionId String
+  jurisdiction   Jurisdiction  @relation(fields: [jurisdictionId], references: [id])
+}
+
+model RuleCategory {
+  id             String           @id @default(cuid())
+  name           String
+  slug           String           @unique
+  jurisdictionId String
+  jurisdiction   Jurisdiction     @relation(fields: [jurisdictionId], references: [id])
+  subcategories  RuleSubcategory[]
+  rules          Rule[]
+}
+
+model RuleSubcategory {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  categoryId  String
+  category    RuleCategory  @relation(fields: [categoryId], references: [id])
+  rules       Rule[]
+}
+
+model Rule {
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  reasoning      String?
+  outcome        String
+  priority       Int             @default(0)
+  condition      Json
+  recommendations Json?
+  ordinanceCode  String?
+  sourceUrl      String?
+  jurisdictionId String
+  jurisdiction   Jurisdiction    @relation(fields: [jurisdictionId], references: [id])
+  flowId         String?
+  flow           DecisionFlow?   @relation(fields: [flowId], references: [id])
+  categoryId     String?
+  category       RuleCategory?   @relation(fields: [categoryId], references: [id])
+  subcategoryId  String?
+  subcategory    RuleSubcategory? @relation(fields: [subcategoryId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  ruleQuestions  RuleQuestion[]
+  decisionRules  DecisionRule[]
+}
+
+model DecisionFlow {
+  id             String       @id @default(cuid())
+  name           String
+  label          String?
+  description    String?
+  jurisdictionId String
+  jurisdiction   Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  questions      Question[]
+  rules          Rule[]
+  decisions      Decision[]
+}
+
+model Question {
+  id        String       @id @default(cuid())
+  flowId    String
+  flow      DecisionFlow @relation(fields: [flowId], references: [id])
+  prompt    String
+  type      String
+  order     Int
+  required  Boolean      @default(false)
+  helpText  String?
+  options   Json?
+  validation Json?
+  branch    Json?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  ruleLinks RuleQuestion[]
+  answers   Answer[]
+}
+
+model RuleQuestion {
+  id         String   @id @default(cuid())
+  ruleId     String
+  rule       Rule     @relation(fields: [ruleId], references: [id])
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  required   Boolean  @default(false)
+}
+
+model Decision {
+  id             String       @id @default(cuid())
+  flowId         String
+  flow           DecisionFlow @relation(fields: [flowId], references: [id])
+  jurisdictionId String
+  jurisdiction   Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  outcome        String
+  reasoning      Json?
+  citations      Json?
+  rulesApplied   Json?
+  recommendations Json?
+  address        String?
+  zoneCode       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  answers        Answer[]
+  decisionRules  DecisionRule[]
+}
+
+model DecisionRule {
+  id         String   @id @default(cuid())
+  decisionId String
+  decision   Decision @relation(fields: [decisionId], references: [id])
+  ruleId     String
+  rule       Rule     @relation(fields: [ruleId], references: [id])
+  outcome    String
+  priority   Int      @default(0)
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  decisionId String
+  decision   Decision @relation(fields: [decisionId], references: [id])
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  value      Json
+  createdAt  DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Report {
   id        String   @id @default(cuid())
   title     String
