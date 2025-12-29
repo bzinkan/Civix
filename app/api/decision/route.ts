@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/db";
+import { toJsonValue } from "../../../lib/json";
 import {
   DecisionInput,
   evaluateDecision
@@ -7,8 +8,12 @@ import {
 
 export const runtime = "nodejs";
 
+type DecisionRequest = Omit<DecisionInput, "answers"> & {
+  answers?: { questionId: unknown; value: unknown }[];
+};
+
 export async function POST(request: Request) {
-  const body = (await request.json()) as DecisionInput;
+  const body = (await request.json()) as DecisionRequest;
 
   if (!body?.jurisdictionId || !body?.flowId) {
     return NextResponse.json(
@@ -17,9 +22,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const normalizedBody = {
+  const normalizedBody: DecisionInput = {
     ...body,
-    answers: Array.isArray(body.answers) ? body.answers : []
+    jurisdictionId: String(body.jurisdictionId),
+    flowId: String(body.flowId),
+    answers: Array.isArray(body.answers)
+      ? body.answers.map((answer) => ({
+          questionId: String(answer.questionId),
+          value: toJsonValue(answer.value)
+        }))
+      : []
   };
 
   const result = await evaluateDecision(normalizedBody);
