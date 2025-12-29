@@ -75,37 +75,39 @@ jobs:
           echo "task-def-arn=$TASK_DEF_ARN" >> "$GITHUB_OUTPUT"
 
       - name: Run Prisma migrations in ECS
-        env:
-          TASK_DEF_ARN: ${{ steps.register-task-def.outputs.task-def-arn }}
         run: |
-          OVERRIDES=$(printf '{"containerOverrides":[{"name":"%s","command":["node","./node_modules/.bin/prisma","migrate","deploy"]}]}' "${ECS_CONTAINER_NAME}")
+          cat > overrides.json << 'EOF'
+          {
+            "containerOverrides": [
+              {
+                "name": "civix",
+                "command": ["node","./node_modules/.bin/prisma","migrate","deploy"]
+              }
+            ]
+          }
+          EOF
 
           TASK_ARN=$(aws ecs run-task \
-            --cluster "${ECS_CLUSTER}" \
+            --cluster Civix \
             --launch-type FARGATE \
-            --task-definition "${TASK_DEF_ARN}" \
-            --network-configuration "awsvpcConfiguration={subnets=[${ECS_SUBNETS}],securityGroups=[${ECS_SECURITY_GROUPS}],assignPublicIp=DISABLED}" \
-            --overrides "${OVERRIDES}" \
-            --query 'tasks[0].taskArn' \
+            --task-definition civix \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS//,/\,}],securityGroups=[$SECURITY_GROUP],assignPublicIp=DISABLED}" \
+            --overrides file://overrides.json \
+            --query "tasks[0].taskArn" \
             --output text)
 
-          if [ -z "${TASK_ARN}" ] || [ "${TASK_ARN}" = "None" ]; then
-            echo "Failed to start migration task." >&2
-            exit 1
-          fi
+          echo "Migration task ARN: $TASK_ARN"
 
-          aws ecs wait tasks-stopped --cluster "${ECS_CLUSTER}" --tasks "${TASK_ARN}"
+          aws ecs wait tasks-stopped --cluster Civix --tasks "$TASK_ARN"
 
           EXIT_CODE=$(aws ecs describe-tasks \
-            --cluster "${ECS_CLUSTER}" \
-            --tasks "${TASK_ARN}" \
-            --query "tasks[0].containers[?name=='${ECS_CONTAINER_NAME}'].exitCode" \
+            --cluster Civix \
+            --tasks "$TASK_ARN" \
+            --query "tasks[0].containers[0].exitCode" \
             --output text)
 
-          if [ "${EXIT_CODE}" != "0" ]; then
-            echo "Migration task failed with exit code ${EXIT_CODE}." >&2
-            exit 1
-          fi
+          echo "Migration exit code: $EXIT_CODE"
+          test "$EXIT_CODE" = "0"
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
