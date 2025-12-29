@@ -81,15 +81,23 @@ jobs:
             shift
             local -a command=("$@")
 
-            jq -n --arg name "${ECS_CONTAINER_NAME}" --argjson cmd "$(printf '%s\n' "${command[@]}" | jq -R . | jq -s .)" \
-              '{containerOverrides: [{name: $name, command: $cmd}]}' > overrides.json
+            cat <<EOF > overrides.json
+            {
+              "containerOverrides": [
+                {
+                  "name": "civix",
+                  "command": $(printf '%s\n' "${command[@]}" | jq -R . | jq -s .)
+                }
+              ]
+            }
+            EOF
 
             TASK_ARN=$(aws ecs run-task \
               --cluster "${ECS_CLUSTER}" \
               --launch-type FARGATE \
               --task-definition "${{ steps.register-task-def.outputs.task-def-arn }}" \
               --overrides file://overrides.json \
-              --network-configuration "awsvpcConfiguration={subnets=[${ECS_SUBNETS}],securityGroups=[${ECS_SECURITY_GROUPS}],assignPublicIp=ENABLED}" \
+              --network-configuration "awsvpcConfiguration={subnets=[subnet-0117ecb86a802b21f,subnet-06bc8f6d307fccc0d,subnet-02e70366c26d4509f],securityGroups=[sg-0b50d7697660a3b65],assignPublicIp=ENABLED}" \
               --query "tasks[0].taskArn" \
               --output text)
 
