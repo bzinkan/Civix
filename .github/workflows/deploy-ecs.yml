@@ -75,67 +75,61 @@ jobs:
           echo "task-def-arn=$TASK_DEF_ARN" >> "$GITHUB_OUTPUT"
 
       - name: Run Prisma migrations in ECS
+        shell: bash
         run: |
-          run_task() {
-            local task_name="$1"
-            shift
-            local -a command=("$@")
+          set -euo pipefail
 
-            cat <<EOF > overrides.json
-            {
-              "containerOverrides": [
-                {
-                  "name": "civix",
-                  "command": $(printf '%s\n' "${command[@]}" | jq -R . | jq -s .)
-                }
-              ]
-            }
-            EOF
+          # REQUIRED: set these to your real values (or keep your existing env vars)
+          CLUSTER="Civix"
+          SERVICE="civix"
+          CONTAINER_NAME="civix"
 
-            TASK_ARN=$(aws ecs run-task \
-              --cluster "${ECS_CLUSTER}" \
-              --launch-type FARGATE \
-              --task-definition "${{ steps.register-task-def.outputs.task-def-arn }}" \
-              --overrides file://overrides.json \
-              --network-configuration "awsvpcConfiguration={subnets=[subnet-0117ecb86a802b21f,subnet-06bc8f6d307fccc0d,subnet-02e70366c26d4509f],securityGroups=[sg-0b50d7697660a3b65],assignPublicIp=ENABLED}" \
-              --query "tasks[0].taskArn" \
-              --output text)
+          SUBNETS=("subnet-0117ecb86a802b21f" "subnet-06bc8f6d307fccc0d" "subnet-02e70366c26d4509f")
+          SECURITY_GROUPS=("sg-0b50d7697660a3b65")
 
-            echo "${task_name} task ARN: $TASK_ARN"
+          # Use the task definition ARN output from your register step if you have it
+          # Otherwise replace this with your family:revision (e.g. civix:15) or an env var
+          TASK_DEF="${{ steps.task-def.outputs.task-definition-arn || '' }}"
+          if [ -z "$TASK_DEF" ]; then
+            TASK_DEF="civix:15"
+          fi
 
-            aws ecs wait tasks-stopped --cluster "${ECS_CLUSTER}" --tasks "$TASK_ARN"
-
-            TASK_DESC=$(aws ecs describe-tasks --cluster "${ECS_CLUSTER}" --tasks "$TASK_ARN")
-            TASK_DEF_ARN=$(echo "$TASK_DESC" | jq -r '.tasks[0].taskDefinitionArn')
-            CONTAINER_NAME=$(echo "$TASK_DESC" | jq -r '.tasks[0].containers[0].name')
-            TASK_ID=$(echo "$TASK_ARN" | awk -F'/' '{print $NF}')
-
-            LOG_GROUP=$(aws ecs describe-task-definition \
-              --task-definition "$TASK_DEF_ARN" \
-              --query "taskDefinition.containerDefinitions[?name=='$CONTAINER_NAME'].logConfiguration.options.\"awslogs-group\" | [0]" \
-              --output text)
-            LOG_STREAM_PREFIX=$(aws ecs describe-task-definition \
-              --task-definition "$TASK_DEF_ARN" \
-              --query "taskDefinition.containerDefinitions[?name=='$CONTAINER_NAME'].logConfiguration.options.\"awslogs-stream-prefix\" | [0]" \
-              --output text)
-            LOG_STREAM="${LOG_STREAM_PREFIX}/${CONTAINER_NAME}/${TASK_ID}"
-
-            echo "${task_name} logs (last ~200 lines) from $LOG_GROUP:$LOG_STREAM"
-            aws logs get-log-events \
-              --log-group-name "$LOG_GROUP" \
-              --log-stream-name "$LOG_STREAM" \
-              --limit 200 \
-              --query 'events[].message' \
-              --output text | tr '\t' '\n'
-
-            EXIT_CODE=$(echo "$TASK_DESC" | jq -r '.tasks[0].containers[0].exitCode')
-
-            echo "${task_name} exit code: $EXIT_CODE"
-            test "$EXIT_CODE" = "0"
+          cat > overrides.json <<'JSON'
+          {
+            "containerOverrides": [
+              {
+                "name": "civix",
+                "command": ["node","./node_modules/.bin/prisma","migrate","resolve","--applied","20250101000000_add_question_key"]
+              }
+            ]
           }
+          JSON
 
-          run_task "Prisma migrate resolve" node ./node_modules/.bin/prisma migrate resolve --applied 20250101000000_add_question_key
-          run_task "Prisma migrate deploy" node ./node_modules/.bin/prisma migrate deploy
+          echo "Running migration task..."
+          TASK_ARN="$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --launch-type FARGATE \
+            --task-definition "$TASK_DEF" \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS[0]},${SUBNETS[1]},${SUBNETS[2]}],securityGroups=[${SECURITY_GROUPS[0]}],assignPublicIp=ENABLED}" \
+            --overrides file://overrides.json \
+            --query 'tasks[0].taskArn' \
+            --output text)"
+
+          echo "Task ARN: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN"
+
+          EXIT_CODE="$(aws ecs describe-tasks \
+            --cluster "$CLUSTER" \
+            --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)"
+
+          echo "Migration exit code: $EXIT_CODE"
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Migration task failed."
+            aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN"
+            exit 1
+          fi
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
