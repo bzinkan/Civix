@@ -12,8 +12,8 @@ env:
   ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
   ECS_TASK_DEFINITION: ecs-task-definition.json
   ECS_CONTAINER_NAME: ${{ secrets.ECS_CONTAINER_NAME }}
-  ECS_SUBNETS: ${{ secrets.ECS_SUBNETS }}
-  ECS_SECURITY_GROUPS: ${{ secrets.ECS_SECURITY_GROUPS }}
+  ECS_SUBNETS: ${{ secrets.ECS_SUBNETS }} # comma-separated, e.g. subnet-a,subnet-b,subnet-c
+  ECS_SECURITY_GROUPS: ${{ secrets.ECS_SECURITY_GROUPS }} # comma-separated, e.g. sg-123,sg-456
 
 jobs:
   deploy:
@@ -65,41 +65,37 @@ jobs:
           environment-variables: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
 
-      - name: Register Amazon ECS task definition
-        id: register-task-def
-        run: |
-          TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-          echo "task-def-arn=$TASK_DEF_ARN" >> "$GITHUB_OUTPUT"
-
       - name: Run Prisma migrations in ECS
         shell: bash
         run: |
           set -euo pipefail
 
-          # REQUIRED: set these to your real values (or keep your existing env vars)
-          CLUSTER="Civix"
-          SERVICE="civix"
-          CONTAINER_NAME="civix"
+          CLUSTER="${{ env.ECS_CLUSTER }}"
+          CONTAINER_NAME="${{ env.ECS_CONTAINER_NAME }}"
+          TASK_DEF_FILE="${{ steps.render-task-def.outputs.task-definition }}"
 
-          SUBNETS=("subnet-0117ecb86a802b21f" "subnet-06bc8f6d307fccc0d" "subnet-02e70366c26d4509f")
-          SECURITY_GROUPS=("sg-0b50d7697660a3b65")
+          # Register the rendered task def and capture the ARN
+          TASK_DEF_ARN="$(aws ecs register-task-definition \
+            --cli-input-json file://$TASK_DEF_FILE \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)"
 
-          # Use the task definition ARN output from your register step if you have it
-          # Otherwise replace this with your family:revision (e.g. civix:15) or an env var
-          TASK_DEF="${{ steps.task-def.outputs.task-definition-arn || '' }}"
-          if [ -z "$TASK_DEF" ]; then
-            TASK_DEF="civix:15"
-          fi
+          echo "Registered task def: $TASK_DEF_ARN"
 
-          cat > overrides.json <<'JSON'
+          # Parse comma-separated secrets into arrays
+          IFS=',' read -r -a SUBNETS <<< "${{ env.ECS_SUBNETS }}"
+          IFS=',' read -r -a SECURITY_GROUPS <<< "${{ env.ECS_SECURITY_GROUPS }}"
+
+          # Build JSON arrays for AWS CLI
+          SUBNETS_JSON="$(printf '"%s",' "${SUBNETS[@]}" | sed 's/,$//')"
+          SGS_JSON="$(printf '"%s",' "${SECURITY_GROUPS[@]}" | sed 's/,$//')"
+
+          cat > overrides.json <<JSON
           {
             "containerOverrides": [
               {
-                "name": "civix",
-                "command": ["node","./node_modules/.bin/prisma","migrate","resolve","--applied","20250101000000_add_question_key"]
+                "name": "$CONTAINER_NAME",
+                "command": ["npx","prisma","migrate","deploy"]
               }
             ]
           }
@@ -109,8 +105,8 @@ jobs:
           TASK_ARN="$(aws ecs run-task \
             --cluster "$CLUSTER" \
             --launch-type FARGATE \
-            --task-definition "$TASK_DEF" \
-            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS[0]},${SUBNETS[1]},${SUBNETS[2]}],securityGroups=[${SECURITY_GROUPS[0]}],assignPublicIp=ENABLED}" \
+            --task-definition "$TASK_DEF_ARN" \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS_JSON],securityGroups=[$SGS_JSON],assignPublicIp=DISABLED}" \
             --overrides file://overrides.json \
             --query 'tasks[0].taskArn' \
             --output text)"
@@ -134,7 +130,7 @@ jobs:
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.register-task-def.outputs.task-def-arn }}
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
