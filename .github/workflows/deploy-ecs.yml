@@ -71,7 +71,8 @@ jobs:
           set -euo pipefail
 
           CLUSTER="${{ env.ECS_CLUSTER }}"
-          CONTAINER_NAME="${{ env.ECS_CONTAINER_NAME }}"
+          # Trim any hidden CR/LF from the secret
+          CONTAINER_NAME="$(printf '%s' "${{ env.ECS_CONTAINER_NAME }}" | tr -d '\r\n')"
           TASK_DEF_FILE="${{ steps.render-task-def.outputs.task-definition }}"
 
           # Register the rendered task def and capture the ARN
@@ -82,24 +83,28 @@ jobs:
 
           echo "Registered task def: $TASK_DEF_ARN"
 
-          # Parse comma-separated secrets into arrays
-          IFS=',' read -r -a SUBNETS <<< "${{ env.ECS_SUBNETS }}"
-          IFS=',' read -r -a SECURITY_GROUPS <<< "${{ env.ECS_SECURITY_GROUPS }}"
+          # Parse comma-separated secrets into arrays (and strip spaces/CRLF)
+          SUBNETS_RAW="$(printf '%s' "${{ env.ECS_SUBNETS }}" | tr -d '\r\n ' )"
+          SGS_RAW="$(printf '%s' "${{ env.ECS_SECURITY_GROUPS }}" | tr -d '\r\n ' )"
+
+          IFS=',' read -r -a SUBNETS <<< "$SUBNETS_RAW"
+          IFS=',' read -r -a SECURITY_GROUPS <<< "$SGS_RAW"
 
           # Build JSON arrays for AWS CLI
           SUBNETS_JSON="$(printf '"%s",' "${SUBNETS[@]}" | sed 's/,$//')"
           SGS_JSON="$(printf '"%s",' "${SECURITY_GROUPS[@]}" | sed 's/,$//')"
 
-          cat > overrides.json <<JSON
-          {
-            "containerOverrides": [
-              {
-                "name": "$CONTAINER_NAME",
-                "command": ["npx","prisma","migrate","deploy"]
-              }
-            ]
-          }
-          JSON
+          # Build overrides JSON safely with python (proper escaping)
+          python3 - <<PY > overrides.json
+          import json
+          name = ${CONTAINER_NAME!r}
+          print(json.dumps({
+            "containerOverrides": [{
+              "name": name,
+              "command": ["npx","prisma","migrate","deploy"]
+            }]
+          }))
+          PY
 
           echo "Running migration task..."
           TASK_ARN="$(aws ecs run-task \
