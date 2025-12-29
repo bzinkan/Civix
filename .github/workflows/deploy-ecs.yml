@@ -14,7 +14,7 @@ env:
   ECS_CONTAINER_NAME: ${{ secrets.ECS_CONTAINER_NAME }}
   ECS_SUBNETS: ${{ secrets.ECS_SUBNETS }}
   ECS_SECURITY_GROUPS: ${{ secrets.ECS_SECURITY_GROUPS }}
-  SUBNETS: subnet-0117ecb86a802b21f,subnet-06bc8f6d307fccc0d,subnet-02e70366c26d4509f
+  SUBNETS: subnet-0117ecb86a802b21f,subnet-06bc8f6d307fcc0d,subnet-02e70366c26d4509f
   SECURITY_GROUP: sg-0b50d7697660a3b65
 
 jobs:
