@@ -11,13 +11,14 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
-    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:deploy": "node ./node_modules/.bin/prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^5.18.0",
     "next": "^14.2.5",
+    "prisma": "^5.18.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -25,7 +26,6 @@
     "@types/node": "20.14.10",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
-    "prisma": "^5.18.0",
     "tsx": "^4.16.5",
     "typescript": "5.5.4"
   },

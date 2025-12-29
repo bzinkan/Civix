@@ -8,6 +8,16 @@ Prisma migrations must run inside AWS because the RDS instance is in a private V
 - The task definition used by the service is registered (same family/revision as the service).
 - The service VPC, subnets, and security groups allow access to the private RDS instance.
 
+### GitHub Actions IAM permissions
+
+Ensure the GitHub Actions role can run one-off tasks and pass the ECS roles used by the task definition:
+
+- `ecs:RunTask`
+- `ecs:DescribeTasks`
+- `ecs:DescribeTaskDefinition`
+- `ecs:ListTasks` (optional, for troubleshooting)
+- `iam:PassRole` for the task execution role and task role
+
 ## Run a one-off migration task
 
 1. **Find the current task definition revision used by the service.**
