@@ -39,7 +39,7 @@ Ensure the GitHub Actions role can run one-off tasks and pass the ECS roles used
      --cluster <cluster-name> \
      --launch-type FARGATE \
      --task-definition <task-definition-arn> \
-     --network-configuration "awsvpcConfiguration={subnets=[<subnet-1>,<subnet-2>],securityGroups=[<sg-1>],assignPublicIp=DISABLED}" \
+    --network-configuration "awsvpcConfiguration={subnets=[<subnet-1>,<subnet-2>],securityGroups=[<sg-1>],assignPublicIp=ENABLED}" \
      --overrides '{
        "containerOverrides": [
          {
