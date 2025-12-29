@@ -32,6 +32,21 @@ export default function HomePage() {
       <section>
         <Paywall />
       </section>
+      <div
+        style={{
+          position: "fixed",
+          bottom: 12,
+          right: 12,
+          padding: "8px 10px",
+          background: "#000",
+          color: "#fff",
+          borderRadius: 8,
+          fontSize: 12,
+          zIndex: 9999,
+        }}
+      >
+        DEPLOY MARKER: v1
+      </div>
     </div>
   );
 }
