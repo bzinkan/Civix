@@ -6,34 +6,31 @@ export type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-const isPlainObject = (value: object): value is Record<string, unknown> => {
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  if (value === null || typeof value !== "object") return false;
   const prototype = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
 };
 
 export const toJsonValue = (value: unknown): JsonValue => {
-  if (value === null) {
-    return null;
+  // IMPORTANT: JsonValue does not allow undefined
+  if (value === undefined) {
+    throw new TypeError("Undefined values are not JSON-serializable.");
   }
 
-  const valueType = typeof value;
+  if (value === null) return null;
 
-  if (valueType === "string" || valueType === "boolean") {
-    return value;
-  }
+  if (typeof value === "string") return value;
+  if (typeof value === "boolean") return value;
 
-  if (valueType === "number") {
+  if (typeof value === "number") {
     if (!Number.isFinite(value)) {
       throw new TypeError("Non-finite numbers are not JSON-serializable.");
     }
     return value;
   }
 
-  if (valueType === "undefined") {
-    throw new TypeError("Undefined values are not JSON-serializable.");
-  }
-
-  if (valueType === "bigint" || valueType === "symbol" || valueType === "function") {
+  if (typeof value === "bigint" || typeof value === "symbol" || typeof value === "function") {
     throw new TypeError("Unsupported JSON value type.");
   }
 
@@ -41,7 +38,7 @@ export const toJsonValue = (value: unknown): JsonValue => {
     return value.map((entry) => toJsonValue(entry));
   }
 
-  if (valueType === "object") {
+  if (typeof value === "object") {
     if (!isPlainObject(value)) {
       throw new TypeError("Only plain objects can be serialized to JSON.");
     }
