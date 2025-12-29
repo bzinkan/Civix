@@ -43,16 +43,18 @@ export async function POST(request: Request) {
     )
     .filter((id): id is string => Boolean(id));
 
+  const orClauses: Prisma.QuestionWhereInput[] = [
+    ...(questionKeys.length ? [{ key: { in: questionKeys } }] : []),
+    ...(questionIds.length ? [{ id: { in: questionIds } }] : [])
+  ];
+
   const questions =
     questionKeys.length === 0 && questionIds.length === 0
       ? []
       : await prisma.question.findMany({
           where: {
             flowId: String(body.flowId),
-            OR: [
-              questionKeys.length > 0 ? { key: { in: questionKeys } } : undefined,
-              questionIds.length > 0 ? { id: { in: questionIds } } : undefined
-            ].filter(Boolean)
+            ...(orClauses.length ? { OR: orClauses } : {})
           },
           select: {
             id: true,
