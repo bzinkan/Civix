@@ -84,16 +84,8 @@ jobs:
 
           echo "Registered task def: $TASK_DEF_ARN"
 
-          # Parse comma-separated secrets into arrays (and strip spaces/CRLF)
-          SUBNETS_RAW="$(printf '%s' "${{ env.ECS_SUBNETS }}" | tr -d '\r\n ' )"
-          SGS_RAW="$(printf '%s' "${{ env.ECS_SECURITY_GROUPS }}" | tr -d '\r\n ' )"
-
-          IFS=',' read -r -a SUBNETS <<< "$SUBNETS_RAW"
-          IFS=',' read -r -a SECURITY_GROUPS <<< "$SGS_RAW"
-
-          # Build JSON arrays for AWS CLI
-          SUBNETS_JSON="$(printf '"%s",' "${SUBNETS[@]}" | sed 's/,$//')"
-          SGS_JSON="$(printf '"%s",' "${SECURITY_GROUPS[@]}" | sed 's/,$//')"
+          export ECS_SUBNETS="${{ env.ECS_SUBNETS }}"
+          export ECS_SECURITY_GROUPS="${{ env.ECS_SECURITY_GROUPS }}"
 
           # Build overrides JSON safely with python (no bash substitution)
           python3 - <<'PY' > overrides.json
@@ -110,17 +102,101 @@ jobs:
           }))
           PY
 
+          # Build network configuration JSON safely (whitespace/CRLF tolerant)
+          python3 - <<'PY' > network-config.json
+          import json
+          import os
+
+          def parse_list(value):
+            return [item.strip() for item in value.split(",") if item.strip()]
+
+          subnets = parse_list(os.environ.get("ECS_SUBNETS", ""))
+          sgs = parse_list(os.environ.get("ECS_SECURITY_GROUPS", ""))
+
+          if not subnets:
+            raise SystemExit("ECS_SUBNETS is empty after parsing")
+          if not sgs:
+            raise SystemExit("ECS_SECURITY_GROUPS is empty after parsing")
+
+          print(json.dumps({
+            "awsvpcConfiguration": {
+              "subnets": subnets,
+              "securityGroups": sgs,
+              "assignPublicIp": "ENABLED"
+            }
+          }))
+          PY
+
           echo "Running migration task..."
-          TASK_ARN="$(aws ecs run-task \
+          aws ecs run-task \
             --cluster "$CLUSTER" \
             --launch-type FARGATE \
             --task-definition "$TASK_DEF_ARN" \
-            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS_JSON],securityGroups=[$SGS_JSON],assignPublicIp=DISABLED}" \
+            --network-configuration file://network-config.json \
             --overrides file://overrides.json \
-            --query 'tasks[0].taskArn' \
-            --output text)"
+            --output json > run-task.json
+
+          TASK_ARN="$(python3 - <<'PY' < run-task.json
+          import json
+          import sys
+
+          data = json.load(sys.stdin)
+          failures = data.get("failures") or []
+          if failures:
+            print("Run-task failures:", file=sys.stderr)
+            print(json.dumps(failures, indent=2), file=sys.stderr)
+            sys.exit(1)
+          tasks = data.get("tasks") or []
+          if not tasks:
+            print("No tasks returned from run-task.", file=sys.stderr)
+            sys.exit(1)
+          print(tasks[0]["taskArn"])
+          PY
+          )"
 
           echo "Task ARN: $TASK_ARN"
+
+          echo "Fetching ENI attachment details..."
+          ATTACHMENT_DETAILS_JSON="$(aws ecs describe-tasks \
+            --cluster "$CLUSTER" \
+            --tasks "$TASK_ARN" \
+            --query 'tasks[0].attachments[?type==`ElasticNetworkInterface`].details' \
+            --output json)"
+          echo "$ATTACHMENT_DETAILS_JSON"
+
+          ENI_ID="$(python3 - <<'PY' <<<"$ATTACHMENT_DETAILS_JSON"
+          import json
+          import sys
+
+          details = json.loads(sys.stdin.read())
+          eni_id = ""
+          for attachment in details:
+            for item in attachment:
+              if item.get("name") == "networkInterfaceId":
+                eni_id = item.get("value", "")
+                break
+            if eni_id:
+              break
+          print(eni_id)
+          PY
+          )"
+
+          if [ -n "$ENI_ID" ]; then
+            echo "ENI ID: $ENI_ID"
+            PUBLIC_IP="$(aws ec2 describe-network-interfaces \
+              --network-interface-ids "$ENI_ID" \
+              --query 'NetworkInterfaces[0].Association.PublicIp' \
+              --output text)"
+            PRIVATE_IP="$(aws ec2 describe-network-interfaces \
+              --network-interface-ids "$ENI_ID" \
+              --query 'NetworkInterfaces[0].PrivateIpAddress' \
+              --output text)"
+            echo "ENI private IP: $PRIVATE_IP"
+            echo "ENI public IP: $PUBLIC_IP"
+          else
+            echo "No ENI ID found in attachment details."
+          fi
+
           aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN"
 
           EXIT_CODE="$(aws ecs describe-tasks \
