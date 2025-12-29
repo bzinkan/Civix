@@ -83,14 +83,22 @@ export async function POST(request: Request) {
     const inputId =
       typeof answer.questionId === "string" ? answer.questionId : undefined;
     const hasInputKey = inputKey ? keyToId.has(inputKey) : false;
+
+    if (hasInputKey && !inputKey) {
+      throw new Error("Missing inputKey");
+    }
+    if (!hasInputKey && !inputId) {
+      throw new Error("Missing inputId");
+    }
+
     const questionKey = hasInputKey
       ? inputKey
       : inputId
         ? idToKey.get(inputId)
         : undefined;
     const questionId = hasInputKey
-      ? keyToId.get(inputKey) ?? inputId
-      : inputId;
+      ? (keyToId.get(inputKey!) ?? inputId!)
+      : inputId!;
 
     return {
       questionKey,
