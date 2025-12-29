@@ -8,12 +8,19 @@ import {
 } from "../../../lib/rules-engine";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type DecisionRequest = Omit<DecisionInput, "answers"> & {
   answers?: { questionId: unknown; value: unknown }[];
 };
 
 export async function POST(request: Request) {
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json(
+      { error: "DATABASE_URL not set" },
+      { status: 500 }
+    );
+  }
   const body = (await request.json()) as DecisionRequest;
 
   if (!body?.jurisdictionId || !body?.flowId) {
