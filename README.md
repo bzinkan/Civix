@@ -123,6 +123,15 @@ npm run dev
 App runs at:
 http://localhost:3000
 
+Rule Tester
+
+Use `/dashboard/tester` to select a flow and jurisdiction, enter answers, and run
+the decision engine with debug output (matched/failed rule IDs and the first
+failed condition).
+
+Rule conditions should reference stable question keys using the `answers.` path,
+for example: `answers.is_restricted_breed`.
+
 CI / Deployment
 
 GitHub Actions validates builds on every push

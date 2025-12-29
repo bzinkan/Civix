@@ -11,7 +11,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type DecisionRequest = Omit<DecisionInput, "answers"> & {
-  answers?: { questionId: unknown; value: unknown }[];
+  answers?: { questionKey?: unknown; questionId?: unknown; value: unknown }[];
+  debug?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -30,16 +31,79 @@ export async function POST(request: Request) {
     );
   }
 
+  const incomingAnswers = Array.isArray(body.answers) ? body.answers : [];
+  const questionKeys = incomingAnswers
+    .map((answer) =>
+      typeof answer.questionKey === "string" ? answer.questionKey : null
+    )
+    .filter((key): key is string => Boolean(key));
+  const questionIds = incomingAnswers
+    .map((answer) =>
+      typeof answer.questionId === "string" ? answer.questionId : null
+    )
+    .filter((id): id is string => Boolean(id));
+
+  const questions =
+    questionKeys.length === 0 && questionIds.length === 0
+      ? []
+      : await prisma.question.findMany({
+          where: {
+            flowId: String(body.flowId),
+            OR: [
+              questionKeys.length > 0 ? { key: { in: questionKeys } } : undefined,
+              questionIds.length > 0 ? { id: { in: questionIds } } : undefined
+            ].filter(Boolean)
+          },
+          select: {
+            id: true,
+            key: true
+          }
+        });
+
+  const keyToId = new Map(questions.map((question) => [question.key, question.id]));
+  const idToKey = new Map(questions.map((question) => [question.id, question.key]));
+
+  const normalizedAnswers = incomingAnswers.map((answer) => {
+    const inputKey =
+      typeof answer.questionKey === "string" ? answer.questionKey : undefined;
+    const inputId =
+      typeof answer.questionId === "string" ? answer.questionId : undefined;
+    const hasInputKey = inputKey ? keyToId.has(inputKey) : false;
+    const questionKey = hasInputKey
+      ? inputKey
+      : inputId
+        ? idToKey.get(inputId)
+        : undefined;
+    const questionId = hasInputKey ? keyToId.get(inputKey) : inputId;
+
+    return {
+      questionKey,
+      questionId,
+      value: toJsonValue(answer.value)
+    };
+  });
+
+  const unresolved = normalizedAnswers.filter(
+    (answer) => !answer.questionKey || !answer.questionId
+  );
+
+  if (unresolved.length > 0) {
+    return NextResponse.json(
+      { error: "One or more answers reference unknown questions." },
+      { status: 400 }
+    );
+  }
+
   const normalizedBody: DecisionInput = {
     ...body,
     jurisdictionId: String(body.jurisdictionId),
     flowId: String(body.flowId),
-    answers: Array.isArray(body.answers)
-      ? body.answers.map((answer) => ({
-          questionId: String(answer.questionId),
-          value: toJsonValue(answer.value)
-        }))
-      : []
+    debug: body.debug === true,
+    answers: normalizedAnswers.map((answer) => ({
+      questionKey: answer.questionKey as string,
+      questionId: answer.questionId as string,
+      value: answer.value
+    }))
   };
 
   const result = await evaluateDecision(normalizedBody);
@@ -63,7 +127,7 @@ export async function POST(request: Request) {
               : (answer.value as Prisma.InputJsonValue),
           question: {
             connect: {
-              id: answer.questionId
+              id: answer.questionId as string
             }
           }
         }))

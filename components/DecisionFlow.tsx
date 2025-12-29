@@ -15,6 +15,7 @@ type DecisionFlowProps = {
 
 type FlowQuestion = {
   id: string;
+  key: string;
   prompt: string;
   type: string;
   order: number;
@@ -71,12 +72,12 @@ export default function DecisionFlow({
   const currentQuestion = questions[currentIndex];
 
   const currentValue = currentQuestion
-    ? answers[currentQuestion.id]
+    ? answers[currentQuestion.key]
     : undefined;
 
   const updateAnswer = (value: JsonValue) => {
     if (!currentQuestion) return;
-    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }));
+    setAnswers((prev) => ({ ...prev, [currentQuestion.key]: value }));
   };
 
   const handleNext = async () => {
@@ -103,8 +104,8 @@ export default function DecisionFlow({
       jurisdictionId,
       flowId,
       answers: questions.map((question) => ({
-        questionId: question.id,
-        value: answers[question.id] ?? null
+        questionKey: question.key,
+        value: answers[question.key] ?? null
       }))
     };
 
@@ -171,23 +172,23 @@ export default function DecisionFlow({
         return (
           <div style={{ display: "flex", gap: 12 }}>
             <label>
-              <input
-                type="radio"
-                name={currentQuestion.id}
-                value="true"
-                checked={currentValue === true}
-                onChange={() => updateAnswer(true)}
-              />
+                <input
+                  type="radio"
+                  name={currentQuestion.key}
+                  value="true"
+                  checked={currentValue === true}
+                  onChange={() => updateAnswer(true)}
+                />
               Yes
             </label>
             <label>
-              <input
-                type="radio"
-                name={currentQuestion.id}
-                value="false"
-                checked={currentValue === false}
-                onChange={() => updateAnswer(false)}
-              />
+                <input
+                  type="radio"
+                  name={currentQuestion.key}
+                  value="false"
+                  checked={currentValue === false}
+                  onChange={() => updateAnswer(false)}
+                />
               No
             </label>
           </div>
