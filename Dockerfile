@@ -13,6 +13,8 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV SKIP_ENV_VALIDATION=1
+RUN npx prisma generate
 RUN npm run build
 
 FROM node:20-bookworm-slim AS runner
@@ -30,7 +32,10 @@ RUN apt-get update \
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
+COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
 
 USER nextjs
 EXPOSE 8080
