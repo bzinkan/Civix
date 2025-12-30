@@ -258,7 +258,7 @@ jobs:
           print(json.dumps({
             "containerOverrides": [{
               "name": os.environ["CONTAINER_NAME"],
-              "command": ["npm", "run", "db:seed"]
+              "command": ["sh", "-c", "npx prisma generate && npm run db:seed"]
             }]
           }))
           PY
