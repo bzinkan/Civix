@@ -74,6 +74,87 @@ jobs:
             --query 'logGroups[?logGroupName==`'"$GROUP"'`].logGroupName' --output text | grep -q "$GROUP" \
             || aws logs create-log-group --region "$REGION" --log-group-name "$GROUP"
 
+      - name: Resolve failed Prisma migration in ECS (one-time)
+        env:
+          AWS_REGION: us-east-2
+          CLUSTER: ${{ env.ECS_CLUSTER }}
+          SUBNETS: ${{ env.ECS_SUBNETS }}
+          SECURITY_GROUPS: ${{ env.ECS_SECURITY_GROUPS }}
+          CONTAINER_NAME: ${{ env.ECS_CONTAINER_NAME }}
+          LOG_GROUP: /ecs/civix
+          APP_NAME: civix
+          MIGRATION_NAME: 20250101000000_add-question-key
+        run: |
+          set -euo pipefail
+
+          normalize_csv() {
+            local input="$1"
+            local -a items=()
+            IFS=',' read -r -a raw <<< "$input"
+            for item in "${raw[@]}"; do
+              item="$(echo "$item" | xargs)"
+              [ -n "$item" ] && items+=("$item")
+            done
+            printf '%s' "$(IFS=,; echo "${items[*]}")"
+          }
+
+          SUBNETS_CSV="$(normalize_csv "$SUBNETS")"
+          SGS_CSV="$(normalize_csv "$SECURITY_GROUPS")"
+
+          echo "Launching Prisma resolve task for migration: $MIGRATION_NAME"
+
+          python3 - <<'PY' > overrides.json
+          import json, os
+          print(json.dumps({
+            "containerOverrides": [{
+              "name": os.environ["CONTAINER_NAME"],
+              "command": ["npx","prisma","migrate","resolve","--applied", os.environ["MIGRATION_NAME"]]
+            }]
+          }))
+          PY
+
+          # Use the SAME task definition family your migrations use.
+          # If your workflow already computed TASK_DEF_ARN earlier, set it here instead.
+          TASK_DEF_ARN="$(aws ecs list-task-definitions --region "$AWS_REGION" --family-prefix "$APP_NAME" --sort DESC --max-items 1 --query 'taskDefinitionArns[0]' --output text)"
+          echo "Using task definition: $TASK_DEF_ARN"
+
+          aws ecs run-task \
+            --region "$AWS_REGION" \
+            --cluster "$CLUSTER" \
+            --launch-type FARGATE \
+            --task-definition "$TASK_DEF_ARN" \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS_CSV],securityGroups=[$SGS_CSV],assignPublicIp=ENABLED}" \
+            --overrides file://overrides.json \
+            --output json > resolve-run.json
+
+          TASK_ARN="$(jq -r '.tasks[0].taskArn' resolve-run.json)"
+          echo "Resolve Task ARN: $TASK_ARN"
+
+          aws ecs wait tasks-stopped --region "$AWS_REGION" --cluster "$CLUSTER" --tasks "$TASK_ARN" || true
+
+          DESC="$(aws ecs describe-tasks --region "$AWS_REGION" --cluster "$CLUSTER" --tasks "$TASK_ARN" --output json)"
+          EXIT_CODE="$(echo "$DESC" | jq -r '.tasks[0].containers[0].exitCode // empty')"
+          echo "Resolve exit code: $EXIT_CODE"
+
+          # Manual CloudWatch fetch (works even if ECS doesn't populate logStreamName)
+          TASK_ID="${TASK_ARN##*/}"
+          STREAM="ecs/$APP_NAME/$TASK_ID"
+          echo "CloudWatch log stream: $STREAM"
+          aws logs get-log-events \
+            --region "$AWS_REGION" \
+            --log-group-name "$LOG_GROUP" \
+            --log-stream-name "$STREAM" \
+            --start-from-head \
+            --query 'events[].message' \
+            --output text || true
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Resolve task failed."
+            exit 1
+          fi
+
+          echo "Resolve completed successfully."
+
       - name: Run Prisma migrations in ECS
         env:
           CONTAINER_NAME: ${{ env.ECS_CONTAINER_NAME }}
