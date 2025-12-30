@@ -74,6 +74,81 @@ jobs:
             --query 'logGroups[?logGroupName==`'"$GROUP"'`].logGroupName' --output text | grep -q "$GROUP" \
             || aws logs create-log-group --region "$REGION" --log-group-name "$GROUP"
 
+      - name: Resolve failed migrations in ECS
+        env:
+          CONTAINER_NAME: ${{ env.ECS_CONTAINER_NAME }}
+          ECS_CLUSTER: ${{ env.ECS_CLUSTER }}
+          ECS_SUBNETS: ${{ env.ECS_SUBNETS }}
+          ECS_SECURITY_GROUPS: ${{ env.ECS_SECURITY_GROUPS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CLUSTER="${{ env.ECS_CLUSTER }}"
+          CONTAINER_NAME="$(printf '%s' "${{ env.ECS_CONTAINER_NAME }}" | tr -d '\r\n')"
+          TASK_DEF_FILE="${{ steps.render-task-def.outputs.task-definition }}"
+
+          TASK_DEF_ARN="$(aws ecs register-task-definition \
+            --cli-input-json file://$TASK_DEF_FILE \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)"
+
+          export ECS_SUBNETS="${{ env.ECS_SUBNETS }}"
+          export ECS_SECURITY_GROUPS="${{ env.ECS_SECURITY_GROUPS }}"
+
+          normalize_csv() {
+            local input="$1"
+            local -a items=()
+            IFS=',' read -r -a raw <<< "$input"
+            for item in "${raw[@]}"; do
+              item="$(echo "$item" | xargs)"
+              [ -n "$item" ] && items+=("$item")
+            done
+            printf '%s' "$(IFS=,; echo "${items[*]}")"
+          }
+
+          SUBNETS_CSV="$(normalize_csv "$ECS_SUBNETS")"
+          SECURITY_GROUPS_CSV="$(normalize_csv "$ECS_SECURITY_GROUPS")"
+
+          [ -z "$SUBNETS_CSV" ] && echo "ECS_SUBNETS empty" && exit 1
+          [ -z "$SECURITY_GROUPS_CSV" ] && echo "ECS_SECURITY_GROUPS empty" && exit 1
+
+          python3 - <<'PY' > overrides_resolve.json
+          import json, os
+          print(json.dumps({
+            "containerOverrides": [{
+              "name": os.environ["CONTAINER_NAME"],
+              "command": ["npx", "prisma", "migrate", "resolve", "--applied", "20241201000000_initial_schema"]
+            }]
+          }))
+          PY
+
+          echo "Resolving failed migration..."
+          aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --launch-type FARGATE \
+            --task-definition "$TASK_DEF_ARN" \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS_CSV],securityGroups=[$SECURITY_GROUPS_CSV],assignPublicIp=ENABLED}" \
+            --overrides file://overrides_resolve.json \
+            --output json > resolve-task.json
+
+          TASK_ARN_RESOLVE="$(jq -r '.tasks[0].taskArn // empty' resolve-task.json)"
+          [ -z "$TASK_ARN_RESOLVE" ] && echo "No resolve taskArn returned" && exit 1
+
+          echo "Waiting for resolve task to stop..."
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN_RESOLVE"
+
+          DESC_RESOLVE="$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN_RESOLVE" --output json)"
+          EXIT_RESOLVE="$(echo "$DESC_RESOLVE" | jq -r '.tasks[0].containers[0].exitCode // 1')"
+
+          echo "Resolve exit code: $EXIT_RESOLVE"
+
+          if [ "$EXIT_RESOLVE" = "0" ]; then
+            echo "Failed migration resolved successfully."
+          else
+            echo "Migration resolution returned exit code $EXIT_RESOLVE (migration may already be resolved or not exist)"
+          fi
+
       - name: Run Prisma migrations in ECS
         env:
           CONTAINER_NAME: ${{ env.ECS_CONTAINER_NAME }}
