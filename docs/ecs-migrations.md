@@ -18,6 +18,11 @@ Ensure the GitHub Actions role can run one-off tasks and pass the ECS roles used
 - `ecs:ListTasks` (optional, for troubleshooting)
 - `iam:PassRole` for the task execution role and task role
 
+### CloudWatch Logs prerequisites
+
+The task definition uses the `awslogs` log driver. Make sure the log group exists
+and the execution role can create it (see `docs/ecs-logging.md`).
+
 ## Run a one-off migration task
 
 1. **Find the current task definition revision used by the service.**
