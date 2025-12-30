@@ -97,7 +97,7 @@ jobs:
           print(json.dumps({
             "containerOverrides": [{
               "name": name,
-              "command": ["npx", "prisma", "migrate", "deploy"]
+              "command": ["/app/node_modules/.bin/prisma", "migrate", "deploy"]
             }]
           }))
           PY
