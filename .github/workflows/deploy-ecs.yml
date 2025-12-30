@@ -232,6 +232,77 @@ jobs:
 
           echo "Migration succeeded."
 
+      - name: Seed database with demo data
+        env:
+          CONTAINER_NAME: ${{ env.ECS_CONTAINER_NAME }}
+          ECS_CLUSTER: ${{ env.ECS_CLUSTER }}
+          ECS_SUBNETS: ${{ env.ECS_SUBNETS }}
+          ECS_SECURITY_GROUPS: ${{ env.ECS_SECURITY_GROUPS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CLUSTER="${{ env.ECS_CLUSTER }}"
+          CONTAINER_NAME="$(printf '%s' "${{ env.ECS_CONTAINER_NAME }}" | tr -d '\r\n')"
+          TASK_DEF_FILE="${{ steps.render-task-def.outputs.task-definition }}"
+
+          TASK_DEF_ARN="$(aws ecs register-task-definition \
+            --cli-input-json file://$TASK_DEF_FILE \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)"
+
+          export ECS_SUBNETS="${{ env.ECS_SUBNETS }}"
+          export ECS_SECURITY_GROUPS="${{ env.ECS_SECURITY_GROUPS }}"
+
+          python3 - <<'PY' > overrides_seed.json
+          import json, os
+          print(json.dumps({
+            "containerOverrides": [{
+              "name": os.environ["CONTAINER_NAME"],
+              "command": ["npm", "run", "db:seed"]
+            }]
+          }))
+          PY
+
+          normalize_csv() {
+            local input="$1"
+            local -a items=()
+            IFS=',' read -r -a raw <<< "$input"
+            for item in "${raw[@]}"; do
+              item="$(echo "$item" | xargs)"
+              [ -n "$item" ] && items+=("$item")
+            done
+            printf '%s' "$(IFS=,; echo "${items[*]}")"
+          }
+
+          SUBNETS_CSV="$(normalize_csv "$ECS_SUBNETS")"
+          SECURITY_GROUPS_CSV="$(normalize_csv "$ECS_SECURITY_GROUPS")"
+
+          echo "Running database seed task..."
+          aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --launch-type FARGATE \
+            --task-definition "$TASK_DEF_ARN" \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS_CSV],securityGroups=[$SECURITY_GROUPS_CSV],assignPublicIp=ENABLED}" \
+            --overrides file://overrides_seed.json \
+            --output json > seed-task.json
+
+          TASK_ARN_SEED="$(jq -r '.tasks[0].taskArn // empty' seed-task.json)"
+          [ -z "$TASK_ARN_SEED" ] && echo "No seed taskArn returned" && exit 1
+
+          echo "Waiting for seed task to stop..."
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN_SEED"
+
+          DESC_SEED="$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN_SEED" --output json)"
+          EXIT_SEED="$(echo "$DESC_SEED" | jq -r '.tasks[0].containers[0].exitCode // 1')"
+
+          echo "Seed exit code: $EXIT_SEED"
+
+          if [ "$EXIT_SEED" = "0" ]; then
+            echo "Database seeded successfully."
+          else
+            echo "Seed task completed with exit code $EXIT_SEED (demo data may already exist)"
+          fi
+
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
