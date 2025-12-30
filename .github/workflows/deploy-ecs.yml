@@ -119,55 +119,6 @@ jobs:
           [ -z "$SUBNETS_CSV" ] && echo "ECS_SUBNETS empty" && exit 1
           [ -z "$SECURITY_GROUPS_CSV" ] && echo "ECS_SECURITY_GROUPS empty" && exit 1
 
-          # --- ONE-TIME RESOLVE (runs before migrate deploy) ---
-          # TODO: Remove this block after first successful deployment
-          echo "Running prisma migrate resolve (one-time unblock)..."
-          python3 - <<'PY' > overrides_resolve.json
-          import json, os
-          print(json.dumps({
-            "containerOverrides": [{
-              "name": os.environ["CONTAINER_NAME"],
-              "command": ["npx","prisma","migrate","resolve","--applied","20250101000000_add-question-key"]
-            }]
-          }))
-          PY
-
-          aws ecs run-task \
-            --region "$AWS_REGION" \
-            --cluster "$CLUSTER" \
-            --launch-type FARGATE \
-            --task-definition "$TASK_DEF_ARN" \
-            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS_CSV],securityGroups=[$SECURITY_GROUPS_CSV],assignPublicIp=ENABLED}" \
-            --overrides file://overrides_resolve.json \
-            --output json > resolve-run.json
-
-          TASK_ARN_RESOLVE="$(jq -r '.tasks[0].taskArn // empty' resolve-run.json)"
-          [ -z "$TASK_ARN_RESOLVE" ] && echo "No resolve taskArn returned" && jq . resolve-run.json && exit 1
-
-          aws ecs wait tasks-stopped --region "$AWS_REGION" --cluster "$CLUSTER" --tasks "$TASK_ARN_RESOLVE" || true
-
-          DESC_RESOLVE="$(aws ecs describe-tasks --region "$AWS_REGION" --cluster "$CLUSTER" --tasks "$TASK_ARN_RESOLVE" --output json)"
-          EXIT_RESOLVE="$(echo "$DESC_RESOLVE" | jq -r '.tasks[0].containers[0].exitCode // 1')"
-          echo "Resolve exit code: $EXIT_RESOLVE"
-
-          # Fetch logs by TASK_ID (works even when logStreamName is null)
-          TASK_ID_RESOLVE="${TASK_ARN_RESOLVE##*/}"
-          STREAM_RESOLVE="ecs/civix/$TASK_ID_RESOLVE"
-          aws logs get-log-events \
-            --region "$AWS_REGION" \
-            --log-group-name "/ecs/civix" \
-            --log-stream-name "$STREAM_RESOLVE" \
-            --start-from-head \
-            --query 'events[].message' \
-            --output text || true
-
-          if [ "$EXIT_RESOLVE" != "0" ]; then
-            echo "Resolve failed; stopping deploy."
-            exit 1
-          fi
-          echo "Resolve succeeded; continuing to migrate deploy..."
-          # --- END ONE-TIME RESOLVE ---
-
           python3 - <<'PY' > overrides.json
           import json, os
           print(json.dumps({
