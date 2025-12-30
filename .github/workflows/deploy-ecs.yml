@@ -120,6 +120,7 @@ jobs:
           [ -z "$SECURITY_GROUPS_CSV" ] && echo "ECS_SECURITY_GROUPS empty" && exit 1
 
           # --- ONE-TIME RESOLVE (runs before migrate deploy) ---
+          # TODO: Remove this block after first successful deployment
           echo "Running prisma migrate resolve (one-time unblock)..."
           python3 - <<'PY' > overrides_resolve.json
           import json, os
@@ -172,7 +173,7 @@ jobs:
           print(json.dumps({
             "containerOverrides": [{
               "name": os.environ["CONTAINER_NAME"],
-              "command": ["sh", "-c", "npx prisma generate && npx prisma migrate deploy"]
+              "command": ["npx", "prisma", "migrate", "deploy"]
             }]
           }))
           PY
