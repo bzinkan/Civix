@@ -34,6 +34,24 @@ if they are missing:
 }
 ```
 
+Example CLI command to attach the inline policy:
+
+```bash
+aws iam put-role-policy \
+  --role-name ecsTaskExecutionRole \
+  --policy-name ecs-allow-create-log-groups \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": ["logs:CreateLogGroup"],
+        "Resource": "*"
+      }
+    ]
+  }'
+```
+
 Without this, ECS can only create log streams when the group already exists.
 
 ## Quick verification

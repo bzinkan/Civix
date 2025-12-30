@@ -65,6 +65,12 @@ jobs:
           environment-variables: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
 
+      - name: Ensure CloudWatch log group exists
+        run: |
+          aws logs describe-log-groups --log-group-name-prefix "/ecs/civix" --region "$AWS_REGION" \
+            --query 'logGroups[?logGroupName==`/ecs/civix`].logGroupName' --output text | grep -q "/ecs/civix" \
+            || aws logs create-log-group --log-group-name "/ecs/civix" --region "$AWS_REGION"
+
       - name: Run Prisma migrations in ECS
         env:
           CONTAINER_NAME: ${{ env.ECS_CONTAINER_NAME }}
