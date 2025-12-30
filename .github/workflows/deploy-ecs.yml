@@ -65,11 +65,14 @@ jobs:
           environment-variables: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
 
-      - name: Ensure CloudWatch log group exists
+      - name: Ensure CloudWatch log group exists (us-east-2)
         run: |
-          aws logs describe-log-groups --log-group-name-prefix "/ecs/civix" --region "$AWS_REGION" \
-            --query 'logGroups[?logGroupName==`/ecs/civix`].logGroupName' --output text | grep -q "/ecs/civix" \
-            || aws logs create-log-group --log-group-name "/ecs/civix" --region "$AWS_REGION"
+          set -euo pipefail
+          REGION="us-east-2"
+          GROUP="/ecs/civix"
+          aws logs describe-log-groups --region "$REGION" --log-group-name-prefix "$GROUP" \
+            --query 'logGroups[?logGroupName==`'"$GROUP"'`].logGroupName' --output text | grep -q "$GROUP" \
+            || aws logs create-log-group --region "$REGION" --log-group-name "$GROUP"
 
       - name: Run Prisma migrations in ECS
         env:
@@ -91,6 +94,10 @@ jobs:
             --output text)"
 
           echo "Registered task def: $TASK_DEF_ARN"
+          echo "Task def log config:"
+          aws ecs describe-task-definition --task-definition "$TASK_DEF_ARN" \
+            --query 'taskDefinition.{executionRoleArn:executionRoleArn, containers:containerDefinitions[].{name:name,log:logConfiguration}}' \
+            --output json
 
           export ECS_SUBNETS="${{ env.ECS_SUBNETS }}"
           export ECS_SECURITY_GROUPS="${{ env.ECS_SECURITY_GROUPS }}"
@@ -170,6 +177,20 @@ jobs:
 
           echo "Waiting for task to stop..."
           aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN"
+
+          echo "Container statuses:"
+          aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[].{name:name,exitCode:exitCode,reason:reason,logStreamName:logStreamName,lastStatus:lastStatus}' \
+            --output table
+
+          echo "Recent log streams (if any):"
+          aws logs describe-log-streams \
+            --region us-east-2 \
+            --log-group-name "/ecs/civix" \
+            --order-by LastEventTime --descending \
+            --max-items 10 \
+            --query 'logStreams[].{name:logStreamName,lastEvent:lastEventTimestamp}' \
+            --output table || true
 
           # After stop, fetch exit code + reason
           DESC2="$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" --output json)"
