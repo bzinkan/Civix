@@ -1,87 +1,98 @@
 Civix
 
-Civix is an industry-agnostic compliance and rules-interpretation platform.
+Civix is a regulatory decision engine that turns fragmented local rules into clear, defensible answers—and monetizes the path to compliance.
 
-It provides clear, authoritative answers to questions like “Is this allowed?” (the What) and monetizes the actionable guidance on “How to comply” (the How) through reports and subscriptions.
+Across cities, towns, and jurisdictions, compliance rules are scattered across PDFs, written in legal language, and difficult to interpret. Civix centralizes these rules and answers a single, high-stakes question:
 
-The system is designed to work across industries including zoning, animals, business regulation, construction, and environmental rules.
+“Is this allowed here?”
 
-Core Principles
+Free answers establish trust and authority. Paid reports deliver execution-ready guidance on how to comply.
 
-Single deployable application
+The Problem
 
-Frontend + backend in one Next.js repo
+Regulatory compliance is:
 
-Free answers prove knowledge
+Fragmented across thousands of local authorities
 
-Paid reports deliver execution
+Written for lawyers, not decision-makers
 
-Rules engine is industry-agnostic
+Time-consuming to interpret
 
-Infrastructure stays boring and stable
+Expensive to get wrong
 
-Tech Stack
+People routinely ask:
 
-Framework: Next.js (App Router)
+Can I build this on my property?
 
-Runtime: Node.js 24
+Do I need a permit?
 
-Backend: Next.js API routes
+What rules apply to this address?
 
-Database: PostgreSQL (AWS RDS)
+What steps do I need to take next?
 
-ORM: Prisma
+The answers are rarely clear—and mistakes carry legal, financial, or safety risk.
 
-Payments: Stripe (subscriptions + one-time purchases)
+The Solution
 
-Hosting: AWS Elastic Beanstalk
+Civix is an industry-agnostic rules engine that produces deterministic compliance answers with explainability.
 
-CI: GitHub Actions
+Free: Clear yes/no/conditional answers with rationale
 
-Repo Structure (High Level)
-app/            → UI + API routes
-lib/            → Business logic (rules, auth, permissions)
-components/     → Reusable UI components
-prisma/         → Database schema
-.github/        → CI workflows
-.elasticbeanstalk/ → EB configuration
-.ebextensions/  → EB environment config
+Paid: Step-by-step compliance execution
 
-Free vs Paid Model
-Free (“What”)
+Civix scales horizontally across industries without rewriting infrastructure.
 
-Clear, direct answers
+Business Model
+Free Tier (Trust & Acquisition)
+
+Clear, authoritative answers
+
+Jurisdiction-aware decisions
+
+Builds credibility and inbound demand
 
 Example:
 
-“⚠️ Restricted. You generally cannot build a front-yard fence here.”
+⚠️ Restricted — Front-yard fences are not permitted under current zoning rules.
 
-Paid (“How”)
+Paid Tier (Monetization)
 
 Compliance reports
 
-Permit steps
+Permit and approval workflows
 
-Required forms
+Required forms and documentation
 
 Pre-vetted service providers
 
-Available via:
+Revenue Streams
 
-One-time purchase
+One-time report purchases
 
-Monthly subscription
+Monthly subscriptions
 
-API Design
-Endpoint	Purpose
-/api/health	Deployment & uptime checks
-/api/query	Free compliance answers
-/api/report	Paid compliance reports
-/api/auth	Authentication
-/api/stripe	Payments & webhooks
-Rules Engine
+Future API access for partners
 
-Rules live in lib/rules/ and are separated by domain:
+Why Civix Wins
+
+Industry-agnostic rules engine
+One system supports zoning, animals, construction, business regulation, and more.
+
+Explainable decisions
+Every answer is traceable to specific rule logic—no black box.
+
+Low marginal cost expansion
+New jurisdictions and industries require rules, not infrastructure.
+
+Infrastructure discipline
+Stable, boring infrastructure enables long-term reliability.
+
+Clear monetization boundary
+Free answers drive trust; execution guidance drives revenue.
+
+Rules Engine Architecture
+
+Rules are modular and domain-separated:
 
 lib/rules/
 ├── zoning.ts
@@ -89,63 +100,60 @@ lib/rules/
 ├── business.ts
 
 
-New industries are added without infrastructure changes.
+Each rule:
 
-Authentication & Payments
+Evaluates structured user inputs
 
-Authentication is required for paid access
+Produces deterministic outcomes
 
-Stripe handles:
+Fails fast with traceable conditions
 
-Monthly subscriptions
+This allows:
 
-One-time purchases
+Rapid iteration
 
-Auth and payments are implemented minimally to avoid early lock-in
+Jurisdiction-specific logic
 
-Environment Variables
+Easy onboarding of new regulatory domains
 
-Copy .env.example to .env and configure:
+Technology Stack
 
-DATABASE_URL=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-NEXTAUTH_SECRET=
+Frontend & Backend: Next.js (App Router)
+
+Runtime: Node.js 24
+
+Database: PostgreSQL (AWS RDS)
+
+ORM: Prisma
+
+Payments: Stripe
+
+Hosting: AWS Elastic Beanstalk
+
+CI/CD: GitHub Actions
+
+Single deployable application. No microservice sprawl.
+
+Developer Experience
+
+Local rule testing via /dashboard/tester
+
+Full debug output (matched rules, failed conditions)
+
+Stable question keys ensure long-term rule integrity
+
+Deployment Pipeline
+push → CI validation → Elastic Beanstalk deploy → live
 
 
-Secrets are managed via AWS Elastic Beanstalk environment variables in production.
-
-Development
-npm install
-npm run dev
-
-
-App runs at:
-http://localhost:3000
-
-Rule Tester
-
-Use `/dashboard/tester` to select a flow and jurisdiction, enter answers, and run
-the decision engine with debug output (matched/failed rule IDs and the first
-failed condition).
-
-Rule conditions should reference stable question keys using the `answers.` path,
-for example: `answers.is_restricted_breed`.
-
-CI / Deployment
-
-GitHub Actions validates builds on every push
-
-Elastic Beanstalk deploys from the main branch
-
-Target state:
-
-push → CI → deploy → live URL
+Production secrets are managed via AWS environment variables.
 
 Status
 
 🚧 Active development
-Infrastructure and architecture are locked before feature expansion.
+
+Core architecture and infrastructure are locked.
+Current focus is on rule ingestion, jurisdiction coverage, and report depth.
 
 License
 
