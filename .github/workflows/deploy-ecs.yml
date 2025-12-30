@@ -178,6 +178,18 @@ jobs:
           echo "Waiting for task to stop..."
           aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN"
 
+          TASK_ID="${TASK_ARN##*/}"
+          echo "Attempting manual CloudWatch log fetch..."
+          echo "Log group: /ecs/civix"
+          echo "Log stream: ecs/civix/$TASK_ID"
+          aws logs get-log-events \
+            --region us-east-2 \
+            --log-group-name "/ecs/civix" \
+            --log-stream-name "ecs/civix/$TASK_ID" \
+            --start-from-head \
+            --query 'events[].message' \
+            --output text || true
+
           echo "Container statuses:"
           aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
             --query 'tasks[0].containers[].{name:name,exitCode:exitCode,reason:reason,logStreamName:logStreamName,lastStatus:lastStatus}' \
