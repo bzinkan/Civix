@@ -79,7 +79,6 @@ CREATE TABLE "DecisionFlow" (
 CREATE TABLE "Question" (
     "id" TEXT NOT NULL,
     "flowId" TEXT NOT NULL,
-    "key" TEXT NOT NULL,
     "prompt" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "order" INTEGER NOT NULL,
@@ -169,9 +168,6 @@ CREATE UNIQUE INDEX "RuleCategory_slug_key" ON "RuleCategory"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "RuleSubcategory_slug_key" ON "RuleSubcategory"("slug");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Question_flowId_key_key" ON "Question"("flowId", "key");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
