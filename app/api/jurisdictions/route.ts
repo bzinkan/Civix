@@ -12,15 +12,23 @@ export async function GET() {
     );
   }
 
-  const jurisdictions = await prisma.jurisdiction.findMany({
-    orderBy: [{ name: "asc" }, { state: "asc" }],
-    select: {
-      id: true,
-      name: true,
-      state: true,
-      type: true
-    }
-  });
+  try {
+    const jurisdictions = await prisma.jurisdiction.findMany({
+      orderBy: [{ name: "asc" }, { state: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        state: true,
+        type: true
+      }
+    });
 
-  return NextResponse.json(jurisdictions);
+    return NextResponse.json(jurisdictions);
+  } catch (error) {
+    console.error("Error fetching jurisdictions:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch jurisdictions", details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
 }

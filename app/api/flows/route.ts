@@ -11,16 +11,25 @@ export async function GET() {
       { status: 500 }
     );
   }
-  const flows = await prisma.decisionFlow.findMany({
-    orderBy: { createdAt: "asc" },
-    select: {
-      id: true,
-      name: true,
-      label: true,
-      description: true,
-      jurisdictionId: true
-    }
-  });
 
-  return NextResponse.json(flows);
+  try {
+    const flows = await prisma.decisionFlow.findMany({
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        name: true,
+        label: true,
+        description: true,
+        jurisdictionId: true
+      }
+    });
+
+    return NextResponse.json(flows);
+  } catch (error) {
+    console.error("Error fetching flows:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch flows", details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
 }
