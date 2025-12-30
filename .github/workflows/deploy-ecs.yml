@@ -71,12 +71,9 @@ jobs:
           set -euo pipefail
 
           CLUSTER="${{ env.ECS_CLUSTER }}"
-          # Trim any hidden CR/LF from the secret
           CONTAINER_NAME="$(printf '%s' "${{ env.ECS_CONTAINER_NAME }}" | tr -d '\r\n')"
-          export CONTAINER_NAME
           TASK_DEF_FILE="${{ steps.render-task-def.outputs.task-definition }}"
 
-          # Register the rendered task def and capture the ARN
           TASK_DEF_ARN="$(aws ecs register-task-definition \
             --cli-input-json file://$TASK_DEF_FILE \
             --query 'taskDefinition.taskDefinitionArn' \
@@ -87,17 +84,12 @@ jobs:
           export ECS_SUBNETS="${{ env.ECS_SUBNETS }}"
           export ECS_SECURITY_GROUPS="${{ env.ECS_SECURITY_GROUPS }}"
 
-          # Build overrides JSON safely with python (no bash substitution)
           python3 - <<'PY' > overrides.json
-          import json
-          import os
-
-          name = os.environ["CONTAINER_NAME"]
-
+          import json, os
           print(json.dumps({
             "containerOverrides": [{
-              "name": name,
-              "command": ["/app/node_modules/.bin/prisma", "migrate", "deploy"]
+              "name": os.environ["CONTAINER_NAME"],
+              "command": ["npx", "prisma", "migrate", "deploy"]
             }]
           }))
           PY
@@ -105,31 +97,19 @@ jobs:
           normalize_csv() {
             local input="$1"
             local -a items=()
-            local item
             IFS=',' read -r -a raw <<< "$input"
             for item in "${raw[@]}"; do
               item="$(echo "$item" | xargs)"
-              if [ -n "$item" ]; then
-                items+=("$item")
-              fi
+              [ -n "$item" ] && items+=("$item")
             done
-            local joined
-            joined="$(printf '%s,' "${items[@]}")"
-            printf '%s' "${joined%,}"
+            printf '%s' "$(IFS=,; echo "${items[*]}")"
           }
 
           SUBNETS_CSV="$(normalize_csv "$ECS_SUBNETS")"
           SECURITY_GROUPS_CSV="$(normalize_csv "$ECS_SECURITY_GROUPS")"
 
-          if [ -z "$SUBNETS_CSV" ]; then
-            echo "ECS_SUBNETS is empty after parsing"
-            exit 1
-          fi
-
-          if [ -z "$SECURITY_GROUPS_CSV" ]; then
-            echo "ECS_SECURITY_GROUPS is empty after parsing"
-            exit 1
-          fi
+          [ -z "$SUBNETS_CSV" ] && echo "ECS_SUBNETS empty" && exit 1
+          [ -z "$SECURITY_GROUPS_CSV" ] && echo "ECS_SECURITY_GROUPS empty" && exit 1
 
           echo "Running migration task..."
           aws ecs run-task \
@@ -148,53 +128,65 @@ jobs:
           fi
 
           TASK_ARN="$(jq -r '.tasks[0].taskArn // empty' run-task.json)"
-          if [ -z "$TASK_ARN" ]; then
-            echo "No tasks returned from run-task."
-            exit 1
-          fi
-
+          [ -z "$TASK_ARN" ] && echo "No taskArn returned" && exit 1
           echo "Task ARN: $TASK_ARN"
 
-          echo "Fetching ENI attachment details..."
-          ATTACHMENT_DETAILS_JSON="$(aws ecs describe-tasks \
-            --cluster "$CLUSTER" \
-            --tasks "$TASK_ARN" \
-            --query 'tasks[0].attachments[?type==`ElasticNetworkInterface`].details' \
-            --output json)"
-          echo "$ATTACHMENT_DETAILS_JSON"
+          # ✅ Wait until ENI + log stream exist
+          echo "Waiting for task to reach RUNNING..."
+          aws ecs wait tasks-running --cluster "$CLUSTER" --tasks "$TASK_ARN" || true
 
-          ENI_ID="$(echo "$ATTACHMENT_DETAILS_JSON" | jq -r '.[0][] | select(.name=="networkInterfaceId") | .value' | head -n 1)"
+          # Pull ENI + log stream (retry a few times because ENI can lag)
+          ENI_ID=""
+          LOG_STREAM=""
+          for i in 1 2 3 4 5; do
+            DESC="$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" --output json)"
+            ENI_ID="$(echo "$DESC" | jq -r '.tasks[0].attachments[]? | select(.type=="ElasticNetworkInterface") | .details[]? | select(.name=="networkInterfaceId") | .value' | head -n 1)"
+            LOG_STREAM="$(echo "$DESC" | jq -r '.tasks[0].containers[0].logStreamName // empty')"
+            [ -n "$ENI_ID" ] || [ -n "$LOG_STREAM" ] && break
+            echo "ENI/log stream not ready yet (attempt $i)..."
+            sleep 2
+          done
 
           if [ -n "$ENI_ID" ]; then
             echo "ENI ID: $ENI_ID"
-            PUBLIC_IP="$(aws ec2 describe-network-interfaces \
-              --network-interface-ids "$ENI_ID" \
-              --query 'NetworkInterfaces[0].Association.PublicIp' \
-              --output text)"
-            PRIVATE_IP="$(aws ec2 describe-network-interfaces \
-              --network-interface-ids "$ENI_ID" \
-              --query 'NetworkInterfaces[0].PrivateIpAddress' \
-              --output text)"
+            PRIVATE_IP="$(aws ec2 describe-network-interfaces --network-interface-ids "$ENI_ID" --query 'NetworkInterfaces[0].PrivateIpAddress' --output text)"
+            PUBLIC_IP="$(aws ec2 describe-network-interfaces --network-interface-ids "$ENI_ID" --query 'NetworkInterfaces[0].Association.PublicIp' --output text || true)"
             echo "ENI private IP: $PRIVATE_IP"
-            echo "ENI public IP: $PUBLIC_IP"
+            echo "ENI public IP: ${PUBLIC_IP:-<none>}"
           else
-            echo "No ENI ID found in attachment details."
+            echo "No ENI ID found (can happen if the task exits fast)."
           fi
 
+          echo "Waiting for task to stop..."
           aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN"
 
-          EXIT_CODE="$(aws ecs describe-tasks \
-            --cluster "$CLUSTER" \
-            --tasks "$TASK_ARN" \
-            --query 'tasks[0].containers[0].exitCode' \
-            --output text)"
+          # After stop, fetch exit code + reason
+          DESC2="$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" --output json)"
+          EXIT_CODE="$(echo "$DESC2" | jq -r '.tasks[0].containers[0].exitCode // empty')"
+          STOPPED_REASON="$(echo "$DESC2" | jq -r '.tasks[0].stoppedReason // empty')"
+          LOG_STREAM="$(echo "$DESC2" | jq -r '.tasks[0].containers[0].logStreamName // empty')"
 
+          echo "Stopped reason: $STOPPED_REASON"
           echo "Migration exit code: $EXIT_CODE"
+          echo "Log stream: $LOG_STREAM"
+
+          # ✅ THIS is what you were missing: print Prisma logs on failure
           if [ "$EXIT_CODE" != "0" ]; then
-            echo "Migration task failed."
-            aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN"
+            echo "Migration failed. Dumping CloudWatch logs..."
+            if [ -n "$LOG_STREAM" ]; then
+              aws logs get-log-events \
+                --log-group-name "/ecs/civix" \
+                --log-stream-name "$LOG_STREAM" \
+                --start-from-head \
+                --query 'events[].message' \
+                --output text || true
+            else
+              echo "No log stream found on container."
+            fi
             exit 1
           fi
+
+          echo "Migration succeeded."
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
