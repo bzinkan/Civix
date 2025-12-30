@@ -66,6 +66,11 @@ jobs:
             DATABASE_URL=${{ secrets.DATABASE_URL }}
 
       - name: Run Prisma migrations in ECS
+        env:
+          CONTAINER_NAME: ${{ env.ECS_CONTAINER_NAME }}
+          ECS_CLUSTER: ${{ env.ECS_CLUSTER }}
+          ECS_SUBNETS: ${{ env.ECS_SUBNETS }}
+          ECS_SECURITY_GROUPS: ${{ env.ECS_SECURITY_GROUPS }}
         shell: bash
         run: |
           set -euo pipefail
