@@ -28,13 +28,8 @@ export async function generateEmbedding(
   try {
     const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
 
-    const result = await model.embedContent({
-      content: {
-        parts: [{ text }],
-        role: 'user',
-      },
-      taskType,
-    });
+    // embedContent accepts just the text string directly
+    const result = await model.embedContent(text);
 
     return {
       embedding: result.embedding.values,
