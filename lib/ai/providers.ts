@@ -28,8 +28,8 @@ export const AI_CONFIG = {
       pro: 'gemini-1.5-pro-latest',
     },
     anthropic: {
-      fast: 'claude-haiku-4.0-20250514',
-      pro: 'claude-sonnet-4-20250514',
+      fast: 'claude-3-5-haiku-20241022',
+      pro: 'claude-3-5-sonnet-20241022',
     },
     openai: {
       fast: 'gpt-4o-mini',
