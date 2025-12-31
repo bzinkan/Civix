@@ -16,7 +16,14 @@ COPY . .
 ENV SKIP_ENV_VALIDATION=1
 RUN npx prisma generate
 RUN npm run build
-RUN ./node_modules/.bin/tsc prisma/seed.ts --outDir prisma --skipLibCheck --esModuleInterop --resolveJsonModule
+RUN ls -la node_modules/.bin/ | head -20 && \
+    if [ -f node_modules/.bin/tsc ]; then \
+      ./node_modules/.bin/tsc prisma/seed.ts --outDir prisma --skipLibCheck --esModuleInterop --resolveJsonModule; \
+    else \
+      echo "TypeScript not found, installing..." && \
+      npm install -D typescript@5.5.4 && \
+      ./node_modules/.bin/tsc prisma/seed.ts --outDir prisma --skipLibCheck --esModuleInterop --resolveJsonModule; \
+    fi
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
