@@ -20,6 +20,8 @@ model Jurisdiction {
   rules     Rule[]
   decisions Decision[]
   rulesets  Ruleset[]        @relation(name: "JurisdictionRulesets")
+  ordinanceDocuments OrdinanceDocument[] @relation(name: "JurisdictionOrdinances")
+  ordinanceChunks    OrdinanceChunk[]    @relation(name: "JurisdictionChunks")
 }
 
 model ZoningDistrict {
@@ -299,4 +301,59 @@ model AnonymousUsage {
 
   @@index([fingerprint])
   @@index([lastQueryAt])
+}
+
+model OrdinanceDocument {
+  id              String    @id @default(cuid())
+  jurisdiction    Jurisdiction @relation(name: "JurisdictionOrdinances", fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+
+  title           String
+  s3PdfUrl        String?
+  s3TextUrl       String?
+  sourceUrl       String?
+
+  lastScraped     DateTime?
+  scrapeFrequency String    @default("weekly")
+  isActive        Boolean   @default(true)
+
+  chunks          OrdinanceChunk[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([isActive])
+}
+
+model OrdinanceChunk {
+  id              String    @id @default(cuid())
+  document        OrdinanceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId      String
+  jurisdiction    Jurisdiction @relation(name: "JurisdictionChunks", fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+
+  chapter         String
+  section         String?
+  title           String
+  content         String    @db.Text
+
+  // Vector embedding stored as JSON array (pgvector alternative for compatibility)
+  // Will be converted to actual vector type when using pgvector extension
+  embedding       Json?
+
+  sourceUrl       String?
+  effectiveDate   DateTime?
+  lastVerified    DateTime  @default(now())
+
+  chunkIndex      Int       @default(0)
+  tokenCount      Int?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([documentId])
+  @@index([chapter])
+  @@index([section])
 }
