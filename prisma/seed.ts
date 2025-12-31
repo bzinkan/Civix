@@ -149,8 +149,7 @@ async function main() {
         type: question.type,
         order: question.order,
         required: question.required,
-        helpText: question.helpText,
-        options: question.options
+        helpText: question.helpText
       },
       create: {
         flowId: flow.id,
@@ -159,8 +158,7 @@ async function main() {
         type: question.type,
         order: question.order,
         required: question.required,
-        helpText: question.helpText,
-        options: question.options
+        helpText: question.helpText
       }
     });
   }
