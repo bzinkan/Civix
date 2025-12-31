@@ -3,6 +3,11 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Delete old Demo City data
+  await prisma.jurisdiction.deleteMany({
+    where: { name: "Demo City" }
+  });
+
   const jurisdiction =
     (await prisma.jurisdiction.findFirst({
       where: { name: "Cincinnati", state: "OH" }
