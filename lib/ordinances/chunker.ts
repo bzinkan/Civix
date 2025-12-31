@@ -87,6 +87,7 @@ function extractTitle(text: string): string {
 /**
  * Split markdown text by section boundaries
  * Sections are identified by markdown headers (##, ###)
+ * Falls back to paragraph-based chunking for unformatted text
  */
 function splitIntoSections(text: string): string[] {
   const sections: string[] = [];
@@ -110,7 +111,51 @@ function splitIntoSections(text: string): string[] {
     sections.push(currentSection.join('\n'));
   }
 
-  return sections.filter(s => s.trim().length > 0);
+  const filtered = sections.filter(s => s.trim().length > 0);
+
+  // If we only got 1 section and it's huge, fall back to paragraph chunking
+  if (filtered.length === 1 && estimateTokens(filtered[0]) > 1000) {
+    console.log(`⚠️  No sections detected. Falling back to paragraph-based chunking for large text (${estimateTokens(filtered[0])} tokens)`);
+    return splitByParagraphs(text, 1500); // Split into ~1500 token chunks
+  }
+
+  return filtered;
+}
+
+/**
+ * Fallback: Split plain text by paragraphs into manageable chunks
+ */
+function splitByParagraphs(text: string, targetTokens: number): string[] {
+  // Try double newlines first (proper paragraphs)
+  let paragraphs = text.split(/\n\n+/);
+
+  // If we only got 1 paragraph, fall back to single newlines
+  if (paragraphs.length === 1) {
+    paragraphs = text.split(/\n/);
+  }
+
+  const chunks: string[] = [];
+  let currentChunk: string[] = [];
+  let currentTokens = 0;
+
+  for (const paragraph of paragraphs) {
+    const paragraphTokens = estimateTokens(paragraph);
+
+    if (currentTokens + paragraphTokens > targetTokens && currentChunk.length > 0) {
+      chunks.push(currentChunk.join('\n'));
+      currentChunk = [];
+      currentTokens = 0;
+    }
+
+    currentChunk.push(paragraph);
+    currentTokens += paragraphTokens;
+  }
+
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk.join('\n'));
+  }
+
+  return chunks.filter(c => c.trim().length > 0);
 }
 
 /**
