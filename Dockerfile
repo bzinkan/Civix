@@ -16,7 +16,7 @@ COPY . .
 ENV SKIP_ENV_VALIDATION=1
 RUN npx prisma generate
 RUN npm run build
-RUN npx tsc prisma/seed.ts --outDir prisma --skipLibCheck --esModuleInterop --resolveJsonModule
+RUN ./node_modules/.bin/tsc prisma/seed.ts --outDir prisma --skipLibCheck --esModuleInterop --resolveJsonModule
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
