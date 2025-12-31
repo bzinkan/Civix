@@ -3,10 +3,35 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Delete old Demo City data
-  await prisma.jurisdiction.deleteMany({
+  // Delete old Demo City data (in correct order due to foreign key constraints)
+  const demoCityJurisdiction = await prisma.jurisdiction.findFirst({
     where: { name: "Demo City" }
   });
+
+  if (demoCityJurisdiction) {
+    // Delete in order: rules -> subcategories -> categories -> flows -> decisions -> jurisdiction
+    await prisma.rule.deleteMany({
+      where: { jurisdictionId: demoCityJurisdiction.id }
+    });
+    await prisma.ruleSubcategory.deleteMany({
+      where: { category: { jurisdictionId: demoCityJurisdiction.id } }
+    });
+    await prisma.ruleCategory.deleteMany({
+      where: { jurisdictionId: demoCityJurisdiction.id }
+    });
+    await prisma.question.deleteMany({
+      where: { flow: { jurisdictionId: demoCityJurisdiction.id } }
+    });
+    await prisma.decisionFlow.deleteMany({
+      where: { jurisdictionId: demoCityJurisdiction.id }
+    });
+    await prisma.decision.deleteMany({
+      where: { jurisdictionId: demoCityJurisdiction.id }
+    });
+    await prisma.jurisdiction.delete({
+      where: { id: demoCityJurisdiction.id }
+    });
+  }
 
   const jurisdiction =
     (await prisma.jurisdiction.findFirst({
