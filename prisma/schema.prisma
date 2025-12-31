@@ -19,6 +19,7 @@ model Jurisdiction {
   flows     DecisionFlow[]
   rules     Rule[]
   decisions Decision[]
+  rulesets  Ruleset[]        @relation(name: "JurisdictionRulesets")
 }
 
 model ZoningDistrict {
@@ -157,15 +158,145 @@ model Answer {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String         @id @default(cuid())
+  email                 String         @unique
+  name                  String?
+  passwordHash          String?
+  stripeId              String?
+
+  subscriptionStatus    String         @default("none")
+  subscriptionId        String?
+  subscriptionEndsAt    DateTime?
+  queryCredits          Int            @default(0)
+
+  conversations         Conversation[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@index([email])
+  @@index([subscriptionStatus])
 }
 
 model Report {
   id        String   @id @default(cuid())
   title     String
   createdAt DateTime @default(now())
+}
+
+// ============================================================================
+// AI CONVERSATION MODELS (from Civix-v2)
+// ============================================================================
+
+model Ruleset {
+  id              String        @id @default(cuid())
+  jurisdiction    Jurisdiction  @relation(name: "JurisdictionRulesets", fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+  category        String
+  version         Int           @default(1)
+  isActive        Boolean       @default(true)
+  aiRules         AIRule[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([jurisdictionId, category, version])
+  @@index([category])
+  @@index([jurisdictionId])
+}
+
+model AIRule {
+  id                  String    @id @default(cuid())
+  ruleset             Ruleset   @relation(fields: [rulesetId], references: [id], onDelete: Cascade)
+  rulesetId           String
+  key                 String
+  description         String
+  outcome             String
+  conditions          Json
+  citation            String?
+  priority            Int       @default(0)
+
+  subcategory         String?
+  canonicalQuestions  String[]
+  keywords            String[]
+  requiredInputs      String[]
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  citations           Citation[]
+
+  @@unique([rulesetId, key])
+  @@index([key])
+  @@index([subcategory])
+}
+
+model Citation {
+  id              String   @id @default(cuid())
+  aiRule          AIRule   @relation(fields: [aiRuleId], references: [id], onDelete: Cascade)
+  aiRuleId        String
+
+  ordinanceNumber String
+  section         String
+  title           String?
+  text            String   @db.Text
+  url             String?
+  pageNumber      Int?
+
+  createdAt       DateTime @default(now())
+
+  @@index([aiRuleId])
+}
+
+model Conversation {
+  id              String    @id @default(cuid())
+  user            User?     @relation(fields: [userId], references: [id])
+  userId          String?
+  fingerprint     String?
+
+  jurisdiction    String?
+  category        String?
+  subcategory     String?
+  collectedInputs Json      @default("{}")
+
+  primaryProvider String    @default("gemini")
+  fallbackUsed    Boolean   @default(false)
+
+  status          String    @default("active")
+
+  messages        Message[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  completedAt     DateTime?
+
+  @@index([userId])
+  @@index([fingerprint])
+  @@index([status])
+}
+
+model Message {
+  id              String        @id @default(cuid())
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId  String
+
+  role            String
+  content         String        @db.Text
+
+  provider        String?
+  tokensUsed      Int?
+  confidence      Float?
+
+  createdAt       DateTime      @default(now())
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model AnonymousUsage {
+  id            String    @id @default(cuid())
+  fingerprint   String    @unique
+  queryCount    Int       @default(0)
+  lastQueryAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([fingerprint])
+  @@index([lastQueryAt])
 }
