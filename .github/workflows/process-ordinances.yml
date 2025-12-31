@@ -1,0 +1,57 @@
+name: Process Ordinances
+
+on:
+  workflow_dispatch:
+    inputs:
+      jurisdiction:
+        description: 'Jurisdiction slug (e.g., cincinnati-oh)'
+        required: true
+        default: 'cincinnati-oh'
+      file_path:
+        description: 'Path to ordinance file (relative to repo root)'
+        required: true
+        default: 'public/ordinances/cincinnati/chapter-856-extract.md'
+      title:
+        description: 'Document title'
+        required: true
+        default: 'Chapter 856: Short Term Rentals'
+
+jobs:
+  process-ordinances:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run ordinance processor
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          npx tsx scripts/process-ordinance.ts \
+            "${{ github.event.inputs.jurisdiction }}" \
+            "${{ github.event.inputs.file_path }}" \
+            "${{ github.event.inputs.title }}"
+
+      - name: Report completion
+        run: |
+          echo "✅ Ordinance processing completed!"
+          echo "Jurisdiction: ${{ github.event.inputs.jurisdiction }}"
+          echo "File: ${{ github.event.inputs.file_path }}"
+          echo "Title: ${{ github.event.inputs.title }}"
