@@ -14,45 +14,25 @@ export default function HomePage() {
 
       {/* How to Get Started */}
       <section className="mb-16">
-        <h2 className="text-3xl font-bold text-center mb-8">How would you like to get started?</h2>
+        <h2 className="text-3xl font-bold text-center mb-8">Get Started</h2>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* AI Chat Card */}
-          <Link href="/ask" className="group">
-            <div className="card hover:shadow-xl transition-shadow cursor-pointer h-full border-2 border-transparent hover:border-blue-500">
+        <div className="max-w-2xl mx-auto">
+          {/* AI Assistant Card - Now Full Width */}
+          <Link href="/ordinances" className="group">
+            <div className="card hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
               <div className="text-4xl mb-4">💬</div>
-              <h3 className="text-2xl font-bold mb-3">Ask AI Assistant</h3>
+              <h3 className="text-2xl font-bold mb-3">Ask About Local Ordinances</h3>
               <p className="text-gray-600 mb-4">
-                Have a conversation with our AI. Just describe your situation in plain English
-                and get personalized guidance.
+                Enter your location and ask questions about local regulations. Our AI searches actual ordinance text and provides answers with citations.
               </p>
               <ul className="text-sm text-gray-700 space-y-2 mb-4">
-                <li>✓ Natural language conversation</li>
-                <li>✓ AI extracts key information</li>
+                <li>✓ Search real ordinance text - no guessing</li>
+                <li>✓ AI helps you find the right regulation</li>
+                <li>✓ Get answers with source citations</li>
                 <li>✓ 3 free queries to try it out</li>
               </ul>
               <div className="text-blue-600 font-semibold group-hover:underline">
-                Start chatting →
-              </div>
-            </div>
-          </Link>
-
-          {/* Guided Form Card */}
-          <Link href="/dashboard" className="group">
-            <div className="card hover:shadow-xl transition-shadow cursor-pointer h-full border-2 border-transparent hover:border-blue-500">
-              <div className="text-4xl mb-4">📋</div>
-              <h3 className="text-2xl font-bold mb-3">Guided Questionnaire</h3>
-              <p className="text-gray-600 mb-4">
-                Answer step-by-step questions to get a precise compliance determination
-                based on your specific situation.
-              </p>
-              <ul className="text-sm text-gray-700 space-y-2 mb-4">
-                <li>✓ Structured question flow</li>
-                <li>✓ Clear, predictable process</li>
-                <li>✓ Detailed compliance results</li>
-              </ul>
-              <div className="text-blue-600 font-semibold group-hover:underline">
-                Start questionnaire →
+                Start asking questions →
               </div>
             </div>
           </Link>
@@ -89,18 +69,18 @@ export default function HomePage() {
         <div className="grid md:grid-cols-3 gap-6 text-center">
           <div>
             <div className="text-3xl mb-3">1️⃣</div>
-            <h3 className="font-semibold mb-2">Choose Your Path</h3>
-            <p className="text-sm text-gray-700">AI chat for exploration or guided form for precision</p>
+            <h3 className="font-semibold mb-2">Enter Your Location</h3>
+            <p className="text-sm text-gray-700">Tell us your city or enter a full address</p>
           </div>
           <div>
             <div className="text-3xl mb-3">2️⃣</div>
-            <h3 className="font-semibold mb-2">Answer Questions</h3>
-            <p className="text-sm text-gray-700">Provide details about your specific situation</p>
+            <h3 className="font-semibold mb-2">Ask Your Question</h3>
+            <p className="text-sm text-gray-700">Describe what you want to know in plain English</p>
           </div>
           <div>
             <div className="text-3xl mb-3">3️⃣</div>
-            <h3 className="font-semibold mb-2">Get Results</h3>
-            <p className="text-sm text-gray-700">Instant compliance determination with citations</p>
+            <h3 className="font-semibold mb-2">Get Sourced Answers</h3>
+            <p className="text-sm text-gray-700">AI finds the exact ordinance and cites the source</p>
           </div>
         </div>
       </section>

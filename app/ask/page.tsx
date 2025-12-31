@@ -1,9 +1,6 @@
-import QueryInterface from '@/components/query/QueryInterface';
+import { redirect } from 'next/navigation';
 
 export default function AskPage() {
-  return (
-    <main className="h-screen">
-      <QueryInterface />
-    </main>
-  );
+  // Redirect to the new ordinances page
+  redirect('/ordinances');
 }
