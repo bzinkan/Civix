@@ -16,6 +16,7 @@ COPY . .
 ENV SKIP_ENV_VALIDATION=1
 RUN npx prisma generate
 RUN npm run build
+RUN npx tsc prisma/seed.ts --outDir prisma --skipLibCheck --esModuleInterop --resolveJsonModule
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
@@ -35,8 +36,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/tsx ./node_modules/tsx
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/esbuild ./node_modules/esbuild
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin ./node_modules/.bin
 
 USER nextjs
