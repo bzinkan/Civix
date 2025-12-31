@@ -5,11 +5,11 @@ const prisma = new PrismaClient();
 async function main() {
   const jurisdiction =
     (await prisma.jurisdiction.findFirst({
-      where: { name: "Demo City", state: "OH" }
+      where: { name: "Cincinnati", state: "OH" }
     })) ??
     (await prisma.jurisdiction.create({
       data: {
-        name: "Demo City",
+        name: "Cincinnati",
         state: "OH",
         type: "city"
       }
@@ -17,76 +17,122 @@ async function main() {
 
   const category =
     (await prisma.ruleCategory.findFirst({
-      where: { slug: "animals", jurisdictionId: jurisdiction.id }
+      where: { slug: "housing-property", jurisdictionId: jurisdiction.id }
     })) ??
     (await prisma.ruleCategory.create({
       data: {
-        name: "Animals",
-        slug: "animals",
+        name: "Housing & Property",
+        slug: "housing-property",
         jurisdictionId: jurisdiction.id
       }
     }));
 
   const subcategory =
     (await prisma.ruleSubcategory.findFirst({
-      where: { slug: "restricted-breeds", categoryId: category.id }
+      where: { slug: "short-term-rentals", categoryId: category.id }
     })) ??
     (await prisma.ruleSubcategory.create({
       data: {
-        name: "Restricted Breeds",
-        slug: "restricted-breeds",
+        name: "Short-Term Rentals",
+        slug: "short-term-rentals",
         categoryId: category.id
       }
     }));
 
   const flow =
     (await prisma.decisionFlow.findFirst({
-      where: { name: "Animals – Restricted Breeds", jurisdictionId: jurisdiction.id }
+      where: { name: "Short-Term Rental Registration", jurisdictionId: jurisdiction.id }
     })) ??
     (await prisma.decisionFlow.create({
       data: {
-        name: "Animals – Restricted Breeds",
-        label: "Restricted Breed Check",
+        name: "Short-Term Rental Registration",
+        label: "STR Eligibility Check",
         description:
-          "Determine whether restricted dog breeds are permitted in Demo City.",
+          "Determine whether your property qualifies for short-term rental registration under Cincinnati Chapter 856.",
         jurisdictionId: jurisdiction.id
       }
     }));
 
   const questions = [
     {
-      key: "animal_type",
-      prompt: "What type of animal are you registering?",
-      type: "select",
+      key: "property_address",
+      prompt: "What is the property address you want to operate as a short-term rental?",
+      type: "text",
       order: 1,
       required: true,
-      options: [
-        { label: "Dog", value: "dog" },
-        { label: "Cat", value: "cat" },
-        { label: "Other", value: "other" }
-      ]
+      helpText: "Full street address in Cincinnati, OH"
     },
     {
-      key: "is_restricted_breed",
-      prompt: "Is the animal a restricted breed?",
+      key: "legal_authority",
+      prompt: "Do you have legal authority to operate the property as a short-term rental?",
       type: "boolean",
       order: 2,
       required: true,
-      helpText: "Restricted breeds require additional approval."
+      helpText: "You must be the property owner or have written authorization from the owner."
     },
     {
-      key: "grandfathered",
-      prompt: "Was the animal owned before the restriction took effect?",
+      key: "affordable_housing",
+      prompt: "Is the property deed-restricted or rent-restricted affordable housing?",
       type: "boolean",
       order: 3,
-      required: true
+      required: true,
+      helpText: "Properties with affordability restrictions cannot be used as short-term rentals per Section 856-17(a)."
     },
     {
-      key: "has_insurance",
-      prompt: "Do you have proof of required liability insurance?",
-      type: "boolean",
+      key: "total_dwelling_units",
+      prompt: "How many total dwelling units are in the building?",
+      type: "number",
       order: 4,
-      required: true
+      required: true,
+      helpText: "Total number of residential units in the entire building"
+    },
+    {
+      key: "current_str_units",
+      prompt: "How many short-term rental units are currently operating in the building?",
+      type: "number",
+      order: 5,
+      required: true,
+      helpText: "Count all currently registered STRs in the building, excluding your proposed unit"
+    },
+    {
+      key: "pre_2019_operation",
+      prompt: "Was this unit operating as a short-term rental before January 1, 2019?",
+      type: "boolean",
+      order: 6,
+      required: true,
+      helpText: "Grandfathered units may have different limits per Section 856-17(b)(3)."
+    },
+    {
+      key: "pre_2019_str_count",
+      prompt: "How many STR units were operating in the building before January 1, 2019?",
+      type: "number",
+      order: 7,
+      required: false,
+      helpText: "Only answer if you indicated pre-2019 operation"
+    },
+    {
+      key: "liability_insurance",
+      prompt: "Do you have commercial general liability insurance of at least $500,000?",
+      type: "boolean",
+      order: 8,
+      required: true,
+      helpText: "Required per Section 856-9(a) - must be maintained throughout registration"
+    },
+    {
+      key: "current_taxes_utilities",
+      prompt: "Are you current on all property taxes, utility bills, and special assessments?",
+      type: "boolean",
+      order: 9,
+      required: true,
+      helpText: "Required certification per Section 856-7(d)(5)"
+    },
+    {
+      key: "code_compliance",
+      prompt: "Is the property in compliance with all applicable building, housing, fire, and zoning codes?",
+      type: "boolean",
+      order: 10,
+      required: true,
+      helpText: "Required certification per Section 856-7(d)(6)"
     }
   ];
 
@@ -126,138 +172,299 @@ async function main() {
   await prisma.rule.createMany({
     data: [
       {
-        name: "Non-dog animals allowed",
-        description: "Restrictions only apply to dogs.",
-        reasoning: "The restricted breed ordinance applies only to dogs.",
-        outcome: "approved",
+        name: "No legal authority - Denied",
+        description: "STR operator must have legal authority to operate the property.",
+        reasoning: "Section 856-7 requires the applicant to be the property owner or have written authorization from the owner.",
+        outcome: "denied",
         priority: 100,
         condition: {
           type: "comparison",
-          fact: "answers.animal_type",
-          operator: "ne",
-          value: "dog"
+          fact: "answers.legal_authority",
+          operator: "eq",
+          value: false
         },
-        recommendations: ["No restricted breed review is required."],
-        ordinanceCode: "RBC-100",
-        sourceUrl: "https://example.com/ordinance/restricted-breeds#scope",
+        recommendations: [
+          "Obtain written authorization from the property owner before applying.",
+          "Ensure you have legal authority to operate the property as a short-term rental."
+        ],
+        ordinanceCode: "856-7",
+        sourceUrl: null,
         jurisdictionId: jurisdiction.id,
         flowId: flow.id,
         categoryId: category.id,
         subcategoryId: subcategory.id
       },
       {
-        name: "Non-restricted dogs allowed",
-        description: "Non-restricted dog breeds are permitted.",
-        reasoning: "Only restricted breeds are subject to the ban.",
-        outcome: "approved",
+        name: "Affordable housing - Denied",
+        description: "Affordable housing units cannot be operated as short-term rentals.",
+        reasoning: "Section 856-17(a) prohibits short-term rentals in deed-restricted or rent-restricted affordable housing.",
+        outcome: "denied",
+        priority: 95,
+        condition: {
+          type: "comparison",
+          fact: "answers.affordable_housing",
+          operator: "eq",
+          value: true
+        },
+        recommendations: [
+          "This property is not eligible for short-term rental registration.",
+          "Consider long-term rental options to comply with affordability restrictions."
+        ],
+        ordinanceCode: "856-17(a)",
+        sourceUrl: null,
+        jurisdictionId: jurisdiction.id,
+        flowId: flow.id,
+        categoryId: category.id,
+        subcategoryId: subcategory.id
+      },
+      {
+        name: "No liability insurance - Denied",
+        description: "Commercial general liability insurance of at least $500,000 is required.",
+        reasoning: "Section 856-9(a) requires proof of commercial general liability insurance.",
+        outcome: "denied",
         priority: 90,
         condition: {
-          type: "and",
-          conditions: [
-            {
-              type: "comparison",
-              fact: "answers.animal_type",
-              operator: "eq",
-              value: "dog"
-            },
-            {
-              type: "comparison",
-              fact: "answers.is_restricted_breed",
-              operator: "eq",
-              value: false
-            }
-          ]
+          type: "comparison",
+          fact: "answers.liability_insurance",
+          operator: "eq",
+          value: false
         },
-        recommendations: ["Maintain standard dog registration records."],
-        ordinanceCode: "RBC-210",
-        sourceUrl: "https://example.com/ordinance/restricted-breeds#allowed",
+        recommendations: [
+          "Obtain commercial general liability insurance of at least $500,000.",
+          "Ensure the insurance policy covers short-term rental operations."
+        ],
+        ordinanceCode: "856-9(a)",
+        sourceUrl: null,
         jurisdictionId: jurisdiction.id,
         flowId: flow.id,
         categoryId: category.id,
         subcategoryId: subcategory.id
       },
       {
-        name: "Restricted dogs with grandfathering and insurance",
-        description:
-          "Grandfathered restricted breeds may stay with insurance proof.",
-        reasoning:
-          "Restricted breeds are conditionally allowed when grandfathered and insured.",
-        outcome: "conditional",
+        name: "Not current on taxes/utilities - Denied",
+        description: "All property taxes, utilities, and special assessments must be current.",
+        reasoning: "Section 856-7(d)(5) requires certification that all taxes and bills are current.",
+        outcome: "denied",
+        priority: 85,
+        condition: {
+          type: "comparison",
+          fact: "answers.current_taxes_utilities",
+          operator: "eq",
+          value: false
+        },
+        recommendations: [
+          "Pay all outstanding property taxes, utility bills, and special assessments.",
+          "Obtain documentation showing all accounts are current."
+        ],
+        ordinanceCode: "856-7(d)(5)",
+        sourceUrl: null,
+        jurisdictionId: jurisdiction.id,
+        flowId: flow.id,
+        categoryId: category.id,
+        subcategoryId: subcategory.id
+      },
+      {
+        name: "Not code compliant - Denied",
+        description: "Property must comply with all building, housing, fire, and zoning codes.",
+        reasoning: "Section 856-7(d)(6) requires certification of compliance with all applicable codes.",
+        outcome: "denied",
         priority: 80,
+        condition: {
+          type: "comparison",
+          fact: "answers.code_compliance",
+          operator: "eq",
+          value: false
+        },
+        recommendations: [
+          "Address all code violations before applying for STR registration.",
+          "Contact Building & Inspections to schedule compliance inspections."
+        ],
+        ordinanceCode: "856-7(d)(6)",
+        sourceUrl: null,
+        jurisdictionId: jurisdiction.id,
+        flowId: flow.id,
+        categoryId: category.id,
+        subcategoryId: subcategory.id
+      },
+      {
+        name: "Small building (≤4 units) - Approved",
+        description: "Buildings with 4 or fewer units have no STR limit.",
+        reasoning: "Section 856-17(b)(1) allows unlimited STRs in buildings with 4 or fewer dwelling units.",
+        outcome: "approved",
+        priority: 75,
         condition: {
           type: "and",
           conditions: [
             {
               type: "comparison",
-              fact: "answers.animal_type",
-              operator: "eq",
-              value: "dog"
-            },
-            {
-              type: "comparison",
-              fact: "answers.is_restricted_breed",
+              fact: "answers.legal_authority",
               operator: "eq",
               value: true
             },
             {
               type: "comparison",
-              fact: "answers.grandfathered",
+              fact: "answers.affordable_housing",
+              operator: "eq",
+              value: false
+            },
+            {
+              type: "comparison",
+              fact: "answers.liability_insurance",
               operator: "eq",
               value: true
             },
             {
               type: "comparison",
-              fact: "answers.has_insurance",
+              fact: "answers.current_taxes_utilities",
               operator: "eq",
               value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.code_compliance",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.total_dwelling_units",
+              operator: "lte",
+              value: 4
             }
           ]
         },
         recommendations: [
-          "Provide proof of insurance and maintain grandfathering documentation."
+          "Proceed with STR registration application.",
+          "Pay the required registration fee.",
+          "Display registration certificate and contact information as required by Section 856-9."
         ],
-        ordinanceCode: "RBC-305",
-        sourceUrl: "https://example.com/ordinance/restricted-breeds#exceptions",
+        ordinanceCode: "856-17(b)(1)",
+        sourceUrl: null,
         jurisdictionId: jurisdiction.id,
         flowId: flow.id,
         categoryId: category.id,
         subcategoryId: subcategory.id
       },
       {
-        name: "Restricted dogs without grandfathering",
-        description: "Restricted breeds without grandfathering are denied.",
-        reasoning:
-          "Restricted breeds must be grandfathered to be kept within city limits.",
-        outcome: "denied",
+        name: "Large building - Within limit",
+        description: "Building with 5+ units is within STR limit per formula.",
+        reasoning: "Section 856-17(b)(2) limits STRs to 4 units plus 1 per every 4 additional units beyond the first 4.",
+        outcome: "approved",
         priority: 70,
         condition: {
           type: "and",
           conditions: [
             {
               type: "comparison",
-              fact: "answers.animal_type",
-              operator: "eq",
-              value: "dog"
-            },
-            {
-              type: "comparison",
-              fact: "answers.is_restricted_breed",
+              fact: "answers.legal_authority",
               operator: "eq",
               value: true
             },
             {
               type: "comparison",
-              fact: "answers.grandfathered",
+              fact: "answers.affordable_housing",
+              operator: "eq",
+              value: false
+            },
+            {
+              type: "comparison",
+              fact: "answers.liability_insurance",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.current_taxes_utilities",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.code_compliance",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.total_dwelling_units",
+              operator: "gte",
+              value: 5
+            },
+            {
+              type: "comparison",
+              fact: "answers.pre_2019_operation",
               operator: "eq",
               value: false
             }
           ]
         },
         recommendations: [
-          "Contact animal control for guidance on restricted breeds."
+          "Proceed with STR registration application.",
+          "Note: Building limit is 4 STRs + 1 per every 4 additional units beyond the first 4.",
+          "Display registration certificate and contact information as required by Section 856-9."
         ],
-        ordinanceCode: "RBC-402",
-        sourceUrl: "https://example.com/ordinance/restricted-breeds#ban",
+        ordinanceCode: "856-17(b)(2)",
+        sourceUrl: null,
+        jurisdictionId: jurisdiction.id,
+        flowId: flow.id,
+        categoryId: category.id,
+        subcategoryId: subcategory.id
+      },
+      {
+        name: "Grandfathered building - Approved",
+        description: "Pre-2019 STR operations allow higher limits if grandfathered count exceeds formula.",
+        reasoning: "Section 856-17(b)(3) allows grandfathered buildings to maintain pre-existing STR counts.",
+        outcome: "conditional",
+        priority: 65,
+        condition: {
+          type: "and",
+          conditions: [
+            {
+              type: "comparison",
+              fact: "answers.legal_authority",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.affordable_housing",
+              operator: "eq",
+              value: false
+            },
+            {
+              type: "comparison",
+              fact: "answers.liability_insurance",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.current_taxes_utilities",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.code_compliance",
+              operator: "eq",
+              value: true
+            },
+            {
+              type: "comparison",
+              fact: "answers.pre_2019_operation",
+              operator: "eq",
+              value: true
+            }
+          ]
+        },
+        recommendations: [
+          "Your building may qualify for grandfathered STR limits.",
+          "Provide documentation of pre-January 1, 2019 STR operation.",
+          "The limit is the greater of: (a) formula-based limit or (b) pre-2019 count.",
+          "Proceed with STR registration application."
+        ],
+        ordinanceCode: "856-17(b)(3)",
+        sourceUrl: null,
         jurisdictionId: jurisdiction.id,
         flowId: flow.id,
         categoryId: category.id,
