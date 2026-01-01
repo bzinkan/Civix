@@ -38,8 +38,34 @@ model ZoningDistrict {
   id             String        @id @default(cuid())
   code           String
   name           String?
+  category       String?       // residential, commercial, industrial, downtown, special
+  description    String?       @db.Text
+
+  // Lot requirements
+  minLotSqft     Int?
+  maxLotCoverage Float?        // 0.0 to 1.0
+
+  // Height limits
+  maxHeightFt    Int?
+  maxStories     Float?        // Can be 2.5 for half-stories
+
+  // Setbacks (in feet)
+  frontSetbackFt Int?
+  sideSetbackFt  Int?
+  rearSetbackFt  Int?
+
+  // Density
+  maxFar         Float?        // Floor Area Ratio
+
+  // Allowed uses (JSON array)
+  allowedUses    Json?         // ["single_family_home", "home_occupation", ...]
+
   jurisdictionId String
   jurisdiction   Jurisdiction  @relation(fields: [jurisdictionId], references: [id])
+
+  @@unique([jurisdictionId, code])
+  @@index([jurisdictionId])
+  @@index([category])
 }
 
 model RuleCategory {
@@ -527,19 +553,24 @@ model PermitRequirement {
   // What activity this applies to
   activityType    String       // e.g., "fence", "shed", "deck", "addition", "demolition"
   activityDescription String?   // More detailed description
+  category        String?      // "building", "trade", "commercial", "license", "public"
 
-  // Zone-specific (null = applies to all zones)
-  zoneCode        String?      // e.g., "R-1", or null for all zones
+  // Zone-specific
+  zonesRequired   Json?        // ["*"] for all, or specific zones
+  zonesProhibited Json?        // Zones where not allowed
 
   // Permit details
-  requiresPermit  Boolean
+  requiresPermit  Boolean      @default(true)
   permitType      String?      // e.g., "Building Permit", "Zoning Certificate"
+  requiresPlans   Boolean      @default(false)
+  requiresInspection Boolean   @default(false)
 
   // Requirements/restrictions (JSON for flexibility)
   requirements    Json?        // { "maxHeight": 6, "setback": 10, "lotCoverage": 0.3 }
 
   // Process details
-  estimatedFee    Float?       // In dollars
+  feeBase         Float?       // Base fee in dollars
+  feePerSqft      Float?       // Additional fee per square foot
   processingDays  Int?         // Estimated processing time
   documents       String[]     // Required documents
 
@@ -552,8 +583,88 @@ model PermitRequirement {
 
   @@index([jurisdictionId])
   @@index([jurisdictionId, activityType])
-  @@index([jurisdictionId, zoneCode])
   @@index([activityType])
+  @@index([category])
+}
+
+// ============================================================================
+// PERMIT EXEMPTIONS (work that doesn't require permit)
+// ============================================================================
+
+model PermitExemption {
+  id              String       @id @default(cuid())
+  jurisdiction    Jurisdiction @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+
+  activity        String       // e.g., "fence_under_6ft", "shed_under_120sqft"
+  description     String       // Human-readable description
+  maxValue        Float?       // Maximum project value
+  maxSqft         Int?         // Maximum square footage
+  conditions      String?      // Additional conditions
+
+  ordinanceRef    String?      // Reference to ordinance section
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([activity])
+}
+
+// ============================================================================
+// COMMON QUESTIONS (FAQ-style answers)
+// ============================================================================
+
+model CommonQuestion {
+  id              String       @id @default(cuid())
+  jurisdiction    Jurisdiction @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+
+  question        String       @db.Text
+  category        String       // deck, fence, shed, home_occupation, etc.
+  answer          String       @db.Text
+  relatedPermits  Json?        // ["deck", "fence"] - related permit types
+  ordinanceRef    String?
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([category])
+}
+
+// ============================================================================
+// SUBSCRIPTION PLAN LIMITS
+// ============================================================================
+
+model PlanLimit {
+  id                String    @id @default(cuid())
+  planName          String    @unique  // free, pro, business, enterprise
+
+  // Usage limits (-1 = unlimited)
+  monthlyLookups    Int       @default(5)
+  savedProperties   Int       @default(1)
+  apiCallsMonthly   Int       @default(0)
+  teamSeats         Int       @default(1)
+
+  // Feature flags
+  docUpload         Boolean   @default(false)
+  pdfReports        Boolean   @default(false)
+  bulkLookup        Boolean   @default(false)
+  apiAccess         Boolean   @default(false)
+  whiteLabel        Boolean   @default(false)
+  prioritySupport   Boolean   @default(false)
+
+  // Pricing
+  priceMonthly      Decimal   @default(0) @db.Decimal(10, 2)
+  priceYearly       Decimal   @default(0) @db.Decimal(10, 2)
+
+  // Stripe price IDs
+  stripePriceMonthly String?
+  stripePriceYearly  String?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 // ============================================================================

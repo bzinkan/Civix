@@ -1,106 +1,167 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function HomePage() {
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    // Check if user has already onboarded
+    const userType = localStorage.getItem('civix_userType');
+    if (userType) {
+      router.push('/dashboard');
+    } else {
+      setChecking(false);
+    }
+  }, [router]);
+
+  // Show loading while checking
+  if (checking) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
       {/* Hero Section */}
       <section className="text-center mb-16">
         <h1 className="text-5xl font-bold mb-4">Civix Compliance Intelligence</h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          Navigate regulatory compliance with confidence. Get instant answers to civic rules
-          and step-by-step guidance for permits, zoning, and local regulations.
+        <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          Navigate regulatory compliance with confidence. Get instant answers to permits,
+          zoning, and local regulations for any property.
         </p>
-      </section>
-
-      {/* How to Get Started */}
-      <section className="mb-16">
-        <h2 className="text-3xl font-bold text-center mb-8">Get Started</h2>
-
-        <div className="max-w-2xl mx-auto">
-          {/* AI Assistant Card - Now Full Width */}
-          <Link href="/ordinances" className="group">
-            <div className="card hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500">
-              <div className="text-4xl mb-4">💬</div>
-              <h3 className="text-2xl font-bold mb-3">Ask About Local Ordinances</h3>
-              <p className="text-gray-600 mb-4">
-                Enter your location and ask questions about local regulations. Our AI searches actual ordinance text and provides answers with citations.
-              </p>
-              <ul className="text-sm text-gray-700 space-y-2 mb-4">
-                <li>✓ Search real ordinance text - no guessing</li>
-                <li>✓ AI helps you find the right regulation</li>
-                <li>✓ Get answers with source citations</li>
-                <li>✓ 3 free queries to try it out</li>
-              </ul>
-              <div className="text-blue-600 font-semibold group-hover:underline">
-                Start asking questions →
-              </div>
-            </div>
+        <div className="flex gap-4 justify-center">
+          <Link href="/onboarding" className="button text-lg px-8 py-3">
+            Get Started
+          </Link>
+          <Link href="/lookup" className="button-secondary text-lg px-8 py-3">
+            Try a Lookup
           </Link>
         </div>
       </section>
 
-      {/* Quick Topics Section */}
+      {/* User Types Section */}
       <section className="mb-16">
-        <h2 className="text-2xl font-bold text-center mb-6">Popular Compliance Topics</h2>
-        <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-          <Link href="/dashboard?flow=str" className="card hover:shadow-lg transition-shadow cursor-pointer text-center">
-            <div className="text-3xl mb-2">🏠</div>
-            <h3 className="font-semibold">Short-Term Rentals</h3>
-            <p className="text-sm text-gray-600 mt-1">Cincinnati Chapter 856</p>
-          </Link>
-
-          <div className="card bg-gray-50 text-center opacity-60">
-            <div className="text-3xl mb-2">🏗️</div>
-            <h3 className="font-semibold">Zoning & Property</h3>
-            <p className="text-sm text-gray-600 mt-1">Coming soon</p>
+        <h2 className="text-3xl font-bold text-center mb-8">Built for Everyone</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="card text-center">
+            <div className="text-4xl mb-4">🏠</div>
+            <h3 className="text-xl font-bold mb-2">Homeowners</h3>
+            <p className="text-gray-600">
+              Check permits, find your trash day, understand what you can build
+            </p>
           </div>
-
-          <div className="card bg-gray-50 text-center opacity-60">
-            <div className="text-3xl mb-2">🏢</div>
-            <h3 className="font-semibold">Business Permits</h3>
-            <p className="text-sm text-gray-600 mt-1">Coming soon</p>
+          <div className="card text-center">
+            <div className="text-4xl mb-4">🔨</div>
+            <h3 className="text-xl font-bold mb-2">Contractors</h3>
+            <p className="text-gray-600">
+              Quick compliance checks, fee estimates, bulk property lookups
+            </p>
+          </div>
+          <div className="card text-center">
+            <div className="text-4xl mb-4">🏢</div>
+            <h3 className="text-xl font-bold mb-2">Real Estate Pros</h3>
+            <p className="text-gray-600">
+              Zoning reports, development potential, client-ready documents
+            </p>
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="card bg-blue-50 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-center">How Civix Works</h2>
+      <section className="card bg-blue-50 mb-16">
+        <h2 className="text-2xl font-bold mb-6 text-center">How It Works</h2>
         <div className="grid md:grid-cols-3 gap-6 text-center">
           <div>
             <div className="text-3xl mb-3">1️⃣</div>
-            <h3 className="font-semibold mb-2">Enter Your Location</h3>
-            <p className="text-sm text-gray-700">Tell us your city or enter a full address</p>
+            <h3 className="font-semibold mb-2">Enter an Address</h3>
+            <p className="text-sm text-gray-700">Any property in supported jurisdictions</p>
           </div>
           <div>
             <div className="text-3xl mb-3">2️⃣</div>
-            <h3 className="font-semibold mb-2">Ask Your Question</h3>
-            <p className="text-sm text-gray-700">Describe what you want to know in plain English</p>
+            <h3 className="font-semibold mb-2">Get Instant Info</h3>
+            <p className="text-sm text-gray-700">Zoning, overlays, permits, and more</p>
           </div>
           <div>
             <div className="text-3xl mb-3">3️⃣</div>
-            <h3 className="font-semibold mb-2">Get Sourced Answers</h3>
-            <p className="text-sm text-gray-700">AI finds the exact ordinance and cites the source</p>
+            <h3 className="font-semibold mb-2">Ask Questions</h3>
+            <p className="text-sm text-gray-700">AI-powered answers with citations</p>
           </div>
         </div>
       </section>
 
-      {/* Deploy Marker */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 12,
-          right: 12,
-          padding: "8px 10px",
-          background: "#000",
-          color: "#fff",
-          borderRadius: 8,
-          fontSize: 12,
-          zIndex: 9999,
-        }}
-      >
-        DEPLOY MARKER: v2-ai
-      </div>
+      {/* Features Grid */}
+      <section className="mb-16">
+        <h2 className="text-3xl font-bold text-center mb-8">Powerful Features</h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="card">
+            <div className="flex items-start gap-4">
+              <div className="text-3xl">🔍</div>
+              <div>
+                <h3 className="font-bold mb-1">Property Lookup</h3>
+                <p className="text-gray-600">
+                  Instantly get zoning, overlays, historic status, and development standards
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="flex items-start gap-4">
+              <div className="text-3xl">📄</div>
+              <div>
+                <h3 className="font-bold mb-1">Document Upload</h3>
+                <p className="text-gray-600">
+                  Upload site plans and get AI-powered compliance checks
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="flex items-start gap-4">
+              <div className="text-3xl">💬</div>
+              <div>
+                <h3 className="font-bold mb-1">AI Chat</h3>
+                <p className="text-gray-600">
+                  Ask questions about permits, regulations, and requirements
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="flex items-start gap-4">
+              <div className="text-3xl">📊</div>
+              <div>
+                <h3 className="font-bold mb-1">Reports & Exports</h3>
+                <p className="text-gray-600">
+                  Generate professional reports for clients and stakeholders
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="text-center">
+        <div className="card bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12">
+          <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
+          <p className="text-lg mb-6 opacity-90">
+            Join thousands of professionals using Civix for compliance
+          </p>
+          <Link
+            href="/onboarding"
+            className="inline-block bg-white text-blue-600 font-bold px-8 py-3 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            Start Free
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
