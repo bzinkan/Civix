@@ -12,8 +12,8 @@ async function testS3Connection() {
   const s3Client = new S3Client({
     region: process.env.AWS_REGION || 'us-east-2',
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+      accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY || '',
     },
   });
 
@@ -101,8 +101,8 @@ This file confirms that:
     if (error.name === 'CredentialsProviderError') {
       console.error('\n⚠ AWS credentials not found or invalid.');
       console.error('Make sure .env.local has:');
-      console.error('  AWS_ACCESS_KEY_ID=...');
-      console.error('  AWS_SECRET_ACCESS_KEY=...');
+      console.error('  AWS_S3_ACCESS_KEY_ID=...');
+      console.error('  AWS_S3_SECRET_ACCESS_KEY=...');
       console.error('  AWS_REGION=us-east-2');
     } else if (error.name === 'NoSuchBucket') {
       console.error(`\n⚠ Bucket "${bucketName}" does not exist.`);

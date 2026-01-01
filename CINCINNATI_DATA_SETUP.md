@@ -186,10 +186,10 @@ npx tsx scripts/s3-upload.ts upload ./permit-app.pdf cincinnati-oh/permits/build
 
 ### Step 4: Configure Access ✅
 
-Credentials already added to `.env.local`:
+Add these credentials to `.env.local`:
 ```
-AWS_ACCESS_KEY_ID=REDACTED_ACCESS_KEY
-AWS_SECRET_ACCESS_KEY=REDACTED_SECRET_KEY
+AWS_S3_ACCESS_KEY_ID=your_access_key_here
+AWS_S3_SECRET_ACCESS_KEY=your_secret_key_here
 AWS_REGION=us-east-2
 AWS_S3_BUCKET=civix-documents
 ```
