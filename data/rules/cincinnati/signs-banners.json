@@ -1,0 +1,115 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "signs_banners",
+  "title": "Signs and Banners Regulations",
+  "ordinance_reference": "Chapter 1431",
+  "summary": "Cincinnati regulates signage to maintain aesthetics and safety while allowing reasonable business identification.",
+
+  "permit_requirements": {
+    "permit_required": true,
+    "exemptions": [
+      "Signs under 4 square feet",
+      "Real estate signs (one per street frontage)",
+      "Political signs (during election season)",
+      "Garage sale signs (48 hours max)",
+      "Construction signs during active permit"
+    ],
+    "fee": "Varies by sign type and size",
+    "apply_at": "https://www.cincinnati-oh.gov/buildings/"
+  },
+
+  "residential_zones": {
+    "allowed_signs": [
+      "Address/nameplate (2 sq ft max)",
+      "Home occupation sign (1 sq ft max)",
+      "For sale/rent sign (6 sq ft max)"
+    ],
+    "prohibited": [
+      "Illuminated signs",
+      "Animated/moving signs",
+      "Off-premises advertising"
+    ]
+  },
+
+  "commercial_zones": {
+    "wall_signs": {
+      "max_area": "15% of building facade or 200 sq ft, whichever is less",
+      "height": "Cannot extend above roofline",
+      "illumination": "Allowed, no flashing"
+    },
+    "freestanding_signs": {
+      "max_height": "25 feet",
+      "max_area": "100 sq ft per face",
+      "setback": "10 feet from property line"
+    },
+    "projecting_signs": {
+      "max_projection": "4 feet from building",
+      "min_clearance": "8 feet above sidewalk",
+      "max_area": "20 sq ft"
+    }
+  },
+
+  "temporary_signs": {
+    "banners": {
+      "permit_required": true,
+      "max_duration": "30 days",
+      "extensions": "Up to 3 per year",
+      "max_area": "32 sq ft"
+    },
+    "a_frame_signs": {
+      "allowed": true,
+      "location": "On private property or with sidewalk cafe permit",
+      "max_size": "24 inches x 36 inches",
+      "hours": "Display during business hours only"
+    },
+    "special_events": {
+      "permit": "Special event sign permit required",
+      "duration": "14 days before, 3 days after event"
+    }
+  },
+
+  "prohibited_signs": [
+    "Billboards in residential areas",
+    "Signs on public property without permit",
+    "Signs obstructing traffic visibility",
+    "Signs attached to trees or utility poles",
+    "Abandoned signs (business closed 60+ days)",
+    "Signs with moving/rotating elements",
+    "Inflatable signs (except with temporary permit)"
+  ],
+
+  "historic_districts": {
+    "additional_review": "Historic Conservation Board approval required",
+    "restrictions": [
+      "Must be compatible with district character",
+      "Illumination may be limited",
+      "Materials must match historic standards"
+    ]
+  },
+
+  "digital_signs": {
+    "allowed_zones": ["Commercial", "Manufacturing"],
+    "restrictions": {
+      "message_change": "Minimum 8 seconds between changes",
+      "brightness": "Must have automatic dimming",
+      "hours": "May be restricted near residential",
+      "animation": "No animation or video"
+    }
+  },
+
+  "enforcement": {
+    "violation_notice": "10 days to comply",
+    "removal": "City may remove after notice period",
+    "penalties": {
+      "first_offense": 100,
+      "repeat_violations": 250,
+      "illegal_billboard": 500
+    }
+  },
+
+  "contact": {
+    "department": "Department of Buildings and Inspections",
+    "phone": "(513) 352-3276",
+    "online": "https://www.cincinnati-oh.gov/buildings/"
+  }
+}

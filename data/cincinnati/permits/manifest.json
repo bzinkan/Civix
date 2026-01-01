@@ -1,1 +1,58 @@
-[]
+[
+  {
+    "filename": "food-facility-review-application-checklist.pdf",
+    "title": "Food Facility Review Application & Checklist",
+    "original_url": "https://www.cincinnati-oh.gov/sites/buildings/assets/File/FFR-App---Edited-3.25---Fillable.pdf",
+    "original_filename": "FFR-App---Edited-3.25---Fillable.pdf",
+    "s3_url": "s3://civix-documents/cincinnati-oh/permits/food-facility-review-application-checklist.pdf",
+    "https_url": "https://civix-documents.s3.us-east-2.amazonaws.com/cincinnati-oh/permits/food-facility-review-application-checklist.pdf",
+    "local_path": "data\\cincinnati\\permits\\food-facility-review-application-checklist.pdf",
+    "file_size_bytes": 951782,
+    "file_size_mb": 0.91,
+    "downloaded_at": "2026-01-01T09:31:02.218056",
+    "jurisdiction": "cincinnati-oh",
+    "document_type": "permit-form"
+  },
+  {
+    "filename": "certificate-of-appropriateness-application-form.pdf",
+    "title": "Certificate of Appropriateness Application Form",
+    "original_url": "https://www.cincinnati-oh.gov/sites/buildings/assets/File/HISTORIC%20CONSERVATION%20APPLICATION%20Fillable%208_17.pdf",
+    "original_filename": "HISTORIC%20CONSERVATION%20APPLICATION%20Fillable%208_17.pdf",
+    "s3_url": "s3://civix-documents/cincinnati-oh/permits/certificate-of-appropriateness-application-form.pdf",
+    "https_url": "https://civix-documents.s3.us-east-2.amazonaws.com/cincinnati-oh/permits/certificate-of-appropriateness-application-form.pdf",
+    "local_path": "data\\cincinnati\\permits\\certificate-of-appropriateness-application-form.pdf",
+    "file_size_bytes": 152926,
+    "file_size_mb": 0.15,
+    "downloaded_at": "2026-01-01T09:31:03.124345",
+    "jurisdiction": "cincinnati-oh",
+    "document_type": "permit-form"
+  },
+  {
+    "filename": "zoning-certificate-of-compliance-request.pdf",
+    "title": "Zoning Certificate of Compliance Request",
+    "original_url": "https://www.cincinnati-oh.gov/sites/buildings/assets/Zoning_COC-App_7-1-25.pdf",
+    "original_filename": "Zoning_COC-App_7-1-25.pdf",
+    "s3_url": "s3://civix-documents/cincinnati-oh/permits/zoning-certificate-of-compliance-request.pdf",
+    "https_url": "https://civix-documents.s3.us-east-2.amazonaws.com/cincinnati-oh/permits/zoning-certificate-of-compliance-request.pdf",
+    "local_path": "data\\cincinnati\\permits\\zoning-certificate-of-compliance-request.pdf",
+    "file_size_bytes": 78583,
+    "file_size_mb": 0.07,
+    "downloaded_at": "2026-01-01T09:31:05.294756",
+    "jurisdiction": "cincinnati-oh",
+    "document_type": "permit-form"
+  },
+  {
+    "filename": "zoning-verification-rebuild-request.pdf",
+    "title": "Zoning Verification & Rebuild Request",
+    "original_url": "https://www.cincinnati-oh.gov/sites/buildings/assets/Zoning-Verification-Request-7-1-25.pdf",
+    "original_filename": "Zoning-Verification-Request-7-1-25.pdf",
+    "s3_url": "s3://civix-documents/cincinnati-oh/permits/zoning-verification-rebuild-request.pdf",
+    "https_url": "https://civix-documents.s3.us-east-2.amazonaws.com/cincinnati-oh/permits/zoning-verification-rebuild-request.pdf",
+    "local_path": "data\\cincinnati\\permits\\zoning-verification-rebuild-request.pdf",
+    "file_size_bytes": 63329,
+    "file_size_mb": 0.06,
+    "downloaded_at": "2026-01-01T09:31:05.859996",
+    "jurisdiction": "cincinnati-oh",
+    "document_type": "permit-form"
+  }
+]

@@ -1,0 +1,163 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "property_maintenance",
+  "title": "Property Maintenance Code",
+  "ordinance_reference": "Chapter 1101-1117",
+  "summary": "Cincinnati's Property Maintenance Code establishes minimum standards for building safety, sanitation, and neighborhood quality.",
+
+  "exterior_maintenance": {
+    "structures": {
+      "requirements": [
+        "Maintain structural integrity",
+        "Keep exterior surfaces weather-resistant",
+        "Paint/repair peeling surfaces",
+        "Replace broken windows within 30 days",
+        "Maintain gutters and downspouts"
+      ],
+      "violations": [
+        "Crumbling masonry",
+        "Rotting wood",
+        "Missing siding",
+        "Holes in walls or roof"
+      ]
+    },
+    "porches_decks": {
+      "requirements": [
+        "Structurally sound",
+        "Handrails required over 30 inches",
+        "Steps in good repair",
+        "No rotting boards"
+      ]
+    },
+    "accessory_structures": {
+      "garages": "Must be maintained same as primary structure",
+      "sheds": "Keep in good repair or demolish",
+      "fences": "Maintain upright, no missing sections"
+    }
+  },
+
+  "yard_maintenance": {
+    "grass_weeds": {
+      "max_height": "8 inches",
+      "enforcement": "Notice + 7 days to comply",
+      "city_mowing": "City may mow and charge property owner"
+    },
+    "debris": {
+      "prohibited": [
+        "Accumulated trash or litter",
+        "Abandoned vehicles",
+        "Appliances",
+        "Building materials not in active use",
+        "Tires"
+      ]
+    },
+    "storage": {
+      "outdoor_storage": "Limited to rear yard only",
+      "screening": "Must be screened from public view",
+      "vehicles": "Only operable, registered vehicles on paved surfaces"
+    }
+  },
+
+  "inoperable_vehicles": {
+    "definition": "Unregistered, wrecked, or non-functioning vehicle",
+    "storage": "Not permitted in view from street",
+    "exceptions": [
+      "Enclosed garage",
+      "Licensed auto repair business",
+      "Active restoration (limited time)"
+    ],
+    "enforcement": {
+      "notice": "5 days to remove",
+      "towing": "City may tow at owner's expense"
+    }
+  },
+
+  "interior_standards": {
+    "basic_requirements": [
+      "Adequate heating (minimum 68F)",
+      "Working plumbing",
+      "Safe electrical systems",
+      "Operable smoke detectors",
+      "No pest infestations",
+      "Adequate ventilation"
+    ],
+    "landlord_obligations": [
+      "Maintain all systems in working order",
+      "Respond to repair requests",
+      "Provide working locks",
+      "Hot water (minimum 110F)",
+      "Functioning appliances if provided"
+    ]
+  },
+
+  "vacant_properties": {
+    "registration_required": true,
+    "fee": "$200-500 annually",
+    "requirements": [
+      "Board windows and doors securely",
+      "Maintain yard",
+      "Prevent unauthorized entry",
+      "Remove graffiti within 30 days",
+      "Post emergency contact"
+    ],
+    "inspections": "Subject to periodic exterior inspection"
+  },
+
+  "nuisance_conditions": {
+    "public_nuisance": [
+      "Unsanitary conditions",
+      "Rodent or insect infestations",
+      "Accumulation of garbage",
+      "Excessive noise (see noise ordinance)",
+      "Illegal activity"
+    ],
+    "abatement": {
+      "notice": "Varies by condition severity",
+      "emergency": "Immediate action for life safety",
+      "cost_recovery": "City may bill property owner"
+    }
+  },
+
+  "graffiti": {
+    "removal_required": true,
+    "timeframe": "30 days from notice",
+    "assistance": "City provides free paint for matching",
+    "murals": "Permitted with proper authorization"
+  },
+
+  "inspections": {
+    "complaint_based": "Inspectors respond to complaints",
+    "rental_properties": "Interior inspection required at registration",
+    "point_of_sale": "Not required in Cincinnati",
+    "how_to_report": {
+      "online": "https://www.cincinnati-oh.gov/csr/",
+      "phone": "513-591-6000",
+      "app": "Fix-It Cincy app"
+    }
+  },
+
+  "penalties": {
+    "notice_to_comply": "First step for most violations",
+    "fines": {
+      "grass_weeds": 250,
+      "debris_accumulation": 250,
+      "structural_violation": 500,
+      "vacant_property_violation": 500,
+      "repeat_violations": "Double fine"
+    },
+    "prosecution": "Chronic violators may face court",
+    "lien": "Unpaid fines become lien on property"
+  },
+
+  "resources": {
+    "exterior_paint_program": "Available for qualifying homeowners",
+    "home_repair_grants": "Contact Community Development",
+    "demolition": "Dangerous buildings may be demolished"
+  },
+
+  "contact": {
+    "inspections": "(513) 352-3276",
+    "complaints": "(513) 591-6000",
+    "online": "https://www.cincinnati-oh.gov/csr/"
+  }
+}

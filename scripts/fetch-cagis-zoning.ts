@@ -62,33 +62,57 @@ async function fetchCAGISZoning(jurisdictionId: string = 'cincinnati-oh') {
     // CAGIS Zoning API endpoint
     const apiUrl = 'https://cagisonline.hamilton-co.org/arcgis/rest/services/Countywide_Layers/Zoning/MapServer/4/query';
 
-    // Query parameters
-    const params = new URLSearchParams({
-      where: '1=1',  // Get all records
-      outFields: '*', // Get all fields
-      f: 'geojson',   // GeoJSON format
-      returnGeometry: 'true',
-    });
-
-    const fullUrl = `${apiUrl}?${params.toString()}`;
-
-    console.log(`📡 Fetching from CAGIS API...`);
+    console.log(`Fetching from CAGIS API...`);
     console.log(`   URL: ${apiUrl}`);
-    console.log(`   This may take a few minutes for large datasets...\n`);
+    console.log(`   Fetching ALL records with pagination...\n`);
 
-    // Fetch data
-    const response = await fetch(fullUrl);
+    // Fetch all data with pagination (API limits to 2000 per request)
+    let allFeatures: CAGISZoningFeature[] = [];
+    let offset = 0;
+    const pageSize = 2000;
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    while (true) {
+      const params = new URLSearchParams({
+        where: '1=1',  // Get all records
+        outFields: '*', // Get all fields
+        f: 'geojson',   // GeoJSON format
+        returnGeometry: 'true',
+        resultOffset: offset.toString(),
+        resultRecordCount: pageSize.toString(),
+      });
+
+      const fullUrl = `${apiUrl}?${params.toString()}`;
+      const response = await fetch(fullUrl);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: CAGISResponse = await response.json();
+
+      if (!data.features || data.features.length === 0) {
+        break; // No more records
+      }
+
+      allFeatures = allFeatures.concat(data.features);
+      console.log(`   Fetched ${data.features.length} records (total: ${allFeatures.length})`);
+
+      if (data.features.length < pageSize) {
+        break; // Last page
+      }
+
+      offset += pageSize;
     }
 
-    const data: CAGISResponse = await response.json();
+    const data: CAGISResponse = {
+      type: 'FeatureCollection',
+      features: allFeatures,
+    };
 
-    console.log(`✓ Received ${data.features?.length || 0} features from API\n`);
+    console.log(`\n[OK] Total received: ${data.features.length} features from API\n`);
 
     if (!data.features || data.features.length === 0) {
-      console.error('❌ No features returned from API');
+      console.error('ERROR: No features returned from API');
       console.error('   The API may be down or the query may be invalid');
       process.exit(1);
     }
@@ -101,18 +125,25 @@ async function fetchCAGISZoning(jurisdictionId: string = 'cincinnati-oh') {
 
     const outputPath = path.join(outputDir, 'cagis-zoning-raw.geojson');
     fs.writeFileSync(outputPath, JSON.stringify(data, null, 2));
-    console.log(`✓ Saved raw GeoJSON to: ${outputPath}\n`);
+    console.log(`[OK] Saved raw GeoJSON to: ${outputPath}\n`);
 
     // Inspect field names from first feature
     const sampleFeature = data.features[0];
-    console.log(`📋 Available fields in CAGIS data:`);
+    console.log(`Available fields in CAGIS data:`);
     Object.keys(sampleFeature.properties).forEach(key => {
       console.log(`   - ${key}: ${sampleFeature.properties[key]}`);
     });
     console.log('');
 
+    // Clear existing zoning data for this jurisdiction
+    console.log(`Clearing existing zoning data for ${jurisdiction.name}...`);
+    const deleted = await prisma.zoningParcel.deleteMany({
+      where: { jurisdictionId },
+    });
+    console.log(`   Deleted ${deleted.count} existing records\n`);
+
     // Process and load into database
-    console.log(`💾 Loading zoning data into RDS...`);
+    console.log(`Loading zoning data into RDS...`);
 
     let loaded = 0;
     let skipped = 0;
@@ -180,13 +211,13 @@ async function fetchCAGISZoning(jurisdictionId: string = 'cincinnati-oh') {
       } catch (error: any) {
         errors++;
         if (errors < 5) {
-          console.error(`\n   ⚠ Error processing feature:`, error.message);
+          console.error(`\n   WARNING: Error processing feature:`, error.message);
         }
       }
     }
 
-    console.log(`\n\n✅ Zoning data loading complete!\n`);
-    console.log(`📊 Summary:`);
+    console.log(`\n\n[OK] Zoning data loading complete!\n`);
+    console.log(`Summary:`);
     console.log(`   Total features: ${data.features.length}`);
     console.log(`   Successfully loaded: ${loaded}`);
     console.log(`   Skipped (no zone code): ${skipped}`);
@@ -198,9 +229,9 @@ async function fetchCAGISZoning(jurisdictionId: string = 'cincinnati-oh') {
       take: 5,
     });
 
-    console.log('\n📋 Sample parcels loaded:');
+    console.log('\nSample parcels loaded:');
     for (const parcel of sampleParcels) {
-      console.log(`   • ${parcel.address} → ${parcel.zoneCode} (${parcel.zoneDescription || 'N/A'})`);
+      console.log(`   - ${parcel.address} -> ${parcel.zoneCode} (${parcel.zoneDescription || 'N/A'})`);
     }
 
     // Show zone code distribution
@@ -213,15 +244,15 @@ async function fetchCAGISZoning(jurisdictionId: string = 'cincinnati-oh') {
       LIMIT 10
     `;
 
-    console.log('\n📈 Top zone codes:');
+    console.log('\nTop zone codes:');
     for (const zone of zoneCodes) {
       console.log(`   ${zone.zoneCode}: ${zone.count} parcels`);
     }
 
-    console.log('\n✓ Cincinnati zoning data is now searchable in the app!');
+    console.log('\n[OK] Cincinnati zoning data is now searchable in the app!');
 
   } catch (error: any) {
-    console.error('\n❌ ERROR:', error.message);
+    console.error('\nERROR:', error.message);
     console.error('\nPossible issues:');
     console.error('- CAGIS API may be temporarily unavailable');
     console.error('- Network connection issues');
@@ -237,7 +268,7 @@ async function fetchCAGISZoning(jurisdictionId: string = 'cincinnati-oh') {
 const jurisdictionId = process.argv[2] || 'cincinnati-oh';
 
 console.log(`
-🏛️ CAGIS Zoning Data Fetcher
+CAGIS Zoning Data Fetcher
 
 This script fetches zoning data from the Cincinnati Area Geographic Information System (CAGIS)
 and loads it into your RDS database for Cincinnati ordinance lookups.

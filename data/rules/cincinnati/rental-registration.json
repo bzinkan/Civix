@@ -1,0 +1,109 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "rental_registration",
+  "title": "Residential Rental Registration",
+  "ordinance_reference": "Chapter 874",
+  "summary": "All residential rental properties in Cincinnati must be registered with the city.",
+
+  "applicability": {
+    "required_for": [
+      "Single-family homes rented to tenants",
+      "Multi-family buildings (duplexes, apartments)",
+      "Condos rented by owners",
+      "Rooming houses"
+    ],
+    "exemptions": [
+      "Owner-occupied buildings with 2 or fewer units",
+      "Hotels and motels",
+      "Hospitals and nursing homes",
+      "Dormitories"
+    ]
+  },
+
+  "registration_requirements": {
+    "initial_registration": {
+      "required": true,
+      "deadline": "Before renting or within 30 days of acquiring property",
+      "fee": 30,
+      "fee_per": "dwelling unit",
+      "annual_renewal": true
+    },
+    "information_required": [
+      "Property owner name and contact information",
+      "Local agent/property manager if owner lives outside Hamilton County",
+      "Number of dwelling units",
+      "Building construction date",
+      "Lead-based paint disclosure (pre-1978 buildings)"
+    ]
+  },
+
+  "local_agent_requirement": {
+    "when_required": "Owner resides outside Hamilton County",
+    "agent_must_be": "Located within 50 miles of property",
+    "agent_responsibilities": [
+      "Accept service of legal notices",
+      "Available for emergencies",
+      "Coordinate with city inspectors"
+    ]
+  },
+
+  "inspection_requirements": {
+    "initial_inspection": {
+      "required": true,
+      "scope": "Health, safety, and building code compliance",
+      "items_checked": [
+        "Smoke and CO detectors",
+        "Egress windows",
+        "Electrical safety",
+        "Plumbing",
+        "Structural integrity",
+        "Lead paint hazards (pre-1978)"
+      ]
+    },
+    "routine_inspections": {
+      "frequency": "Every 3-5 years based on property history",
+      "complaint_driven": "Inspections triggered by tenant complaints"
+    }
+  },
+
+  "lead_paint": {
+    "applies_to": "Buildings constructed before 1978",
+    "requirements": [
+      "Lead-safe work practices for renovations",
+      "Disclosure to tenants",
+      "Lead hazard assessment may be required",
+      "Remediation if hazards found"
+    ],
+    "certification_required": "Contractors must be EPA certified for lead work"
+  },
+
+  "penalties": {
+    "failure_to_register": {
+      "fine": 250,
+      "per_unit": true,
+      "per_day": true
+    },
+    "false_information": {
+      "fine": 500,
+      "criminal": "Possible misdemeanor charge"
+    },
+    "operating_with_violations": {
+      "fine": 100,
+      "per_day": true,
+      "additional": "May result in condemnation"
+    }
+  },
+
+  "tenant_protections": {
+    "right_to_report": "Tenants can report violations without retaliation",
+    "repair_and_deduct": "Available for certain violations after proper notice",
+    "rent_escrow": "Available through court if landlord fails to make repairs"
+  },
+
+  "contact": {
+    "department": "Department of Buildings and Inspections",
+    "phone": "(513) 352-3100",
+    "address": "805 Central Avenue, Suite 500, Cincinnati, OH 45202",
+    "online_registration": "https://www.cincinnati-oh.gov/buildings/"
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "trees_landscaping",
+  "title": "Trees and Landscaping Requirements",
+  "ordinance_reference": "Chapter 743, 1001",
+  "summary": "Cincinnati protects urban trees and requires landscaping for new development to maintain green infrastructure.",
+
+  "tree_removal": {
+    "public_trees": {
+      "permit_required": true,
+      "authority": "Urban Forestry Division",
+      "criteria": [
+        "Dead or dying tree",
+        "Hazardous condition",
+        "Infrastructure conflict",
+        "Disease that may spread"
+      ],
+      "fee": "No fee for hazard removal; replacement cost for healthy trees"
+    },
+    "private_property": {
+      "residential": {
+        "permit_required": false,
+        "exceptions": "Historic districts may require review"
+      },
+      "commercial": {
+        "permit_required": "If part of required landscaping",
+        "replacement": "Must replace removed landscaping trees"
+      }
+    }
+  },
+
+  "street_tree_program": {
+    "free_trees": true,
+    "eligibility": "Residential properties in Cincinnati",
+    "species": "City-approved list for site conditions",
+    "planting": "City plants in tree lawn/right-of-way",
+    "maintenance": "Property owner responsible after establishment",
+    "request": "https://www.cincinnati-oh.gov/public-services/streetscape-and-urban-forestry/"
+  },
+
+  "tree_lawn_maintenance": {
+    "responsibility": "Property owner",
+    "requirements": [
+      "Keep grass trimmed under 8 inches",
+      "Remove debris and litter",
+      "Maintain tree health",
+      "No parking on tree lawn"
+    ],
+    "prohibited": [
+      "Paving over tree lawn",
+      "Storing materials",
+      "Dumping chemicals"
+    ]
+  },
+
+  "landscaping_requirements": {
+    "new_development": {
+      "commercial": {
+        "perimeter": "10-foot landscaped buffer adjacent to residential",
+        "parking_lots": "1 tree per 10 parking spaces",
+        "interior_islands": "Required for lots over 20 spaces",
+        "screening": "3-foot hedge or fence for loading areas"
+      },
+      "multi_family": {
+        "common_areas": "Minimum 15% green space",
+        "tree_requirement": "1 tree per 5,000 sq ft lot area"
+      }
+    },
+    "tree_specifications": {
+      "shade_trees": "2.5 inch caliper minimum at planting",
+      "ornamental": "1.5 inch caliper minimum",
+      "evergreen": "6 feet height minimum"
+    }
+  },
+
+  "protected_trees": {
+    "heritage_trees": {
+      "definition": "Trees over 30 inches diameter or significant species",
+      "protection": "Cannot be removed without Urban Forestry review",
+      "penalties": "Up to $10,000 per tree"
+    },
+    "hillside_areas": {
+      "tree_removal": "Restricted on slopes over 25%",
+      "permit": "Hillside development review required"
+    }
+  },
+
+  "tree_damage": {
+    "construction_protection": {
+      "fencing_required": "Drip line protection during construction",
+      "root_damage": "No trenching within drip line without approval",
+      "grade_changes": "Limited to 4 inches near protected trees"
+    },
+    "utility_work": {
+      "coordination": "Must coordinate with Urban Forestry",
+      "pruning": "Professional arborist required for public trees"
+    }
+  },
+
+  "invasive_species": {
+    "prohibited_planting": [
+      "Ailanthus altissima (Tree of Heaven)",
+      "Pyrus calleryana (Callery Pear)",
+      "Lonicera maackii (Bush Honeysuckle)",
+      "Rosa multiflora (Multiflora Rose)"
+    ],
+    "removal_encouraged": "City provides resources for removal"
+  },
+
+  "stormwater_landscaping": {
+    "rain_gardens": "Encouraged for stormwater management",
+    "pervious_surfaces": "May reduce stormwater fees",
+    "incentives": "MSD Green Infrastructure grants available"
+  },
+
+  "enforcement": {
+    "violation_notice": "30 days to correct",
+    "fines": {
+      "failure_to_maintain": 100,
+      "illegal_removal_public_tree": 500,
+      "heritage_tree_violation": 10000
+    }
+  },
+
+  "contact": {
+    "urban_forestry": "(513) 352-4800",
+    "tree_requests": "https://www.cincinnati-oh.gov/csr/",
+    "master_gardeners": "Hamilton County Extension Office"
+  }
+}

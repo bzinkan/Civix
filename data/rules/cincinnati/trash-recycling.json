@@ -1,0 +1,112 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "trash_recycling",
+  "title": "Trash and Recycling Collection",
+  "ordinance_reference": "Chapter 711-717",
+  "summary": "Cincinnati provides weekly trash and recycling collection for residential properties.",
+
+  "collection_schedule": {
+    "lookup_url": "https://www.cincinnati-oh.gov/public-services/trash-recycling/",
+    "frequency": "Weekly",
+    "holidays": "Collection delayed by one day when holiday falls on or before collection day"
+  },
+
+  "trash_collection": {
+    "container_requirements": {
+      "city_provided": true,
+      "size_options": ["35-gallon", "65-gallon", "96-gallon"],
+      "lid": "Must have tight-fitting lid",
+      "placement": "Curb by 6 AM on collection day",
+      "setback": "Remove from curb within 24 hours of collection"
+    },
+    "bulk_items": {
+      "description": "Large items that don't fit in regular container",
+      "schedule": "Weekly, same day as regular trash",
+      "items_accepted": [
+        "Furniture",
+        "Mattresses",
+        "Appliances (remove doors)",
+        "Carpet (rolled, max 4 feet)"
+      ],
+      "limit": "4 bulk items per week",
+      "appointment_required": false
+    },
+    "prohibited_items": [
+      "Hazardous waste (paint, chemicals, batteries)",
+      "Electronics (TVs, computers)",
+      "Tires",
+      "Construction debris over 4 cubic yards",
+      "Medical waste",
+      "Propane tanks"
+    ]
+  },
+
+  "recycling": {
+    "container": {
+      "city_provided": true,
+      "type": "Blue bin or cart",
+      "single_stream": true
+    },
+    "accepted_items": [
+      "Paper and cardboard (flattened)",
+      "Plastic bottles and containers (#1-#7)",
+      "Metal cans",
+      "Glass bottles and jars",
+      "Cartons (milk, juice)"
+    ],
+    "not_accepted": [
+      "Plastic bags",
+      "Styrofoam",
+      "Food waste",
+      "Ceramics",
+      "Mirrors",
+      "Clothing"
+    ],
+    "preparation": "Rinse containers, remove lids, flatten cardboard"
+  },
+
+  "yard_waste": {
+    "season": "April through December",
+    "container": "Paper bags or clearly marked containers",
+    "limit": "10 bags/bundles per week",
+    "branches": "Cut to 4-foot lengths, bundle with twine"
+  },
+
+  "special_collections": {
+    "electronics": {
+      "accepted_at": "Environmental Enterprise drop-off",
+      "locations": "https://www.cincinnati-oh.gov/public-services/",
+      "cost": "Free for residents"
+    },
+    "hazardous_waste": {
+      "accepted_at": "Hamilton County Household Hazardous Waste facility",
+      "phone": "(513) 946-7766",
+      "items": ["Paint", "Chemicals", "Batteries", "Motor oil"]
+    },
+    "tires": {
+      "limit": "4 per year",
+      "schedule": "Call for special pickup",
+      "fee": "None for residential"
+    }
+  },
+
+  "commercial_properties": {
+    "city_collection": false,
+    "requirement": "Must contract with private hauler",
+    "dumpster_permit": "Required for dumpsters on city property"
+  },
+
+  "penalties": {
+    "improper_container": 50,
+    "early_setout": 50,
+    "late_removal": 50,
+    "illegal_dumping": 500,
+    "repeated_violations": "May result in service suspension"
+  },
+
+  "contact": {
+    "missed_pickup": "(513) 591-6000",
+    "container_request": "(513) 591-6000",
+    "online": "https://www.cincinnati-oh.gov/csr/"
+  }
+}

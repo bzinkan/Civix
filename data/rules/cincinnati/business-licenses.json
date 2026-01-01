@@ -1,0 +1,194 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "business_licenses",
+  "title": "Business Licenses and Permits",
+  "ordinance_reference": "Chapter 311, 313, 317, 851-880",
+  "summary": "Most businesses operating in Cincinnati require various licenses and permits depending on business type and location.",
+
+  "general_business_license": {
+    "required": false,
+    "notes": "Ohio does not require a general business license. However, specific business types need permits."
+  },
+
+  "vendor_license": {
+    "required_for": [
+      "Street vendors",
+      "Food trucks",
+      "Mobile vendors",
+      "Peddlers"
+    ],
+    "fee": "$100-500 depending on type",
+    "apply_at": "City Hall, License Section",
+    "requirements": [
+      "Application with business description",
+      "Proof of insurance",
+      "Health permit (if food)",
+      "Vehicle info (if applicable)"
+    ]
+  },
+
+  "food_service": {
+    "health_permit": {
+      "required": true,
+      "issued_by": "Cincinnati Health Department",
+      "fee": "Varies by establishment size",
+      "inspections": "Annual, unannounced"
+    },
+    "food_truck": {
+      "city_permit": "Mobile food vendor license",
+      "health_permit": "Required",
+      "fire_inspection": "Required",
+      "parking": "Designated zones or private property with permission"
+    },
+    "temporary_food_events": {
+      "permit": "Temporary food permit",
+      "fee": "$35-75",
+      "duration": "Single event up to 14 days"
+    }
+  },
+
+  "alcohol_licenses": {
+    "state_license": {
+      "issued_by": "Ohio Division of Liquor Control",
+      "types": ["D1 (Beer)", "D2 (Wine/Beer)", "D5 (Full Service)", "D6 (Club)"]
+    },
+    "local_approval": {
+      "required": true,
+      "process": "City Council approval may be needed",
+      "distance_restrictions": "500 feet from schools, churches"
+    }
+  },
+
+  "home_occupation": {
+    "permit_required": false,
+    "conditions": [
+      "No external evidence of business",
+      "No employees on premises",
+      "No retail sales to walk-in customers",
+      "No more than 25% of home floor area",
+      "No noise, odor, traffic beyond residential norms"
+    ],
+    "prohibited_businesses": [
+      "Auto repair",
+      "Restaurants",
+      "Medical clinics",
+      "Manufacturing"
+    ]
+  },
+
+  "contractor_licenses": {
+    "required_trades": [
+      "Electrical",
+      "Plumbing",
+      "HVAC",
+      "Roofing",
+      "Fire suppression"
+    ],
+    "general_contractor": {
+      "state_license": "Not required in Ohio",
+      "local": "Registration recommended"
+    },
+    "trade_licenses": {
+      "issued_by": "State of Ohio",
+      "local_registration": "Required to work in Cincinnati"
+    }
+  },
+
+  "special_use_permits": {
+    "zoning_certificate": {
+      "when_required": "New business or change of use",
+      "fee": "$75-200",
+      "purpose": "Verify business is permitted in zone"
+    },
+    "conditional_use": {
+      "when_required": "Uses requiring Board of Zoning Appeals approval",
+      "examples": [
+        "Drive-through",
+        "Day care center",
+        "Auto service station",
+        "Outdoor dining"
+      ],
+      "process": "Public hearing required"
+    }
+  },
+
+  "short_term_rental": {
+    "registration_required": true,
+    "fee": "$100 annually",
+    "requirements": "See short-term-rental.json for details"
+  },
+
+  "massage_establishment": {
+    "permit_required": true,
+    "requirements": [
+      "Ohio massage therapy license",
+      "Background check",
+      "Inspection",
+      "Annual renewal"
+    ],
+    "fee": "$250"
+  },
+
+  "pawn_shops": {
+    "license_required": true,
+    "requirements": [
+      "Background investigation",
+      "Bond requirement",
+      "Record keeping (reported to police)"
+    ],
+    "restrictions": "Location restrictions apply"
+  },
+
+  "taxi_rideshare": {
+    "traditional_taxi": {
+      "license": "Vehicle-for-hire license required",
+      "fee": "Per vehicle and driver"
+    },
+    "rideshare": {
+      "regulation": "TNC (Uber, Lyft) regulated by State of Ohio",
+      "local_permit": "Not required"
+    }
+  },
+
+  "signage": {
+    "sign_permit": "Required for most business signs",
+    "details": "See signs-banners.json"
+  },
+
+  "fire_safety": {
+    "certificate_of_occupancy": {
+      "required_for": "All commercial occupancies",
+      "inspection": "Fire inspection required"
+    },
+    "fire_alarm_permit": "Required for system installation",
+    "sprinkler_permit": "Required for system installation/modification"
+  },
+
+  "income_tax": {
+    "net_profits_tax": {
+      "rate": "1.8%",
+      "applies_to": "Net profits of businesses operating in Cincinnati",
+      "filing": "Annual return required"
+    },
+    "withholding": {
+      "employer_requirement": "Withhold city tax from employee wages",
+      "registration": "Required with Income Tax Division"
+    }
+  },
+
+  "application_process": {
+    "step_1": "Determine business type and required permits",
+    "step_2": "Check zoning compliance",
+    "step_3": "Apply for required permits/licenses",
+    "step_4": "Schedule inspections (if needed)",
+    "step_5": "Register for city income tax"
+  },
+
+  "contact": {
+    "license_section": "(513) 352-3637",
+    "zoning": "(513) 352-3276",
+    "health_department": "(513) 352-3132",
+    "income_tax": "(513) 352-3838",
+    "online": "https://www.cincinnati-oh.gov/finance/licenses-permits/"
+  }
+}

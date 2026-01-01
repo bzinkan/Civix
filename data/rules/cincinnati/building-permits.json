@@ -1,0 +1,310 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "building_permits",
+  "title": "Building Permits and Construction",
+  "ordinance_reference": "Chapter 1101-1150, Ohio Building Code",
+  "summary": "Most construction, renovation, and structural modifications in Cincinnati require building permits. The type and process depends on scope of work and property location.",
+
+  "when_permit_required": {
+    "always_required": [
+      "New construction",
+      "Additions to existing structures",
+      "Structural modifications (load-bearing walls, beams, columns)",
+      "Electrical work (new circuits, panel upgrades, rewiring)",
+      "Plumbing work (new fixtures, water heater, gas lines)",
+      "HVAC installation or replacement",
+      "Roofing (full replacement)",
+      "Window/door changes affecting structural openings",
+      "Deck construction over 30 inches above grade",
+      "Basement finishing with egress or electrical",
+      "Commercial tenant improvements",
+      "Change of use/occupancy"
+    ],
+    "permit_not_required": [
+      "Painting and wallpapering",
+      "Flooring replacement (non-structural)",
+      "Cabinet replacement (same location)",
+      "Minor repairs using same materials",
+      "Fences under 6 feet (residential)",
+      "Sheds under 120 sq ft (no electric/plumbing)",
+      "Replacing fixtures in same location",
+      "Landscaping (no grading permit needed)"
+    ],
+    "gray_areas": {
+      "consult_first": [
+        "Kitchen remodels (depends on scope)",
+        "Bathroom remodels (depends on scope)",
+        "Basement waterproofing",
+        "Driveway replacement"
+      ]
+    }
+  },
+
+  "permit_types": {
+    "building_permit": {
+      "description": "General construction, additions, alterations",
+      "fee_basis": "Based on project valuation",
+      "fee_minimum": 75,
+      "plan_review": "Required for projects over $15,000"
+    },
+    "electrical_permit": {
+      "description": "All electrical work",
+      "fee_basis": "Based on circuits/fixtures",
+      "fee_minimum": 50,
+      "licensed_contractor": true
+    },
+    "plumbing_permit": {
+      "description": "All plumbing installations/modifications",
+      "fee_basis": "Based on fixtures",
+      "fee_minimum": 50,
+      "licensed_contractor": true
+    },
+    "mechanical_permit": {
+      "description": "HVAC systems, ductwork, gas piping",
+      "fee_basis": "Based on equipment",
+      "fee_minimum": 50,
+      "licensed_contractor": true
+    },
+    "demolition_permit": {
+      "description": "Full or partial demolition",
+      "fee": 150,
+      "requirements": ["Asbestos survey", "Utility disconnection proof", "Site plan"]
+    },
+    "zoning_certificate": {
+      "description": "Verifies use is permitted in zone",
+      "fee": 75,
+      "when_needed": "Change of use, new business, additions"
+    }
+  },
+
+  "commercial_projects": {
+    "requirements": [
+      "Licensed architect/engineer drawings (over $50,000)",
+      "Plan review by Buildings Department",
+      "Fire Department review",
+      "ADA compliance review",
+      "Zoning certificate"
+    ],
+    "timeline": {
+      "plan_review": "2-4 weeks typical",
+      "expedited_review": "Available for additional fee"
+    },
+    "inspections": [
+      "Foundation/footing",
+      "Framing/rough-in",
+      "Electrical rough-in",
+      "Plumbing rough-in",
+      "Mechanical rough-in",
+      "Insulation",
+      "Final inspection"
+    ]
+  },
+
+  "residential_projects": {
+    "owner_builder": {
+      "allowed": true,
+      "restrictions": "Must be owner-occupied, personal residence",
+      "still_required": ["Permits", "Inspections", "Code compliance"]
+    },
+    "contractor_requirements": {
+      "general_contractor": "Not licensed in Ohio, but registration recommended",
+      "specialty_trades": "Must be licensed (electric, plumbing, HVAC)"
+    }
+  },
+
+  "historic_properties": {
+    "additional_review": "Historic Conservation Board (HCB)",
+    "certificate_of_appropriateness": {
+      "required_for": [
+        "Exterior alterations visible from public way",
+        "Window replacement",
+        "Siding changes",
+        "Roof material changes",
+        "Additions",
+        "Demolition"
+      ],
+      "not_required_for": [
+        "Interior work (unless structural)",
+        "In-kind repairs with same materials",
+        "Paint (unless district has color guidelines)"
+      ]
+    },
+    "process": {
+      "staff_review": "Minor changes, in-kind repairs",
+      "hcb_hearing": "Major alterations, additions, demolition",
+      "timeline": "HCB meets monthly, submit 3 weeks prior"
+    },
+    "design_guidelines": {
+      "otr": "Over-the-Rhine Historic District Guidelines",
+      "mt_adams": "Mt. Adams Historic District Guidelines",
+      "general": "Secretary of Interior Standards"
+    }
+  },
+
+  "overlay_districts": {
+    "hillside": {
+      "triggers": ["Any grading", "New construction", "Additions"],
+      "requirements": [
+        "Geotechnical report",
+        "Grading plan",
+        "Erosion control plan",
+        "Tree preservation plan"
+      ],
+      "review_by": "City Planning"
+    },
+    "urban_design": {
+      "triggers": ["New construction", "Major exterior changes", "Signage"],
+      "requirements": ["Design review application", "Elevations/renderings"],
+      "review_by": "Urban Design Review Board"
+    },
+    "flood_zone": {
+      "triggers": ["Any construction in FEMA flood zone"],
+      "requirements": [
+        "Elevation certificate",
+        "Flood-resistant construction",
+        "No increase to base flood elevation"
+      ]
+    }
+  },
+
+  "application_process": {
+    "step_1": {
+      "action": "Determine permits needed",
+      "how": "Call or visit Buildings Department, use online permit finder"
+    },
+    "step_2": {
+      "action": "Prepare documents",
+      "typical_documents": [
+        "Completed application",
+        "Site plan showing property lines",
+        "Floor plans (to scale)",
+        "Construction drawings",
+        "Contractor licenses",
+        "Property owner authorization"
+      ]
+    },
+    "step_3": {
+      "action": "Submit application",
+      "methods": ["In person at 805 Central Ave", "Online portal (limited)"]
+    },
+    "step_4": {
+      "action": "Plan review",
+      "timeline": "1-4 weeks depending on complexity"
+    },
+    "step_5": {
+      "action": "Pay fees and receive permit",
+      "display": "Post permit in visible location at job site"
+    },
+    "step_6": {
+      "action": "Schedule inspections",
+      "how": "Call (513) 352-3276 or online",
+      "notice": "24 hours advance notice required"
+    },
+    "step_7": {
+      "action": "Final inspection and certificate of occupancy",
+      "required_for": "New construction, change of use"
+    }
+  },
+
+  "inspections": {
+    "scheduling": {
+      "phone": "(513) 352-3276",
+      "online": "https://www.cincinnati-oh.gov/buildings/",
+      "advance_notice": "24 hours minimum"
+    },
+    "failed_inspection": {
+      "process": "Correction notice issued",
+      "reinspection": "Must correct and reschedule",
+      "fee": "Re-inspection fee may apply after 2nd failure"
+    },
+    "common_failures": [
+      "Work not ready for inspection",
+      "Permit not posted",
+      "Work differs from approved plans",
+      "Code violations",
+      "Missing smoke detectors"
+    ]
+  },
+
+  "fees": {
+    "building_permit": {
+      "calculation": "Based on project valuation",
+      "rate": "$12 per $1,000 of valuation",
+      "minimum": 75
+    },
+    "plan_review": {
+      "rate": "65% of permit fee",
+      "minimum": 50
+    },
+    "electrical": {
+      "base": 50,
+      "per_circuit": 5
+    },
+    "plumbing": {
+      "base": 50,
+      "per_fixture": 10
+    },
+    "mechanical": {
+      "base": 50,
+      "per_unit": 25
+    },
+    "reinspection": 75,
+    "permit_extension": 50,
+    "work_without_permit": "Double permit fee (minimum $150)"
+  },
+
+  "violations": {
+    "work_without_permit": {
+      "penalty": "Double permit fee",
+      "stop_work_order": "Issued immediately",
+      "resolution": "Must obtain permit, may require opening walls for inspection"
+    },
+    "expired_permit": {
+      "validity": "6 months from issue (extendable)",
+      "extension_fee": 50,
+      "expired_work": "New permit required"
+    },
+    "code_violations": {
+      "correction_notice": "Specifies violation and timeframe",
+      "failure_to_correct": "Civil penalties, court action",
+      "occupancy_issues": "May affect certificate of occupancy"
+    }
+  },
+
+  "contractor_licensing": {
+    "ohio_requirements": {
+      "general_contractor": "No state license required",
+      "electrical": "State license required",
+      "plumbing": "State license required",
+      "hvac": "State license required (EPA certification for refrigerants)"
+    },
+    "cincinnati_registration": {
+      "recommended": true,
+      "benefits": ["Easier permit process", "Listed on city website"]
+    },
+    "verify_contractor": {
+      "electrical": "Ohio OCILB (https://elicense.ohio.gov)",
+      "plumbing": "Ohio OCILB",
+      "hvac": "Ohio OCILB"
+    }
+  },
+
+  "resources": {
+    "permit_office": {
+      "address": "805 Central Avenue, Suite 500",
+      "hours": "8:00 AM - 4:00 PM, Monday-Friday",
+      "phone": "(513) 352-3276"
+    },
+    "online": "https://www.cincinnati-oh.gov/buildings/",
+    "ohio_building_code": "https://codes.ohio.gov/ohio-administrative-code/chapter-4101:2",
+    "permit_finder": "https://www.cincinnati-oh.gov/buildings/permits/"
+  },
+
+  "contact": {
+    "permits": "(513) 352-3276",
+    "inspections": "(513) 352-3276",
+    "zoning": "(513) 352-3276",
+    "historic_conservation": "(513) 352-4822",
+    "fire_prevention": "(513) 352-2337"
+  }
+}

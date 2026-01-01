@@ -1,0 +1,202 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "jurisdiction_name": "City of Cincinnati",
+  "state": "OH",
+  "version": "1.0.0",
+  "last_updated": "2025-01-01",
+  "source": "Cincinnati Municipal Code (https://library.municode.com/oh/cincinnati)",
+
+  "topics": [
+    {
+      "id": "short-term-rental",
+      "file": "short-term-rental.json",
+      "title": "Short-Term Rental (Airbnb/VRBO)",
+      "keywords": ["airbnb", "vrbo", "short term rental", "vacation rental", "str", "host"],
+      "ordinance_reference": "Chapter 858"
+    },
+    {
+      "id": "noise-ordinance",
+      "file": "noise-ordinance.json",
+      "title": "Noise Ordinance",
+      "keywords": ["noise", "loud", "quiet hours", "barking", "construction noise", "music", "party"],
+      "ordinance_reference": "Chapter 910"
+    },
+    {
+      "id": "snow-removal",
+      "file": "snow-removal.json",
+      "title": "Snow and Ice Removal",
+      "keywords": ["snow", "ice", "sidewalk", "shovel", "salt", "winter"],
+      "ordinance_reference": "Chapter 723.3"
+    },
+    {
+      "id": "rental-registration",
+      "file": "rental-registration.json",
+      "title": "Rental Property Registration",
+      "keywords": ["rental", "landlord", "tenant", "registration", "inspection", "lease"],
+      "ordinance_reference": "Chapter 855"
+    },
+    {
+      "id": "fence-regulations",
+      "file": "fence-regulations.json",
+      "title": "Fence Regulations",
+      "keywords": ["fence", "height", "setback", "privacy fence", "chain link"],
+      "ordinance_reference": "Chapter 1423"
+    },
+    {
+      "id": "parking-regulations",
+      "file": "parking-regulations.json",
+      "title": "Parking Regulations",
+      "keywords": ["parking", "street parking", "ticket", "tow", "overnight", "permit parking"],
+      "ordinance_reference": "Chapter 503"
+    },
+    {
+      "id": "trash-recycling",
+      "file": "trash-recycling.json",
+      "title": "Trash and Recycling",
+      "keywords": ["trash", "garbage", "recycling", "bulk pickup", "yard waste", "hazardous waste"],
+      "ordinance_reference": "Chapter 711-717"
+    },
+    {
+      "id": "signs-banners",
+      "file": "signs-banners.json",
+      "title": "Signs and Banners",
+      "keywords": ["sign", "banner", "billboard", "business sign", "yard sign", "political sign"],
+      "ordinance_reference": "Chapter 1431"
+    },
+    {
+      "id": "trees-landscaping",
+      "file": "trees-landscaping.json",
+      "title": "Trees and Landscaping",
+      "keywords": ["tree", "landscaping", "tree removal", "street tree", "tree lawn"],
+      "ordinance_reference": "Chapter 743, 1001"
+    },
+    {
+      "id": "property-maintenance",
+      "file": "property-maintenance.json",
+      "title": "Property Maintenance Code",
+      "keywords": ["property maintenance", "grass", "weeds", "blight", "abandoned", "vacant", "nuisance"],
+      "ordinance_reference": "Chapter 1101-1117"
+    },
+    {
+      "id": "business-licenses",
+      "file": "business-licenses.json",
+      "title": "Business Licenses and Permits",
+      "keywords": ["business license", "vendor", "food truck", "home business", "contractor"],
+      "ordinance_reference": "Chapter 311, 313, 317, 851-880"
+    },
+    {
+      "id": "sidewalks-right-of-way",
+      "file": "sidewalks-right-of-way.json",
+      "title": "Sidewalks and Right-of-Way",
+      "keywords": ["sidewalk", "driveway", "right of way", "street", "curb", "apron"],
+      "ordinance_reference": "Chapter 723, 743"
+    },
+    {
+      "id": "animals-pets",
+      "file": "animals-pets.json",
+      "title": "Animal and Pet Regulations",
+      "keywords": ["dog", "cat", "pet", "license", "leash", "barking", "chicken", "animal"],
+      "ordinance_reference": "Chapter 701-708"
+    },
+    {
+      "id": "building-permits",
+      "file": "building-permits.json",
+      "title": "Building Permits and Construction",
+      "keywords": ["building permit", "construction permit", "inspection", "permit required", "contractor", "renovation permit", "demolition", "electrical permit", "plumbing permit", "mechanical permit"],
+      "ordinance_reference": "Chapter 1101-1150"
+    },
+    {
+      "id": "renovations",
+      "file": "renovations.json",
+      "title": "Renovation and Remodeling Requirements",
+      "keywords": ["renovation", "remodel", "alteration", "kitchen remodel", "bathroom remodel", "basement", "addition", "tenant improvement", "commercial renovation", "historic renovation"],
+      "ordinance_reference": "Chapter 1101-1150"
+    },
+    {
+      "id": "zoning-requirements",
+      "file": "zoning-requirements.json",
+      "title": "Zoning Requirements and Development Standards",
+      "keywords": ["zoning", "setback", "height limit", "lot coverage", "FAR", "parking requirement", "variance", "conditional use", "accessory structure", "ADU"],
+      "ordinance_reference": "Title XIV"
+    }
+  ],
+
+  "common_questions": [
+    {
+      "question": "Do I need a permit for a fence?",
+      "topic": "fence-regulations",
+      "answer_path": "permit.required"
+    },
+    {
+      "question": "What time does construction noise have to stop?",
+      "topic": "noise-ordinance",
+      "answer_path": "construction_noise.prohibited_hours"
+    },
+    {
+      "question": "How long do I have to shovel my sidewalk after it snows?",
+      "topic": "snow-removal",
+      "answer_path": "timeframe"
+    },
+    {
+      "question": "Do I need to register my Airbnb?",
+      "topic": "short-term-rental",
+      "answer_path": "registration.required"
+    },
+    {
+      "question": "How tall can my fence be?",
+      "topic": "fence-regulations",
+      "answer_path": "residential_zones.front_yard.max_height"
+    },
+    {
+      "question": "When is trash day?",
+      "topic": "trash-recycling",
+      "answer_path": "collection_schedule.lookup_url"
+    },
+    {
+      "question": "Do I need to license my dog?",
+      "topic": "animals-pets",
+      "answer_path": "dog_licensing.required"
+    },
+    {
+      "question": "Do I need a permit for a kitchen remodel?",
+      "topic": "renovations",
+      "answer_path": "common_renovations.kitchen_remodel"
+    },
+    {
+      "question": "What permits do I need for construction?",
+      "topic": "building-permits",
+      "answer_path": "permit_types"
+    },
+    {
+      "question": "Is this building in a historic district?",
+      "topic": "building-permits",
+      "answer_path": "historic_properties"
+    },
+    {
+      "question": "What are the setback requirements?",
+      "topic": "zoning-requirements",
+      "answer_path": "residential_zones"
+    },
+    {
+      "question": "Do I need a Certificate of Appropriateness?",
+      "topic": "building-permits",
+      "answer_path": "historic_properties.certificate_of_appropriateness"
+    },
+    {
+      "question": "What inspections are required?",
+      "topic": "building-permits",
+      "answer_path": "inspections"
+    },
+    {
+      "question": "How much are permit fees?",
+      "topic": "building-permits",
+      "answer_path": "fees"
+    }
+  ],
+
+  "contact": {
+    "general_info": "(513) 591-6000",
+    "website": "https://www.cincinnati-oh.gov",
+    "service_requests": "https://www.cincinnati-oh.gov/csr/"
+  }
+}

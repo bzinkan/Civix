@@ -1,0 +1,83 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "snow_removal",
+  "title": "Snow and Ice Removal Requirements",
+  "ordinance_reference": "Chapter 723",
+  "summary": "Property owners must clear snow and ice from sidewalks within specified time limits.",
+
+  "sidewalk_requirements": {
+    "responsible_party": "Property owner or occupant",
+    "clearance_width": "Full width of sidewalk, minimum 36 inches",
+    "time_limit": {
+      "after_snowfall_ends": "12 hours during daylight",
+      "description": "Snow must be removed within 12 daylight hours after precipitation ends"
+    },
+    "ice_treatment": {
+      "required": true,
+      "methods": ["Salt", "Sand", "Ice melt", "Other approved de-icing agent"],
+      "prohibited": "Snow/ice cannot be pushed into street"
+    }
+  },
+
+  "snow_emergency": {
+    "declaration": "City Manager declares snow emergency",
+    "notification": "Via local media, city website, and emergency alert system",
+    "parking_restrictions": {
+      "snow_emergency_routes": "No parking on designated routes",
+      "removal_time": "Vehicles must be moved within 3 hours of declaration",
+      "towing": "Vehicles may be towed at owner's expense"
+    },
+    "snow_emergency_routes": {
+      "info_url": "https://www.cincinnati-oh.gov/dote/snow-ice-removal/",
+      "signage": "Look for red and white 'Snow Emergency Route' signs"
+    }
+  },
+
+  "penalties": {
+    "failure_to_clear_sidewalk": {
+      "warning": "First offense may receive warning",
+      "fine": 50,
+      "per_day": true,
+      "description": "Each day of non-compliance is separate violation"
+    },
+    "snow_emergency_parking": {
+      "fine": 50,
+      "towing_fee": 150,
+      "storage_per_day": 25
+    }
+  },
+
+  "exemptions": [
+    "City-owned sidewalks along public parks",
+    "Property owners with documented disability (must request exemption)"
+  ],
+
+  "city_services": {
+    "street_plowing": {
+      "priority_1": "Interstates and major arterials",
+      "priority_2": "Secondary arterials and hills",
+      "priority_3": "Residential streets",
+      "typical_response": "24-48 hours for full city coverage"
+    },
+    "salt_request": {
+      "available": true,
+      "description": "Residents can request salt for steep hills",
+      "how_to_request": "Call 513-591-6000"
+    }
+  },
+
+  "reporting": {
+    "uncleared_sidewalks": {
+      "phone": "513-591-6000",
+      "online": "https://www.cincinnati-oh.gov/csr/",
+      "description": "Report violations to City Services"
+    }
+  },
+
+  "tips": [
+    "Clear snow before it compacts into ice",
+    "Don't push snow into the street - it creates hazards",
+    "Check on elderly neighbors who may need assistance",
+    "Keep fire hydrants near your property clear"
+  ]
+}

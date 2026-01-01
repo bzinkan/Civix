@@ -1,0 +1,188 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "animals_pets",
+  "title": "Animal and Pet Regulations",
+  "ordinance_reference": "Chapter 701-708",
+  "summary": "Cincinnati regulates pets and animals to protect public health and safety, with requirements for licensing, leashes, and responsible ownership.",
+
+  "dog_licensing": {
+    "required": true,
+    "age": "3 months and older",
+    "fee": {
+      "spayed_neutered": "$15 annually",
+      "unaltered": "$30 annually",
+      "late_fee": "$15 penalty after January 31"
+    },
+    "where_to_register": {
+      "county_auditor": "Hamilton County Auditor's Office",
+      "online": "https://www.hamiltoncountyauditor.org/dogs",
+      "retail": "Various pet stores and veterinarians"
+    },
+    "requirements": [
+      "Proof of rabies vaccination",
+      "Owner identification"
+    ]
+  },
+
+  "leash_law": {
+    "requirement": "Dogs must be on leash or under voice control",
+    "public_areas": "Leash required in all public areas",
+    "exceptions": [
+      "Designated off-leash dog parks",
+      "Private property (with owner permission)"
+    ],
+    "leash_length": "6 feet maximum recommended",
+    "violation_fine": 150
+  },
+
+  "dog_parks": {
+    "off_leash_areas": [
+      "Mt. Airy Dog Park",
+      "Washington Park Dog Park",
+      "Otto Armleder Dog Park"
+    ],
+    "rules": [
+      "Dogs must be licensed and vaccinated",
+      "Owners must supervise at all times",
+      "Clean up after your pet",
+      "Aggressive dogs must be removed",
+      "Puppies under 4 months not recommended"
+    ]
+  },
+
+  "barking_dogs": {
+    "violation": "Excessive barking that disturbs neighbors",
+    "definition": "Continuous barking for 10+ minutes",
+    "complaints": {
+      "report_to": "SPCA Cincinnati or Animal Control",
+      "process": "Warning issued, then citation"
+    },
+    "fine": 150
+  },
+
+  "dangerous_dogs": {
+    "definition": [
+      "Dog that has bitten someone",
+      "Dog that has killed another animal",
+      "Dog deemed dangerous by court"
+    ],
+    "requirements": [
+      "$100,000 liability insurance",
+      "Secure enclosure with warning signs",
+      "Muzzle and leash in public",
+      "Microchip registration",
+      "Spay/neuter required"
+    ],
+    "prohibited_areas": "Off-leash areas, parks"
+  },
+
+  "breed_restrictions": {
+    "pit_bulls": {
+      "status": "Ohio repealed statewide pit bull ban in 2012",
+      "cincinnati": "No breed-specific legislation currently",
+      "landlord_policies": "Individual landlords may have restrictions"
+    }
+  },
+
+  "cats": {
+    "licensing": "Not required in Cincinnati",
+    "at_large": "Cats may not be considered at large",
+    "feral_cat_program": "TNR (Trap-Neuter-Return) supported"
+  },
+
+  "animal_limits": {
+    "residential_zones": {
+      "dogs_cats": "No specific limit (must not create nuisance)",
+      "chickens": {
+        "allowed": true,
+        "hens_only": "Roosters prohibited",
+        "max_number": 6,
+        "coop_requirements": [
+          "20 feet from neighboring dwelling",
+          "Clean and odor-free",
+          "Secure from predators"
+        ],
+        "permit": "Not required but zoning check recommended"
+      }
+    },
+    "exotic_animals": {
+      "prohibited": [
+        "Big cats (lions, tigers)",
+        "Bears",
+        "Wolves",
+        "Venomous snakes",
+        "Primates",
+        "Alligators/crocodiles"
+      ],
+      "permit_may_be_required": [
+        "Certain reptiles",
+        "Sugar gliders",
+        "Hedgehogs"
+      ]
+    }
+  },
+
+  "beekeeping": {
+    "allowed": true,
+    "regulations": {
+      "hives": "No specific limit (must not create nuisance)",
+      "setback": "Not required but good neighbor practice",
+      "water_source": "Provide on-site water source",
+      "registration": "Optional but recommended"
+    }
+  },
+
+  "animal_waste": {
+    "requirement": "Owners must immediately remove waste from public areas",
+    "tools": "Carry bags or disposal device",
+    "fine": 100,
+    "private_property": "Must not create unsanitary conditions"
+  },
+
+  "animal_cruelty": {
+    "prohibited": [
+      "Physical abuse",
+      "Neglect (food, water, shelter)",
+      "Abandonment",
+      "Dog fighting"
+    ],
+    "report_to": "SPCA Cincinnati or Cincinnati Police",
+    "penalties": "Criminal charges, fines up to $1,000, jail time"
+  },
+
+  "strays_and_lost_pets": {
+    "found_animals": {
+      "report_to": "SPCA Cincinnati",
+      "hold_period": "72 hours for owner reclaim"
+    },
+    "lost_pets": {
+      "report_to": "SPCA Cincinnati, local shelters",
+      "microchip": "Strongly recommended for all pets"
+    }
+  },
+
+  "noise_from_animals": {
+    "covered_under": "General noise ordinance",
+    "enforcement": "Animal control or police",
+    "see": "noise-ordinance.json"
+  },
+
+  "wild_animals": {
+    "feeding_prohibited": [
+      "Deer",
+      "Coyotes",
+      "Raccoons"
+    ],
+    "nuisance_wildlife": {
+      "removal": "Contact licensed wildlife removal",
+      "city_assistance": "Limited - public health threats only"
+    }
+  },
+
+  "contact": {
+    "spca_cincinnati": "(513) 541-6100",
+    "animal_control": "(513) 541-6100",
+    "hamilton_county_auditor": "(513) 946-4000",
+    "city_service_requests": "(513) 591-6000"
+  }
+}

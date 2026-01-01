@@ -1,0 +1,161 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "sidewalks_right_of_way",
+  "title": "Sidewalks and Right-of-Way Regulations",
+  "ordinance_reference": "Chapter 723, 743",
+  "summary": "Property owners are responsible for sidewalk maintenance. Use of public right-of-way requires permits.",
+
+  "sidewalk_maintenance": {
+    "responsibility": "Adjacent property owner",
+    "requirements": [
+      "Keep free of obstructions",
+      "Remove snow/ice (see snow-removal.json)",
+      "Repair broken or heaved sections",
+      "Maintain safe condition"
+    ],
+    "defects_requiring_repair": [
+      "Vertical displacement over 0.5 inches",
+      "Cracks wider than 0.5 inches",
+      "Missing sections",
+      "Trip hazards"
+    ]
+  },
+
+  "sidewalk_repair": {
+    "notice": {
+      "city_issued": "30-day notice to repair",
+      "process": "Inspector identifies hazard, sends notice"
+    },
+    "options": {
+      "hire_contractor": "Property owner hires licensed contractor",
+      "city_program": "City repairs and assesses property owner"
+    },
+    "specifications": {
+      "thickness": "4 inches minimum",
+      "width": "Match existing (typically 4-5 feet)",
+      "material": "Concrete (must match existing)",
+      "slope": "2% maximum cross-slope"
+    },
+    "permit_required": true,
+    "permit_fee": "$50"
+  },
+
+  "new_sidewalk_installation": {
+    "when_required": [
+      "New construction",
+      "Major renovation",
+      "Subdivision development"
+    ],
+    "standards": {
+      "width": "5 feet minimum (commercial areas wider)",
+      "material": "Concrete",
+      "ada_compliance": "Curb cuts at intersections"
+    },
+    "permit": "Right-of-way permit required"
+  },
+
+  "driveway_aprons": {
+    "definition": "Section connecting driveway to street",
+    "responsibility": "Property owner",
+    "permit_required": true,
+    "specifications": {
+      "width": "Match driveway, max 24 feet residential",
+      "material": "Concrete or approved paving",
+      "slope": "ADA compliant"
+    }
+  },
+
+  "right_of_way_permits": {
+    "required_for": [
+      "Sidewalk work",
+      "Driveway installation",
+      "Street cuts/excavation",
+      "Temporary closures",
+      "Utility connections"
+    ],
+    "apply_at": "Department of Transportation and Engineering",
+    "fee": "Varies by scope"
+  },
+
+  "street_excavation": {
+    "permit_required": true,
+    "requirements": [
+      "Traffic control plan",
+      "Restoration to city standards",
+      "Bond may be required"
+    ],
+    "restrictions": {
+      "moratorium_streets": "5-year no-cut policy after resurfacing",
+      "winter": "Limited excavation Nov-March"
+    }
+  },
+
+  "obstructions": {
+    "prohibited": [
+      "Signs blocking sidewalk",
+      "Merchandise displays (without permit)",
+      "Vehicles parked on sidewalk",
+      "Construction materials",
+      "Overgrown vegetation"
+    ],
+    "vegetation": {
+      "trees_shrubs": "Maintain 8 feet clearance above sidewalk",
+      "from_street": "Clear branches to 14 feet above street"
+    }
+  },
+
+  "sidewalk_cafes": {
+    "permit_required": true,
+    "requirements": [
+      "4 feet clear passage minimum",
+      "Insurance required",
+      "Approved barriers",
+      "Annual renewal"
+    ],
+    "fee": "Based on square footage",
+    "hours": "As approved in permit"
+  },
+
+  "street_furniture": {
+    "benches_planters": {
+      "permit": "Encroachment permit required",
+      "location": "Cannot obstruct pedestrian flow",
+      "maintenance": "Owner responsibility"
+    },
+    "bike_racks": {
+      "installation": "Coordinate with DOTE",
+      "permit": "Required if on public property"
+    }
+  },
+
+  "ada_compliance": {
+    "requirements": [
+      "Curb ramps at all intersections",
+      "Detectable warnings (truncated domes)",
+      "Minimum 36-inch clear width",
+      "Maximum 2% cross-slope"
+    ],
+    "transition_plan": "City has ADA transition plan for improvements"
+  },
+
+  "reporting_hazards": {
+    "online": "https://www.cincinnati-oh.gov/csr/",
+    "phone": "513-591-6000",
+    "app": "Fix-It Cincy"
+  },
+
+  "penalties": {
+    "failure_to_repair": {
+      "fine": 150,
+      "city_repair": "Cost assessed to property + 10% admin fee"
+    },
+    "obstruction": 100,
+    "unpermitted_work": 250
+  },
+
+  "contact": {
+    "dote": "(513) 352-3650",
+    "permits": "(513) 352-3653",
+    "online": "https://www.cincinnati-oh.gov/dote/"
+  }
+}

@@ -31,6 +31,7 @@ model Jurisdiction {
   zoningParcels      ZoningParcel[]      @relation(name: "JurisdictionParcels")
   permitRequirements PermitRequirement[] @relation(name: "JurisdictionPermits")
   buildingCodeChunks BuildingCodeChunk[] @relation(name: "JurisdictionBuildingCodes")
+  overlayDistricts   OverlayDistrict[]   @relation(name: "JurisdictionOverlays")
 }
 
 model ZoningDistrict {
@@ -409,6 +410,38 @@ model ZoningParcel {
   @@index([jurisdictionId, parcelId])
   @@index([zoneCode])
   @@unique([jurisdictionId, parcelId])
+}
+
+// ============================================================================
+// OVERLAY DISTRICTS (Historic, Hillside, Urban Design, Flood, etc.)
+// ============================================================================
+
+model OverlayDistrict {
+  id              String       @id @default(cuid())
+  jurisdiction    Jurisdiction @relation(name: "JurisdictionOverlays", fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+
+  // Overlay type
+  overlayType     String       // "historic", "hillside", "urban_design", "flood", "landslide"
+  name            String       // e.g., "Over-the-Rhine", "Mt. Adams Hillside"
+  description     String?      // Additional details
+
+  // Geographic data
+  geometry        Json?        // GeoJSON polygon
+
+  // Additional properties from source
+  properties      Json?        // Raw properties from API
+
+  // Metadata
+  sourceUrl       String?
+  lastVerified    DateTime     @default(now())
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([jurisdictionId, overlayType])
+  @@index([overlayType])
 }
 
 // ============================================================================

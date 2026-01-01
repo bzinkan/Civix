@@ -1,0 +1,317 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "renovations",
+  "title": "Renovation and Remodeling Requirements",
+  "ordinance_reference": "Chapter 1101-1150, Ohio Building Code Chapter 34",
+  "summary": "Renovation projects in Cincinnati must comply with building codes, and may require permits, inspections, and special reviews depending on scope and property location.",
+
+  "renovation_categories": {
+    "level_1_alteration": {
+      "description": "Minor alterations, no structural changes",
+      "examples": [
+        "Replacing fixtures in same location",
+        "New flooring over existing",
+        "Painting and finishes",
+        "Cabinet replacement"
+      ],
+      "permit_required": "Usually no, unless electrical/plumbing affected",
+      "code_compliance": "Work must meet current code"
+    },
+    "level_2_alteration": {
+      "description": "Reconfiguration of space, new systems",
+      "examples": [
+        "Moving walls (non-structural)",
+        "Adding outlets or fixtures",
+        "New HVAC distribution",
+        "Kitchen/bath remodel"
+      ],
+      "permit_required": true,
+      "code_compliance": "Affected areas must meet current code"
+    },
+    "level_3_alteration": {
+      "description": "Major alterations affecting structure or systems",
+      "examples": [
+        "Removing load-bearing walls",
+        "Adding new floor area",
+        "Major system replacements",
+        "Change of occupancy type"
+      ],
+      "permit_required": true,
+      "code_compliance": "Entire building may need upgrades"
+    }
+  },
+
+  "common_renovations": {
+    "kitchen_remodel": {
+      "permit_needed": {
+        "no": ["Cabinet replacement", "Countertops", "Flooring", "Painting"],
+        "yes": ["Moving plumbing", "Adding outlets", "Gas line work", "Structural changes"]
+      },
+      "typical_permits": ["Building", "Plumbing", "Electrical"],
+      "inspections": ["Rough plumbing", "Rough electrical", "Final"]
+    },
+    "bathroom_remodel": {
+      "permit_needed": {
+        "no": ["Fixture replacement (same location)", "Tile work", "Vanity replacement"],
+        "yes": ["Moving fixtures", "Adding fixtures", "Shower pan", "Exhaust fan (new)"]
+      },
+      "typical_permits": ["Building", "Plumbing", "Electrical"],
+      "inspections": ["Rough plumbing", "Final"]
+    },
+    "basement_finishing": {
+      "permit_required": true,
+      "requirements": [
+        "Egress window (if bedroom)",
+        "Smoke/CO detectors",
+        "Ceiling height (7 ft minimum)",
+        "Electrical circuits",
+        "HVAC for conditioned space"
+      ],
+      "typical_permits": ["Building", "Electrical", "Mechanical"],
+      "inspections": ["Framing", "Rough electrical", "Insulation", "Final"]
+    },
+    "window_replacement": {
+      "permit_needed": {
+        "no": ["Same size, same location"],
+        "yes": ["Different size", "New opening", "Historic district"]
+      },
+      "energy_code": "Must meet current energy code requirements",
+      "historic": "Certificate of Appropriateness required in historic districts"
+    },
+    "roof_replacement": {
+      "permit_needed": {
+        "no": ["Overlay on single existing layer (check local rules)"],
+        "yes": ["Tear-off and replace", "Structural repairs", "Adding skylights"]
+      },
+      "requirements": ["Ice and water shield at eaves", "Proper ventilation"]
+    },
+    "hvac_replacement": {
+      "permit_required": true,
+      "requirements": [
+        "Load calculation",
+        "Proper sizing",
+        "Code-compliant installation",
+        "EPA refrigerant handling (if applicable)"
+      ],
+      "licensed_contractor": true
+    },
+    "electrical_panel_upgrade": {
+      "permit_required": true,
+      "requirements": [
+        "Utility coordination",
+        "Proper grounding",
+        "Arc-fault protection (bedrooms)",
+        "GFCI protection (wet areas)"
+      ],
+      "licensed_contractor": true
+    }
+  },
+
+  "commercial_renovations": {
+    "tenant_improvement": {
+      "permit_required": true,
+      "requirements": [
+        "Landlord authorization",
+        "Architect/engineer drawings (over $50K)",
+        "ADA compliance",
+        "Fire/life safety review",
+        "Certificate of occupancy"
+      ],
+      "timeline": "2-6 weeks plan review typical"
+    },
+    "change_of_use": {
+      "examples": ["Retail to restaurant", "Office to residential", "Warehouse to event space"],
+      "requirements": [
+        "Zoning certificate",
+        "Building code analysis",
+        "Fire separation requirements",
+        "Parking analysis",
+        "ADA upgrades"
+      ],
+      "may_trigger": ["Sprinkler requirement", "Full code compliance"]
+    },
+    "ada_compliance": {
+      "when_triggered": [
+        "Alterations exceeding 20% of building value",
+        "Change of use",
+        "Primary function area renovation"
+      ],
+      "path_of_travel": "Must be made accessible up to 20% of project cost"
+    }
+  },
+
+  "historic_renovations": {
+    "what_triggers_review": [
+      "Exterior changes visible from public way",
+      "Window replacement (any type)",
+      "Siding or cladding changes",
+      "Additions",
+      "Demolition (full or partial)"
+    ],
+    "exempt_from_review": [
+      "Interior work (unless affecting structure)",
+      "In-kind repairs with matching materials",
+      "Mechanical equipment not visible"
+    ],
+    "certificate_of_appropriateness": {
+      "minor_work": {
+        "process": "Staff review",
+        "timeline": "1-2 weeks",
+        "examples": ["In-kind repairs", "Storm windows", "Minor repairs"]
+      },
+      "major_work": {
+        "process": "Historic Conservation Board hearing",
+        "timeline": "Monthly meetings, submit 3 weeks prior",
+        "examples": ["New windows", "Additions", "Major alterations"]
+      }
+    },
+    "approved_materials": {
+      "windows": "Wood or approved aluminum-clad (profile must match historic)",
+      "siding": "Match original material and profile",
+      "roofing": "Slate, standing seam, or approved alternative",
+      "masonry": "Repoint with lime morite, no Portland cement"
+    },
+    "tax_credits": {
+      "federal": "20% for certified historic rehabilitation",
+      "ohio": "25% for owner-occupied historic homes",
+      "requirements": "Must follow Secretary of Interior Standards"
+    }
+  },
+
+  "structural_modifications": {
+    "load_bearing_walls": {
+      "identification": "Consult structural engineer or original plans",
+      "removal_requirements": [
+        "Structural engineer design",
+        "Proper beam/header sizing",
+        "Adequate bearing points",
+        "Building permit"
+      ],
+      "permit_required": true,
+      "inspection": "Framing inspection before covering"
+    },
+    "foundation_work": {
+      "types": ["Repair", "Underpinning", "Waterproofing", "Addition footings"],
+      "permit_required": true,
+      "engineer_required": "Yes for structural modifications"
+    },
+    "floor_system": {
+      "modifications": ["Removing subfloor", "Adding openings", "Sistering joists"],
+      "permit_required": "If structural, yes",
+      "inspection": "Before covering"
+    }
+  },
+
+  "code_compliance": {
+    "existing_buildings": {
+      "general_rule": "Existing conditions may remain unless altered",
+      "when_upgrade_required": [
+        "Work affects that system",
+        "Change of use",
+        "Addition over 50% of building area",
+        "Substantial improvement in flood zone"
+      ]
+    },
+    "common_upgrades_triggered": {
+      "smoke_detectors": "Required in all sleeping areas, each level",
+      "carbon_monoxide": "Required if fuel-burning appliances",
+      "gfci_outlets": "Required in kitchens, baths, garages, outdoors",
+      "arc_fault": "Required in bedrooms (new circuits)",
+      "egress_windows": "Required in bedrooms"
+    },
+    "non_conforming_buildings": {
+      "rule": "May continue if legally established",
+      "limits": "Alterations limited to 50% of value without full compliance"
+    }
+  },
+
+  "working_in_occupied_buildings": {
+    "residential": {
+      "considerations": [
+        "Dust/debris containment",
+        "Maintain egress paths",
+        "Temporary utilities if needed",
+        "Lead paint/asbestos testing in pre-1978 buildings"
+      ]
+    },
+    "commercial": {
+      "considerations": [
+        "Fire watch if sprinklers impaired",
+        "Maintain exit pathways",
+        "Phased construction",
+        "After-hours work may be required"
+      ]
+    }
+  },
+
+  "environmental_concerns": {
+    "lead_paint": {
+      "applies_to": "Buildings built before 1978",
+      "requirements": [
+        "EPA RRP Rule compliance",
+        "Certified renovator required",
+        "Containment procedures",
+        "Proper disposal"
+      ],
+      "exemptions": ["Minor maintenance under 6 sq ft interior, 20 sq ft exterior"]
+    },
+    "asbestos": {
+      "applies_to": "Buildings built before 1980",
+      "requirements": [
+        "Testing before demolition/renovation",
+        "Licensed abatement if present",
+        "Notification to OEPA",
+        "Proper disposal"
+      ]
+    },
+    "mold": {
+      "discovery": "Must be addressed before finishing work",
+      "remediation": "Follow industry standards (IICRC S520)"
+    }
+  },
+
+  "project_timeline": {
+    "small_residential": {
+      "permit_review": "1-2 weeks",
+      "typical_duration": "Kitchen: 3-6 weeks, Bathroom: 2-4 weeks"
+    },
+    "large_residential": {
+      "permit_review": "2-4 weeks",
+      "typical_duration": "Addition: 3-6 months, Whole house: 6-12 months"
+    },
+    "commercial": {
+      "permit_review": "3-6 weeks",
+      "typical_duration": "Varies widely by scope"
+    }
+  },
+
+  "tips_for_contractors": {
+    "before_starting": [
+      "Verify property ownership and get written authorization",
+      "Check for historic district or overlay zones",
+      "Review HOA or condo association rules",
+      "Get all permits before starting work",
+      "Call 811 before any digging"
+    ],
+    "during_construction": [
+      "Post permits visibly at job site",
+      "Schedule inspections in advance",
+      "Document changes from plans",
+      "Maintain clean and safe site"
+    ],
+    "at_completion": [
+      "Get final inspections signed off",
+      "Obtain certificate of occupancy if required",
+      "Provide homeowner with permits and documentation",
+      "Close out permits properly"
+    ]
+  },
+
+  "contact": {
+    "building_permits": "(513) 352-3276",
+    "plan_review": "(513) 352-3276",
+    "inspections": "(513) 352-3276",
+    "historic": "(513) 352-4822",
+    "zoning": "(513) 352-3276"
+  }
+}

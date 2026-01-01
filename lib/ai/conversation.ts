@@ -255,7 +255,7 @@ async function updateConversation(context: ConversationContext) {
   await prisma.conversation.update({
     where: { id: context.conversationId },
     data: {
-      jurisdiction: context.jurisdiction,
+      jurisdictionName: context.jurisdiction,
       category: context.category,
       subcategory: context.subcategory,
       collectedInputs: context.collectedInputs,
@@ -316,7 +316,7 @@ export async function loadConversation(conversationId: string): Promise<Conversa
     conversationId: conversation.id,
     userId: conversation.userId || undefined,
     fingerprint: conversation.fingerprint || undefined,
-    jurisdiction: conversation.jurisdiction || undefined,
+    jurisdiction: conversation.jurisdictionName || undefined,
     category: conversation.category || undefined,
     subcategory: conversation.subcategory || undefined,
     collectedInputs: (conversation.collectedInputs as Record<string, any>) || {},

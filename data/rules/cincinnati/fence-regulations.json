@@ -1,0 +1,121 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "fence",
+  "title": "Fence Regulations",
+  "ordinance_reference": "Cincinnati Zoning Code Section 1421-07",
+  "summary": "Fence height and placement rules vary by zone and location on property.",
+
+  "permit_requirements": {
+    "when_required": "Fences over 6 feet in any location",
+    "when_not_required": "Fences 6 feet or under meeting setback requirements",
+    "historic_district": "All exterior work requires Certificate of Appropriateness"
+  },
+
+  "height_limits": {
+    "residential_zones": {
+      "front_yard": {
+        "max_height_feet": 4,
+        "max_height_inches": 48,
+        "notes": "Measured from grade at fence location"
+      },
+      "side_yard_front_portion": {
+        "max_height_feet": 4,
+        "description": "Side yard between front building line and street"
+      },
+      "side_yard_rear_portion": {
+        "max_height_feet": 6,
+        "description": "Side yard behind front building line"
+      },
+      "rear_yard": {
+        "max_height_feet": 6,
+        "max_height_inches": 72
+      },
+      "corner_lot": {
+        "street_side": 4,
+        "interior_side": 6,
+        "notes": "Street-facing sides treated as front yard"
+      }
+    },
+    "commercial_zones": {
+      "max_height_feet": 8,
+      "notes": "May be higher with variance"
+    }
+  },
+
+  "setback_requirements": {
+    "from_property_line": {
+      "minimum_inches": 0,
+      "notes": "Can be built on property line, but check survey first"
+    },
+    "from_sidewalk": {
+      "minimum_feet": 1,
+      "notes": "Cannot obstruct public right-of-way"
+    },
+    "vision_clearance": {
+      "description": "At intersections and driveways, fences over 30 inches must be set back",
+      "triangle": "Sight triangle typically 25 feet on each side"
+    }
+  },
+
+  "material_requirements": {
+    "allowed": [
+      "Wood",
+      "Vinyl/PVC",
+      "Chain link",
+      "Wrought iron",
+      "Aluminum",
+      "Composite materials",
+      "Masonry (with proper footer)"
+    ],
+    "prohibited": [
+      "Barbed wire (except industrial zones)",
+      "Electric fencing (residential)",
+      "Hazardous materials"
+    ],
+    "maintenance": "Fences must be maintained in good condition, not leaning or falling"
+  },
+
+  "special_cases": {
+    "pool_fencing": {
+      "required": true,
+      "minimum_height_feet": 4,
+      "gate_requirements": "Self-closing, self-latching",
+      "ordinance_reference": "Ohio Building Code"
+    },
+    "retaining_walls": {
+      "separate_permit": "Required if over 4 feet",
+      "engineering": "May require engineer stamp"
+    }
+  },
+
+  "historic_districts": {
+    "additional_review": true,
+    "authority": "Historic Conservation Board",
+    "considerations": [
+      "Material compatibility",
+      "Style appropriate to neighborhood",
+      "Height may be restricted further"
+    ]
+  },
+
+  "variance_process": {
+    "when_needed": "To exceed height limits or other requirements",
+    "apply_to": "Board of Zoning Appeals",
+    "fee": 350,
+    "hearing_required": true
+  },
+
+  "penalties": {
+    "non_compliant_fence": {
+      "notice": "Written notice to correct",
+      "timeline": "30 days to comply",
+      "fine": "Up to $500 per day after notice period"
+    }
+  },
+
+  "common_questions": {
+    "good_side_facing": "No requirement, but neighborly to face good side out",
+    "neighbor_consent": "Not required if on your property, but recommended to discuss",
+    "shared_fence": "Both owners responsible for maintenance if on property line"
+  }
+}

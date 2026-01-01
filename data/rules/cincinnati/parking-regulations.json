@@ -1,0 +1,108 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "parking",
+  "title": "Street Parking Regulations",
+  "ordinance_reference": "Chapter 503-506",
+  "summary": "Street parking rules vary by location, time, and permit status.",
+
+  "general_rules": {
+    "direction": "Must park in direction of traffic flow",
+    "distance_from_curb": "Within 12 inches of curb",
+    "time_limit_default": "Varies by posted signs, typically 2 hours in business districts"
+  },
+
+  "prohibited_parking": {
+    "always_prohibited": [
+      "Within 10 feet of fire hydrant",
+      "In front of driveway",
+      "On sidewalk",
+      "Within intersection",
+      "On crosswalk",
+      "Double parking",
+      "Within 30 feet of stop sign",
+      "Within 20 feet of crosswalk at intersection",
+      "In bus stop zone",
+      "In loading zone (without permit)",
+      "Blocking wheelchair ramp"
+    ],
+    "overnight_parking": {
+      "downtown": "Generally prohibited 2 AM - 6 AM without permit",
+      "residential": "Allowed unless posted otherwise"
+    }
+  },
+
+  "permit_parking": {
+    "residential_permit": {
+      "description": "For neighborhoods with permit parking zones",
+      "fee": 25,
+      "period": "Annual",
+      "eligibility": "Residents within designated zone",
+      "apply_at": "Cincinnati Parking Facilities"
+    },
+    "visitor_permits": {
+      "available": true,
+      "limit": "Varies by zone",
+      "duration": "Temporary"
+    }
+  },
+
+  "metered_parking": {
+    "hours": {
+      "typically": "8 AM - 9 PM Monday-Saturday",
+      "sunday": "Usually free",
+      "holidays": "Usually free on major holidays"
+    },
+    "payment_methods": [
+      "Coin (quarters)",
+      "Credit card at multi-space meters",
+      "Parkmobile app"
+    ],
+    "overtime_parking": {
+      "fine": 35,
+      "increased_after": "Fine increases if unpaid after 10 days"
+    }
+  },
+
+  "street_cleaning": {
+    "schedule": "Posted on signs",
+    "restriction": "No parking during posted hours",
+    "fine": 35,
+    "towing": "Possible if blocking sweeper"
+  },
+
+  "snow_emergency": {
+    "see_also": "snow-removal.json",
+    "parking_ban": "No parking on snow emergency routes",
+    "fine": 50,
+    "towing": "Vehicles towed at owner expense"
+  },
+
+  "abandoned_vehicles": {
+    "definition": "Vehicle not moved for 72+ hours",
+    "report_to": "Cincinnati Police non-emergency or CSR",
+    "removal": "City may tow after proper notice"
+  },
+
+  "fines": {
+    "expired_meter": 35,
+    "overtime_parking": 35,
+    "no_parking_zone": 50,
+    "fire_hydrant": 100,
+    "handicap_zone": 250,
+    "fire_lane": 100,
+    "snow_emergency": 50,
+    "street_cleaning": 35
+  },
+
+  "appeals": {
+    "deadline": "30 days from citation date",
+    "how_to_appeal": "Online or in person at Parking Court",
+    "url": "https://www.cincinnati-oh.gov/parking/"
+  },
+
+  "contact": {
+    "parking_violations": "(513) 352-3542",
+    "towed_vehicles": "(513) 352-5900",
+    "report_issues": "https://www.cincinnati-oh.gov/csr/"
+  }
+}

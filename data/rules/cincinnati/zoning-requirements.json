@@ -1,0 +1,367 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "zoning_requirements",
+  "title": "Zoning Requirements and Development Standards",
+  "ordinance_reference": "Cincinnati Zoning Code, Title XIV",
+  "summary": "Cincinnati's zoning code establishes permitted uses, building heights, setbacks, lot coverage, and parking requirements for each zone district.",
+
+  "residential_zones": {
+    "SF-20": {
+      "name": "Single-Family Residential",
+      "min_lot_size": 20000,
+      "min_lot_width": 100,
+      "max_height": 35,
+      "max_stories": 2.5,
+      "setbacks": {
+        "front": 35,
+        "side": 10,
+        "rear": 30
+      },
+      "max_lot_coverage": 0.25,
+      "permitted_uses": ["Single-family dwelling", "Home occupation", "Accessory structures"]
+    },
+    "SF-10": {
+      "name": "Single-Family Residential",
+      "min_lot_size": 10000,
+      "min_lot_width": 70,
+      "max_height": 35,
+      "max_stories": 2.5,
+      "setbacks": {
+        "front": 30,
+        "side": 8,
+        "rear": 25
+      },
+      "max_lot_coverage": 0.30,
+      "permitted_uses": ["Single-family dwelling", "Home occupation", "Accessory structures"]
+    },
+    "SF-6": {
+      "name": "Single-Family Residential",
+      "min_lot_size": 6000,
+      "min_lot_width": 50,
+      "max_height": 35,
+      "max_stories": 2.5,
+      "setbacks": {
+        "front": 25,
+        "side": 5,
+        "rear": 25
+      },
+      "max_lot_coverage": 0.35,
+      "permitted_uses": ["Single-family dwelling", "Home occupation", "Accessory structures"]
+    },
+    "SF-4": {
+      "name": "Single-Family Residential",
+      "min_lot_size": 4000,
+      "min_lot_width": 40,
+      "max_height": 35,
+      "max_stories": 2.5,
+      "setbacks": {
+        "front": 20,
+        "side": 4,
+        "rear": 20
+      },
+      "max_lot_coverage": 0.40,
+      "permitted_uses": ["Single-family dwelling", "Home occupation", "Accessory structures"]
+    },
+    "SF-2": {
+      "name": "Single-Family Residential (Urban)",
+      "min_lot_size": 2000,
+      "min_lot_width": 25,
+      "max_height": 35,
+      "max_stories": 2.5,
+      "setbacks": {
+        "front": 10,
+        "side": 3,
+        "rear": 15
+      },
+      "max_lot_coverage": 0.50,
+      "permitted_uses": ["Single-family dwelling", "Home occupation", "Accessory structures"]
+    },
+    "RM-0.7": {
+      "name": "Multi-Family Residential (Low Density)",
+      "max_far": 0.7,
+      "min_lot_size": 6000,
+      "max_height": 35,
+      "setbacks": {
+        "front": 25,
+        "side": 8,
+        "rear": 25
+      },
+      "max_lot_coverage": 0.40,
+      "permitted_uses": ["Single-family", "Two-family", "Multi-family", "Home occupation"]
+    },
+    "RM-1.2": {
+      "name": "Multi-Family Residential (Medium Density)",
+      "max_far": 1.2,
+      "min_lot_size": 6000,
+      "max_height": 45,
+      "setbacks": {
+        "front": 20,
+        "side": 8,
+        "rear": 20
+      },
+      "max_lot_coverage": 0.45,
+      "permitted_uses": ["Single-family", "Two-family", "Multi-family", "Home occupation"]
+    },
+    "RM-2.0": {
+      "name": "Multi-Family Residential (High Density)",
+      "max_far": 2.0,
+      "min_lot_size": 6000,
+      "max_height": 65,
+      "setbacks": {
+        "front": 15,
+        "side": 10,
+        "rear": 15
+      },
+      "max_lot_coverage": 0.50,
+      "permitted_uses": ["Single-family", "Two-family", "Multi-family", "Home occupation", "Mixed-use with ground floor commercial"]
+    }
+  },
+
+  "commercial_zones": {
+    "CN-P": {
+      "name": "Commercial Neighborhood (Pedestrian)",
+      "max_far": 1.0,
+      "max_height": 35,
+      "setbacks": {
+        "front": 0,
+        "side": 0,
+        "rear": 10
+      },
+      "permitted_uses": ["Retail", "Restaurant", "Office", "Residential upper floors"],
+      "parking": "May be reduced or waived"
+    },
+    "CC-P": {
+      "name": "Commercial Community (Pedestrian)",
+      "max_far": 2.0,
+      "max_height": 45,
+      "setbacks": {
+        "front": 0,
+        "side": 0,
+        "rear": 10
+      },
+      "permitted_uses": ["Retail", "Restaurant", "Office", "Entertainment", "Residential upper floors"],
+      "parking": "Reduced requirements"
+    },
+    "CC-A": {
+      "name": "Commercial Community (Auto-Oriented)",
+      "max_far": 1.0,
+      "max_height": 45,
+      "setbacks": {
+        "front": 25,
+        "side": 10,
+        "rear": 20
+      },
+      "permitted_uses": ["Retail", "Restaurant", "Auto-oriented uses", "Office"],
+      "parking": "Standard requirements"
+    },
+    "CC-M": {
+      "name": "Commercial Community (Mixed)",
+      "max_far": 1.5,
+      "max_height": 45,
+      "setbacks": {
+        "front": 10,
+        "side": 5,
+        "rear": 15
+      },
+      "permitted_uses": ["Retail", "Restaurant", "Office", "Light industrial"],
+      "parking": "Standard requirements"
+    },
+    "CG": {
+      "name": "Commercial General",
+      "max_far": 2.0,
+      "max_height": 65,
+      "setbacks": {
+        "front": 25,
+        "side": 10,
+        "rear": 20
+      },
+      "permitted_uses": ["All commercial", "Light manufacturing", "Warehouse"],
+      "parking": "Standard requirements"
+    }
+  },
+
+  "downtown_zones": {
+    "DD-A": {
+      "name": "Downtown Development (Type A - Core)",
+      "max_far": 12.0,
+      "max_height": "No limit",
+      "setbacks": {
+        "front": 0,
+        "side": 0,
+        "rear": 0
+      },
+      "permitted_uses": ["All commercial", "Residential", "Entertainment", "Hotel"],
+      "parking": "Reduced or eliminated"
+    },
+    "DD-B": {
+      "name": "Downtown Development (Type B)",
+      "max_far": 8.0,
+      "max_height": 200,
+      "setbacks": {
+        "front": 0,
+        "side": 0,
+        "rear": 0
+      },
+      "permitted_uses": ["All commercial", "Residential", "Entertainment"],
+      "parking": "Reduced requirements"
+    },
+    "DD-C": {
+      "name": "Downtown Development (Type C - Transition)",
+      "max_far": 4.0,
+      "max_height": 85,
+      "setbacks": {
+        "front": 0,
+        "side": 0,
+        "rear": 10
+      },
+      "permitted_uses": ["Commercial", "Residential", "Light industrial"],
+      "parking": "Standard requirements"
+    }
+  },
+
+  "manufacturing_zones": {
+    "ML": {
+      "name": "Manufacturing Light",
+      "max_far": 1.0,
+      "max_height": 45,
+      "setbacks": {
+        "front": 25,
+        "side": 10,
+        "rear": 20
+      },
+      "permitted_uses": ["Light manufacturing", "Warehouse", "Office", "Research"],
+      "prohibited": "Heavy industry, residential"
+    },
+    "MG": {
+      "name": "Manufacturing General",
+      "max_far": 2.0,
+      "max_height": 65,
+      "setbacks": {
+        "front": 25,
+        "side": 10,
+        "rear": 25
+      },
+      "permitted_uses": ["All manufacturing", "Warehouse", "Industrial"],
+      "prohibited": "Residential"
+    }
+  },
+
+  "accessory_structures": {
+    "general_rules": {
+      "location": "Rear yard only (side yard with conditions)",
+      "setback_rear": 3,
+      "setback_side": 3,
+      "max_coverage": "With principal building, cannot exceed lot coverage limit"
+    },
+    "detached_garage": {
+      "max_height": 15,
+      "max_area": "720 sq ft or 75% of principal building footprint, whichever less",
+      "setback_from_alley": 3
+    },
+    "shed": {
+      "no_permit_under": 120,
+      "max_height": 10,
+      "setback": 3
+    },
+    "pool": {
+      "permit_required": true,
+      "setback": 10,
+      "fence_required": "4 feet with self-closing gate"
+    },
+    "adu": {
+      "name": "Accessory Dwelling Unit",
+      "allowed": "By conditional use in most residential zones",
+      "max_size": "800 sq ft or 50% of principal, whichever less",
+      "requirements": ["Owner occupancy in one unit", "Parking space"]
+    }
+  },
+
+  "parking_requirements": {
+    "residential": {
+      "single_family": "2 spaces",
+      "two_family": "2 spaces per unit",
+      "multi_family": "1.5 spaces per unit (may vary by zone)"
+    },
+    "commercial": {
+      "retail": "1 per 300 sq ft",
+      "office": "1 per 400 sq ft",
+      "restaurant": "1 per 100 sq ft dining area",
+      "warehouse": "1 per 2000 sq ft"
+    },
+    "reductions": {
+      "transit_proximity": "Up to 25% reduction within 1/4 mile of transit",
+      "shared_parking": "Allowed with shared parking agreement",
+      "downtown": "Reduced or waived in DD zones",
+      "pedestrian_zones": "Reduced in CN-P, CC-P"
+    }
+  },
+
+  "variances_and_exceptions": {
+    "variance": {
+      "when_needed": "Cannot meet dimensional requirements",
+      "board": "Board of Zoning Appeals",
+      "criteria": [
+        "Practical difficulty",
+        "Not self-created hardship",
+        "Minimum variance necessary",
+        "Not detrimental to neighbors"
+      ],
+      "process": "Application, neighbor notification, public hearing"
+    },
+    "conditional_use": {
+      "when_needed": "Use allowed but requires approval",
+      "board": "Board of Zoning Appeals or Zoning Hearing Examiner",
+      "criteria": [
+        "Compatible with neighborhood",
+        "Adequate parking and access",
+        "No adverse impacts"
+      ]
+    },
+    "planned_development": {
+      "purpose": "Flexibility for larger projects",
+      "approval": "City Planning Commission, City Council",
+      "benefits": "Can modify dimensional requirements"
+    }
+  },
+
+  "common_zoning_issues": {
+    "setback_encroachment": {
+      "existing": "May continue if legally established",
+      "expansion": "Cannot expand into setback without variance"
+    },
+    "height_exceptions": {
+      "allowed_to_exceed": ["Chimneys", "Antennas", "Mechanical equipment", "Architectural features"],
+      "limits": "Usually 10-15 feet above roof"
+    },
+    "nonconforming_use": {
+      "continuation": "May continue legally established nonconforming use",
+      "expansion": "Limited - usually cannot expand more than 25%",
+      "abandonment": "If discontinued for 12 months, loses nonconforming status"
+    }
+  },
+
+  "zoning_certificate": {
+    "when_required": [
+      "New construction",
+      "Additions",
+      "Change of use",
+      "New business",
+      "Home occupation"
+    ],
+    "fee": 75,
+    "review_time": "5-10 business days",
+    "what_it_confirms": [
+      "Use is permitted in zone",
+      "Setbacks are met",
+      "Parking is adequate",
+      "No overlay restrictions"
+    ]
+  },
+
+  "contact": {
+    "zoning": "(513) 352-3276",
+    "planning": "(513) 352-4866",
+    "board_of_zoning_appeals": "(513) 352-3276",
+    "online": "https://www.cincinnati-oh.gov/planning/"
+  }
+}

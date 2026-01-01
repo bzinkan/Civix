@@ -1,0 +1,85 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "short_term_rental",
+  "title": "Short-Term Rental (Airbnb/VRBO) Regulations",
+  "effective_date": "2019-07-01",
+  "ordinance_reference": "Chapter 856",
+  "summary": "Cincinnati requires registration for all short-term rentals. Rules vary based on owner occupancy and building type.",
+
+  "definitions": {
+    "short_term_rental": "Rental of a dwelling unit for less than 30 consecutive days",
+    "operator": "Person who operates or is responsible for the short-term rental",
+    "hosting_platform": "Website or app used to list/book short-term rentals (Airbnb, VRBO, etc.)"
+  },
+
+  "requirements": {
+    "registration": {
+      "required": true,
+      "fee": 100,
+      "fee_period": "3 years",
+      "department": "Department of Buildings and Inspections",
+      "documents_required": [
+        "Proof of ownership or written landlord consent",
+        "Floor plan showing rental unit",
+        "Proof of liability insurance ($500,000 minimum)",
+        "Lead-based paint disclosure (for buildings built before 1978)"
+      ]
+    },
+    "owner_occupied": {
+      "description": "Owner or long-term tenant must live on-site",
+      "units_allowed": "Unlimited registrations if owner-occupied",
+      "exemptions": "Units in historic districts may have additional limits"
+    },
+    "non_owner_occupied": {
+      "description": "Owner does not live on-site",
+      "units_allowed": "Maximum 2 per building",
+      "cap": "City-wide cap may apply based on neighborhood"
+    }
+  },
+
+  "prohibited_zones": [
+    "Units in buildings with open code violations",
+    "Units without proper fire safety equipment"
+  ],
+
+  "operational_requirements": {
+    "max_occupancy": "2 persons per bedroom plus 2 additional (max 10)",
+    "parking": "Must not create parking issues for neighbors",
+    "noise": "Subject to all noise ordinances (Chapter 909)",
+    "trash": "Operator responsible for proper waste disposal",
+    "signage": "No external advertising signs allowed on residential property",
+    "contact_info": "Must provide 24/7 contact number to city and neighbors"
+  },
+
+  "penalties": {
+    "operating_without_registration": {
+      "first_offense": 500,
+      "subsequent": 1000,
+      "per_day": true
+    },
+    "violations": {
+      "minor": 100,
+      "major": 500,
+      "revocation": "3 violations in 12 months may result in registration revocation"
+    }
+  },
+
+  "inspection": {
+    "required": true,
+    "frequency": "Before initial registration and upon complaint",
+    "scope": "Fire safety, occupancy limits, building code compliance"
+  },
+
+  "related_forms": [
+    {
+      "name": "Short-Term Rental Registration Application",
+      "url": "https://www.cincinnati-oh.gov/buildings/"
+    }
+  ],
+
+  "contact": {
+    "department": "Department of Buildings and Inspections",
+    "phone": "(513) 352-3100",
+    "email": "buildingpermits@cincinnati-oh.gov"
+  }
+}

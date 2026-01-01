@@ -203,7 +203,7 @@ def main():
             print(f"   [OK] Downloaded ({file_size_mb:.2f} MB)")
 
             # Upload to S3
-            print(f"   📤 Uploading to S3...")
+            print(f"   Uploading to S3...")
             s3_url, https_url = upload_to_s3(local_path, s3_key)
 
             if s3_url:
@@ -235,7 +235,7 @@ def main():
     with open(manifest_path, 'w') as f:
         json.dump(manifest, f, indent=2)
 
-    print(f"✓ Saved manifest to: {manifest_path}\n")
+    print(f"[OK] Saved manifest to: {manifest_path}\n")
 
     # Upload manifest to S3
     s3_manifest_key = f"{S3_PREFIX}manifest.json"
@@ -246,9 +246,9 @@ def main():
             s3_manifest_key,
             ExtraArgs={'ContentType': 'application/json'}
         )
-        print(f"✓ Uploaded manifest to S3: s3://{S3_BUCKET}/{s3_manifest_key}\n")
+        print(f"[OK] Uploaded manifest to S3: s3://{S3_BUCKET}/{s3_manifest_key}\n")
     except Exception as e:
-        print(f"⚠ Failed to upload manifest to S3: {e}\n")
+        print(f"WARNING: Failed to upload manifest to S3: {e}\n")
 
     # Summary
     print("================================================================")

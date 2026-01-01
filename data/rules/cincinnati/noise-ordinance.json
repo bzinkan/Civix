@@ -1,0 +1,135 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "topic": "noise",
+  "title": "Noise Regulations",
+  "ordinance_reference": "Chapter 909",
+  "summary": "Cincinnati regulates noise levels based on zone type and time of day.",
+
+  "definitions": {
+    "noise_disturbance": "Any sound that exceeds permitted levels or unreasonably disturbs the peace",
+    "plainly_audible": "Sound that can be clearly heard at a specified distance"
+  },
+
+  "quiet_hours": {
+    "residential": {
+      "start": "22:00",
+      "end": "07:00",
+      "description": "Quiet hours in residential zones"
+    },
+    "commercial": {
+      "start": "23:00",
+      "end": "06:00",
+      "description": "Quiet hours in commercial zones"
+    }
+  },
+
+  "decibel_limits": {
+    "residential_zone": {
+      "daytime": {
+        "limit_dba": 65,
+        "hours": "7:00 AM - 10:00 PM"
+      },
+      "nighttime": {
+        "limit_dba": 55,
+        "hours": "10:00 PM - 7:00 AM"
+      }
+    },
+    "commercial_zone": {
+      "daytime": {
+        "limit_dba": 70,
+        "hours": "7:00 AM - 11:00 PM"
+      },
+      "nighttime": {
+        "limit_dba": 65,
+        "hours": "11:00 PM - 7:00 AM"
+      }
+    },
+    "industrial_zone": {
+      "all_hours": {
+        "limit_dba": 75
+      }
+    }
+  },
+
+  "prohibited_noises": [
+    {
+      "type": "loud_music",
+      "description": "Music plainly audible at 50 feet from source",
+      "hours": "10:00 PM - 8:00 AM"
+    },
+    {
+      "type": "construction",
+      "description": "Construction noise without permit",
+      "hours": "Before 7:00 AM or after 9:00 PM weekdays, before 9:00 AM or after 5:00 PM weekends"
+    },
+    {
+      "type": "motor_vehicle",
+      "description": "Loud exhaust, horn honking (non-emergency), stereo audible at 25 feet"
+    },
+    {
+      "type": "animals",
+      "description": "Dogs barking continuously for more than 10 minutes"
+    },
+    {
+      "type": "amplified_sound",
+      "description": "Outdoor amplified sound without permit"
+    }
+  ],
+
+  "exemptions": [
+    "Emergency vehicles and equipment",
+    "Licensed construction with valid permit during allowed hours",
+    "Public events with special event permit",
+    "Religious institutions during services",
+    "Licensed entertainment venues with proper permits",
+    "Snow removal equipment",
+    "Lawn equipment between 7:00 AM and 9:00 PM"
+  ],
+
+  "construction_hours": {
+    "weekdays": {
+      "start": "07:00",
+      "end": "21:00"
+    },
+    "saturday": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "sunday_holidays": {
+      "permitted": false,
+      "exception": "Emergency repairs with permit"
+    }
+  },
+
+  "penalties": {
+    "first_offense": {
+      "fine": 150,
+      "type": "minor misdemeanor"
+    },
+    "second_offense": {
+      "fine": 250,
+      "type": "minor misdemeanor"
+    },
+    "third_offense": {
+      "fine": 500,
+      "type": "misdemeanor",
+      "additional": "Possible equipment seizure"
+    }
+  },
+
+  "complaint_process": {
+    "who_to_call": "Cincinnati Police Non-Emergency",
+    "phone": "513-765-1212",
+    "online": "https://www.cincinnati-oh.gov/police/",
+    "response": "Officer will assess and may issue citation"
+  },
+
+  "special_permits": {
+    "amplified_sound_permit": {
+      "required_for": "Outdoor concerts, festivals, block parties",
+      "fee": 50,
+      "apply_to": "Special Events Office",
+      "advance_notice": "30 days"
+    }
+  }
+}
