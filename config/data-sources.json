@@ -1,0 +1,138 @@
+{
+  "cincinnati-oh": {
+    "jurisdiction": {
+      "name": "Cincinnati",
+      "state": "OH",
+      "county": "Hamilton",
+      "id": "cincinnati-oh"
+    },
+    "apis": {
+      "cagis": {
+        "name": "CAGIS (Cincinnati Area Geographic Information System)",
+        "baseUrl": "https://cagisonline.hamilton-co.org/arcgis/rest/services",
+        "endpoints": {
+          "zoning": {
+            "url": "https://cagisonline.hamilton-co.org/arcgis/rest/services/Countywide_Layers/Zoning/MapServer/4/query",
+            "description": "Zoning district data for parcels",
+            "format": "GeoJSON",
+            "queryParams": {
+              "where": "1=1",
+              "outFields": "*",
+              "f": "geojson"
+            },
+            "fields": [
+              "OBJECTID",
+              "ZONING_CODE",
+              "ZONING_DESC",
+              "PARCEL_ID",
+              "ADDRESS",
+              "GEOMETRY"
+            ]
+          },
+          "parcels": {
+            "url": "https://cagisonline.hamilton-co.org/arcgis/rest/services/Countywide_Layers/AuditorParcelInformation/MapServer",
+            "description": "Parcel information from Hamilton County Auditor",
+            "format": "GeoJSON",
+            "queryParams": {
+              "where": "1=1",
+              "outFields": "*",
+              "f": "geojson"
+            },
+            "fields": [
+              "PARCEL_ID",
+              "ADDRESS",
+              "OWNER_NAME",
+              "LAND_USE",
+              "ACREAGE",
+              "GEOMETRY"
+            ]
+          }
+        }
+      }
+    },
+    "dataSources": {
+      "ordinances": {
+        "status": "complete",
+        "source": "Local file",
+        "location": "public/ordinances/cincinnati/full-ordinances.txt",
+        "s3Location": "s3://civix-documents/cincinnati-oh/ordinances/full-ordinances.txt",
+        "loaded": true,
+        "recordCount": 1418,
+        "lastUpdated": "2025-12-31"
+      },
+      "zoning": {
+        "status": "pending",
+        "source": "CAGIS API",
+        "apiEndpoint": "https://cagisonline.hamilton-co.org/arcgis/rest/services/Countywide_Layers/Zoning/MapServer/4/query",
+        "loaded": false,
+        "estimatedRecordCount": "~50000 parcels"
+      },
+      "parcels": {
+        "status": "pending",
+        "source": "CAGIS API",
+        "apiEndpoint": "https://cagisonline.hamilton-co.org/arcgis/rest/services/Countywide_Layers/AuditorParcelInformation/MapServer",
+        "loaded": false,
+        "estimatedRecordCount": "~200000 parcels"
+      },
+      "permitRequirements": {
+        "status": "scraper-ready",
+        "source": "Cincinnati Building Department + Manual extraction",
+        "permitFormsUrl": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/",
+        "scraperScript": "scripts/scrape-cincinnati-permits.py",
+        "urls": [
+          "https://www.cincinnati-oh.gov/buildings/",
+          "https://www.cincinnati-oh.gov/planning/zoning/"
+        ],
+        "loaded": false,
+        "steps": [
+          "1. Run: python scripts/scrape-cincinnati-permits.py",
+          "2. Review downloaded PDFs in data/cincinnati/permits/",
+          "3. Manually extract permit requirements to CSV",
+          "4. Load: npx tsx scripts/load-permit-requirements.ts ./permits.csv cincinnati-oh"
+        ],
+        "notes": "Scraper downloads all PDF forms. Manual data extraction still needed for structured requirements."
+      },
+      "buildingCodes": {
+        "status": "pending",
+        "source": "Multiple",
+        "codes": [
+          {
+            "name": "International Building Code",
+            "edition": "2021",
+            "type": "IBC",
+            "url": "https://codes.iccsafe.org/content/IBC2021P1"
+          },
+          {
+            "name": "International Residential Code",
+            "edition": "2021",
+            "type": "IRC",
+            "url": "https://codes.iccsafe.org/content/IRC2021P1"
+          },
+          {
+            "name": "Cincinnati Local Amendments",
+            "type": "local_amendment",
+            "location": "Cincinnati Municipal Code Chapter 1101"
+          }
+        ],
+        "loaded": false
+      }
+    },
+    "contacts": {
+      "buildingDepartment": {
+        "name": "Cincinnati Department of Buildings & Inspections",
+        "url": "https://www.cincinnati-oh.gov/buildings/",
+        "phone": "(513) 352-3100"
+      },
+      "planningDepartment": {
+        "name": "Cincinnati Planning & Development",
+        "url": "https://www.cincinnati-oh.gov/planning/",
+        "phone": "(513) 352-4000"
+      },
+      "cagisSupport": {
+        "name": "CAGIS Support",
+        "email": "cagis@hamilton-co.org",
+        "url": "https://cagisonline.hamilton-co.org/"
+      }
+    }
+  }
+}

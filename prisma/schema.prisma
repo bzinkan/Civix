@@ -14,14 +14,23 @@ model Jurisdiction {
   type      String
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
+
+  // Legacy models
   zoning    ZoningDistrict[]
   categories RuleCategory[]
   flows     DecisionFlow[]
   rules     Rule[]
   decisions Decision[]
   rulesets  Ruleset[]        @relation(name: "JurisdictionRulesets")
+
+  // Ordinance & regulatory data
   ordinanceDocuments OrdinanceDocument[] @relation(name: "JurisdictionOrdinances")
   ordinanceChunks    OrdinanceChunk[]    @relation(name: "JurisdictionChunks")
+
+  // New comprehensive data
+  zoningParcels      ZoningParcel[]      @relation(name: "JurisdictionParcels")
+  permitRequirements PermitRequirement[] @relation(name: "JurisdictionPermits")
+  buildingCodeChunks BuildingCodeChunk[] @relation(name: "JurisdictionBuildingCodes")
 }
 
 model ZoningDistrict {
@@ -253,7 +262,11 @@ model Conversation {
   userId          String?
   fingerprint     String?
 
-  jurisdiction    String?
+  // Ordinance query context
+  jurisdictionId  String?
+  jurisdictionName String?
+  jurisdictionState String?
+
   category        String?
   subcategory     String?
   collectedInputs Json      @default("{}")
@@ -271,6 +284,7 @@ model Conversation {
   @@index([userId])
   @@index([fingerprint])
   @@index([status])
+  @@index([jurisdictionId])
 }
 
 model Message {
@@ -278,8 +292,11 @@ model Message {
   conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId  String
 
-  role            String
+  role            String        // 'user' or 'assistant'
   content         String        @db.Text
+
+  // For assistant messages: ordinance sources/citations
+  sources         Json?
 
   provider        String?
   tokensUsed      Int?
@@ -356,4 +373,110 @@ model OrdinanceChunk {
   @@index([documentId])
   @@index([chapter])
   @@index([section])
+}
+
+// ============================================================================
+// ZONING DATA MODELS
+// ============================================================================
+
+model ZoningParcel {
+  id              String       @id @default(cuid())
+  jurisdiction    Jurisdiction @relation(name: "JurisdictionParcels", fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+
+  // Property identification
+  address         String
+  parcelId        String?      // City's parcel ID (if available)
+
+  // Zoning information
+  zoneCode        String       // e.g., "R-1", "C-2"
+  zoneDescription String?      // e.g., "Single Family Residential"
+
+  // Geographic data (optional)
+  latitude        Float?
+  longitude       Float?
+  geometry        Json?        // GeoJSON polygon if available
+
+  // Metadata
+  sourceUrl       String?      // Link to city's zoning map
+  lastVerified    DateTime     @default(now())
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([jurisdictionId, address])
+  @@index([jurisdictionId, parcelId])
+  @@index([zoneCode])
+  @@unique([jurisdictionId, parcelId])
+}
+
+// ============================================================================
+// PERMIT REQUIREMENTS
+// ============================================================================
+
+model PermitRequirement {
+  id              String       @id @default(cuid())
+  jurisdiction    Jurisdiction @relation(name: "JurisdictionPermits", fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+
+  // What activity this applies to
+  activityType    String       // e.g., "fence", "shed", "deck", "addition", "demolition"
+  activityDescription String?   // More detailed description
+
+  // Zone-specific (null = applies to all zones)
+  zoneCode        String?      // e.g., "R-1", or null for all zones
+
+  // Permit details
+  requiresPermit  Boolean
+  permitType      String?      // e.g., "Building Permit", "Zoning Certificate"
+
+  // Requirements/restrictions (JSON for flexibility)
+  requirements    Json?        // { "maxHeight": 6, "setback": 10, "lotCoverage": 0.3 }
+
+  // Process details
+  estimatedFee    Float?       // In dollars
+  processingDays  Int?         // Estimated processing time
+  documents       String[]     // Required documents
+
+  // Source information
+  sourceUrl       String?
+  ordinanceRef    String?      // Reference to ordinance section
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([jurisdictionId, activityType])
+  @@index([jurisdictionId, zoneCode])
+  @@index([activityType])
+}
+
+// ============================================================================
+// BUILDING CODE CHUNKS (Similar to ordinances)
+// ============================================================================
+
+model BuildingCodeChunk {
+  id              String       @id @default(cuid())
+  jurisdiction    Jurisdiction @relation(name: "JurisdictionBuildingCodes", fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+
+  codeType        String       // "IBC", "IRC", "local_amendment", "fire_code", "plumbing", "electrical"
+  codeYear        String?      // e.g., "2021" for IBC 2021
+  section         String
+  title           String
+  content         String       @db.Text
+
+  // Vector embedding for semantic search
+  embedding       Json?
+
+  sourceUrl       String?
+  s3PdfUrl        String?      // Link to PDF in S3
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([codeType])
+  @@index([jurisdictionId, codeType])
 }
