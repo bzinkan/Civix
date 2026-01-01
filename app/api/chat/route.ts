@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
       address,
       attachments = [],
       conversation_id,
-      confirm_extracted
+      confirm_extracted,
+      toolContext
     } = body;
 
     if (!message || typeof message !== 'string') {
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Regular chat - no attachments
-    const response = await handleChatMessage(message, propertyContext, conversation_id);
+    const response = await handleChatMessage(message, propertyContext, conversation_id, toolContext);
     return NextResponse.json(response);
 
   } catch (error: any) {
@@ -624,22 +625,43 @@ function getDevelopmentStandards(zoneCode: string): {
 async function handleChatMessage(
   message: string,
   propertyContext: PropertyContext | null,
-  conversationId?: string
+  conversationId?: string,
+  toolContext?: { toolId: string; systemContext: string; category: string }
 ): Promise<any> {
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
-  const systemPrompt = `You are a helpful Cincinnati municipal regulations assistant. You help residents, contractors, and professionals understand zoning, permits, and city regulations.
-
-${propertyContext ? `Current property context:
+  // Build property context string
+  const propertyInfo = propertyContext ? `
+Current property context:
 Address: ${propertyContext.address}
 Zoning: ${propertyContext.zoning?.code || 'Unknown'} - ${propertyContext.zoning?.description || ''}
 Historic District: ${propertyContext.overlays.historic_district || 'None'}
 Hillside: ${propertyContext.overlays.hillside ? 'Yes' : 'No'}
 Setbacks: Front ${propertyContext.development_standards?.setbacks.front_ft || '?'}ft, Side ${propertyContext.development_standards?.setbacks.side_ft || '?'}ft, Rear ${propertyContext.development_standards?.setbacks.rear_ft || '?'}ft
 Max Height: ${propertyContext.development_standards?.max_height_ft || 'Unknown'}ft
-Max Lot Coverage: ${propertyContext.development_standards?.max_lot_coverage ? (propertyContext.development_standards.max_lot_coverage * 100) + '%' : 'Unknown'}` : 'No property context provided.'}
+Max Lot Coverage: ${propertyContext.development_standards?.max_lot_coverage ? (propertyContext.development_standards.max_lot_coverage * 100) + '%' : 'Unknown'}` : '';
+
+  // Use tool-specific system prompt if provided, otherwise use default
+  let systemPrompt: string;
+
+  if (toolContext?.systemContext) {
+    systemPrompt = `${toolContext.systemContext}
+
+${propertyInfo}
+
+Important Guidelines:
+1. Be helpful, specific, and accurate about Cincinnati/Ohio regulations
+2. When referencing specific codes or regulations, cite the relevant section
+3. If the user provides an address, use the property context information above
+4. Provide contact numbers when relevant: Building permits (513) 352-3276, Historic (513) 352-4822, Zoning (513) 352-3270
+5. If you're unsure about specific details, recommend they verify with the appropriate city department
+6. Format responses clearly with bullet points or numbered lists when appropriate`;
+  } else {
+    systemPrompt = `You are a helpful Cincinnati municipal regulations assistant. You help residents, contractors, and professionals understand zoning, permits, and city regulations.
+
+${propertyInfo || 'No property context provided.'}
 
 Guidelines:
 1. Be helpful and specific
@@ -647,6 +669,7 @@ Guidelines:
 3. Always mention if a property is in a historic district - this affects what they can do
 4. Provide contact numbers when relevant: Building permits (513) 352-3276, Historic (513) 352-4822
 5. If you're unsure, recommend they verify with the city`;
+  }
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -660,6 +683,7 @@ Guidelines:
   return {
     type: 'chat',
     message: content.type === 'text' ? content.text : 'I apologize, I could not generate a response.',
-    property: propertyContext
+    property: propertyContext,
+    toolId: toolContext?.toolId
   };
 }
