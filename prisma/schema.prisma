@@ -32,6 +32,8 @@ model Jurisdiction {
   permitRequirements PermitRequirement[] @relation(name: "JurisdictionPermits")
   buildingCodeChunks BuildingCodeChunk[] @relation(name: "JurisdictionBuildingCodes")
   overlayDistricts   OverlayDistrict[]   @relation(name: "JurisdictionOverlays")
+  permitExemptions   PermitExemption[]
+  commonQuestions    CommonQuestion[]
 }
 
 model ZoningDistrict {
