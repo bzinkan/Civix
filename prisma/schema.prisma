@@ -176,17 +176,88 @@ model User {
   passwordHash          String?
   stripeId              String?
 
+  // User type and role
+  userType              String         @default("homeowner")  // homeowner, contractor, realtor, title, legal, developer, small_business
+  companyName           String?
+  licenseNumber         String?        // For contractors
+
+  // Subscription
   subscriptionStatus    String         @default("none")
   subscriptionId        String?
+  subscriptionPlan      String         @default("free")  // free, pro, business, enterprise
   subscriptionEndsAt    DateTime?
   queryCredits          Int            @default(0)
+  monthlyLookups        Int            @default(0)
+  lookupResetDate       DateTime?
 
+  // Relations
   conversations         Conversation[]
+  savedProperties       SavedProperty[]
+  generatedReports      GeneratedReport[]
+
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
 
   @@index([email])
   @@index([subscriptionStatus])
+  @@index([userType])
+}
+
+// ============================================================================
+// SAVED PROPERTIES AND REPORTS
+// ============================================================================
+
+model SavedProperty {
+  id              String    @id @default(cuid())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+
+  address         String
+  parcelId        String?
+  jurisdictionId  String?
+  nickname        String?   // "Main St Flip" or "Client Smith Property"
+
+  // Cached data
+  zoneCode        String?
+  zoneDescription String?
+  isHistoric      Boolean   @default(false)
+  historicDistrict String?
+  overlayData     Json?
+
+  // Alerts
+  alertOnPermits  Boolean   @default(false)
+  alertOnViolations Boolean @default(false)
+
+  notes           String?   @db.Text
+  tags            String[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([address])
+}
+
+model GeneratedReport {
+  id              String    @id @default(cuid())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+
+  address         String
+  reportType      String    // zoning, compliance, title, development_potential
+  title           String
+  s3Url           String?
+  reportData      Json?
+
+  // Sharing
+  shareToken      String?   @unique
+  isPublic        Boolean   @default(false)
+  expiresAt       DateTime?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([shareToken])
 }
 
 model Report {
