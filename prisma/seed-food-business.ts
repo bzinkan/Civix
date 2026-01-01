@@ -116,6 +116,137 @@ const FOOD_COMMON_QUESTIONS = [
   { question: 'Where can I park my food truck?', category: 'food_truck_location', answer: 'Food trucks allowed in: Downtown (DD zones) with Street Performance Permit, commercial zones during business hours, private property with owner permission, special events with permit. NOT allowed: residential zones, within 50ft of intersections, blocking pedestrian paths, within 200ft of restaurants (unless invited). Must return to commissary daily.', relatedPermits: ['mobile_food_vendor'], ordinanceRef: 'CMC 859.13' },
 ];
 
+// Business Checklists
+const BUSINESS_CHECKLISTS = [
+  {
+    businessType: 'restaurant',
+    checklistName: 'Restaurant Opening Checklist',
+    description: 'Complete guide to opening a restaurant in Cincinnati, from location selection to grand opening.',
+    totalSteps: 12,
+    estimatedDays: 120,
+    estimatedCost: '$5,000 - $25,000',
+    items: [
+      { step: 1, title: 'Find a Location', description: 'Identify potential locations in commercial zones (CN-P, CN-M, CC-P, CC-M, DD). Verify zoning allows restaurant use before signing lease.', category: 'planning', required: true, estimatedDays: 30, feeRange: null, links: [] },
+      { step: 2, title: 'Register Your Business', description: 'Register with Ohio Secretary of State. Obtain EIN from IRS. Register with Cincinnati for business license.', category: 'business', required: true, estimatedDays: 7, feeRange: '$50-200', links: [] },
+      { step: 3, title: 'Submit Plans to Health Department', description: 'Submit floor plans and equipment layout to Cincinnati Health Department for review. Plans must show 3-compartment sink, handwashing stations, ventilation, etc.', category: 'health', required: true, estimatedDays: 14, feeRange: '$100-250', links: [] },
+      { step: 4, title: 'Apply for Food Service License', description: 'Apply for Type 3 or Type 4 Food Service License based on your menu. Schedule pre-opening inspection.', category: 'health', required: true, estimatedDays: 21, feeRange: '$250-350', links: [] },
+      { step: 5, title: 'Get Building Permits', description: 'Apply for building permits for any construction or renovation work. Includes plumbing, electrical, HVAC, and fire suppression.', category: 'building', required: true, estimatedDays: 30, feeRange: '$500-5,000', links: [] },
+      { step: 6, title: 'Install Fire Suppression', description: 'Install Ansul fire suppression system over cooking equipment. Schedule Fire Department inspection.', category: 'fire', required: true, estimatedDays: 14, feeRange: '$3,000-10,000', links: [] },
+      { step: 7, title: 'Apply for Liquor License (if applicable)', description: 'Apply to Ohio Division of Liquor Control for D-5 or D-5K permit. May need to purchase quota license.', category: 'liquor', required: false, estimatedDays: 90, feeRange: '$2,500-50,000', links: [] },
+      { step: 8, title: 'Food Safety Certification', description: 'At least one manager must complete ServSafe or equivalent food safety training and pass exam.', category: 'training', required: true, estimatedDays: 7, feeRange: '$150-200', links: [] },
+      { step: 9, title: 'Final Building Inspection', description: 'Schedule final building inspection after all construction complete. Address any deficiencies.', category: 'building', required: true, estimatedDays: 7, feeRange: null, links: [] },
+      { step: 10, title: 'Health Department Inspection', description: 'Pass pre-opening health inspection. Must score 80+ to open. Common issues: temperature logs, handwashing, storage.', category: 'health', required: true, estimatedDays: 7, feeRange: null, links: [] },
+      { step: 11, title: 'Certificate of Occupancy', description: 'Obtain Certificate of Occupancy from Building Department. Required before opening to public.', category: 'building', required: true, estimatedDays: 3, feeRange: '$50-100', links: [] },
+      { step: 12, title: 'Post Required Signage', description: 'Post food license, occupancy certificate, and Heimlich maneuver poster in visible locations. Post liquor license if applicable.', category: 'compliance', required: true, estimatedDays: 1, feeRange: null, links: [] },
+    ],
+  },
+  {
+    businessType: 'food_truck',
+    checklistName: 'Food Truck Startup Checklist',
+    description: 'Step-by-step guide to launching a food truck business in Cincinnati.',
+    totalSteps: 10,
+    estimatedDays: 60,
+    estimatedCost: '$2,000 - $8,000',
+    items: [
+      { step: 1, title: 'Get Your Truck/Trailer', description: 'Purchase or lease a food truck or trailer that meets Ohio health code requirements. Must have proper ventilation, water tanks, and fire suppression.', category: 'planning', required: true, estimatedDays: 30, feeRange: null, links: [] },
+      { step: 2, title: 'Register Your Business', description: 'Register with Ohio Secretary of State and obtain EIN. Register for Cincinnati business license.', category: 'business', required: true, estimatedDays: 7, feeRange: '$50-200', links: [] },
+      { step: 3, title: 'Find a Commissary Kitchen', description: 'Sign agreement with a licensed commissary kitchen. Required for daily cleaning, restocking, and wastewater disposal.', category: 'health', required: true, estimatedDays: 14, feeRange: '$200-500/month', links: [] },
+      { step: 4, title: 'Apply for Mobile Food Unit License', description: 'Submit application to Health Department with commissary agreement, menu, and truck specifications.', category: 'health', required: true, estimatedDays: 14, feeRange: '$175', links: [] },
+      { step: 5, title: 'Get Fire Department Approval', description: 'Fire extinguisher inspection. Propane setup inspection if applicable. Get fire department sign-off.', category: 'fire', required: true, estimatedDays: 7, feeRange: '$50-100', links: [] },
+      { step: 6, title: 'Apply for Mobile Food Vendor License', description: 'Apply to City of Cincinnati for Mobile Food Vendor License to operate on public property.', category: 'license', required: true, estimatedDays: 14, feeRange: '$200', links: [] },
+      { step: 7, title: 'Food Safety Certification', description: 'Complete ServSafe or equivalent training. At least one operator per shift must be certified.', category: 'training', required: true, estimatedDays: 7, feeRange: '$150-200', links: [] },
+      { step: 8, title: 'Vehicle Registration & Insurance', description: 'Register vehicle with Ohio BMV. Obtain commercial auto insurance and general liability insurance.', category: 'business', required: true, estimatedDays: 7, feeRange: '$2,000-5,000/year', links: [] },
+      { step: 9, title: 'Pass Health Inspection', description: 'Schedule and pass mobile food unit inspection. Inspector checks: temps, water supply, handwashing, food storage.', category: 'health', required: true, estimatedDays: 7, feeRange: null, links: [] },
+      { step: 10, title: 'Map Your Operating Zones', description: 'Learn where you can and cannot operate. Get Street Performance Permit for downtown. Build relationships with private property owners.', category: 'planning', required: true, estimatedDays: 7, feeRange: null, links: [] },
+    ],
+  },
+  {
+    businessType: 'bar',
+    checklistName: 'Bar/Nightclub Opening Checklist',
+    description: 'Complete guide to opening a bar or nightclub in Cincinnati.',
+    totalSteps: 14,
+    estimatedDays: 180,
+    estimatedCost: '$15,000 - $75,000',
+    items: [
+      { step: 1, title: 'Find a Location', description: 'Must be in commercial zone (CC-P, CC-M, DD). Check 500ft radius for schools, churches, libraries. Verify liquor permits are available in area.', category: 'planning', required: true, estimatedDays: 45, feeRange: null, links: [] },
+      { step: 2, title: 'Secure Liquor License', description: 'Apply to Ohio Division of Liquor Control for D-5 permit. In quota areas, you may need to purchase existing license ($20,000-50,000+).', category: 'liquor', required: true, estimatedDays: 90, feeRange: '$2,500-50,000+', links: [] },
+      { step: 3, title: 'City Council Approval', description: 'Request local liquor permit approval from Cincinnati City Council. Attend public hearing.', category: 'liquor', required: true, estimatedDays: 30, feeRange: null, links: [] },
+      { step: 4, title: 'Register Your Business', description: 'Ohio Secretary of State registration, EIN, city business license.', category: 'business', required: true, estimatedDays: 7, feeRange: '$50-200', links: [] },
+      { step: 5, title: 'Building Permits', description: 'Apply for all needed building permits for renovations, electrical, plumbing, HVAC.', category: 'building', required: true, estimatedDays: 30, feeRange: '$1,000-10,000', links: [] },
+      { step: 6, title: 'Occupancy Load Calculation', description: 'Have architect or engineer calculate maximum occupancy. This affects restroom count, exits, and parking.', category: 'building', required: true, estimatedDays: 14, feeRange: '$500-1,500', links: [] },
+      { step: 7, title: 'Fire Safety Systems', description: 'Install required fire suppression, alarm systems, exit signs, emergency lighting. Schedule Fire Marshal inspection.', category: 'fire', required: true, estimatedDays: 21, feeRange: '$5,000-20,000', links: [] },
+      { step: 8, title: 'Sound System Planning', description: 'Design sound system to meet noise ordinance (65dB at property line). Consider soundproofing if near residential.', category: 'planning', required: true, estimatedDays: 14, feeRange: '$2,000-10,000', links: [] },
+      { step: 9, title: 'Entertainment Permit', description: 'Apply for Entertainment Permit if having live music, DJs, or dancing.', category: 'license', required: false, estimatedDays: 30, feeRange: '$150', links: [] },
+      { step: 10, title: 'Security Plan (if needed)', description: 'Capacity over 200 or late night operation requires security plan filed with Police.', category: 'security', required: false, estimatedDays: 21, feeRange: null, links: [] },
+      { step: 11, title: 'Late Night Permit', description: 'If operating past 2:30am, apply for Late Night Operation Permit.', category: 'license', required: false, estimatedDays: 45, feeRange: '$500', links: [] },
+      { step: 12, title: 'Final Building Inspection', description: 'Pass final building inspection for all permitted work.', category: 'building', required: true, estimatedDays: 7, feeRange: null, links: [] },
+      { step: 13, title: 'Certificate of Occupancy', description: 'Obtain C of O with approved occupancy load.', category: 'building', required: true, estimatedDays: 3, feeRange: '$50-100', links: [] },
+      { step: 14, title: 'TIPS Certification', description: 'Train all bartenders in TIPS or equivalent responsible alcohol service.', category: 'training', required: true, estimatedDays: 7, feeRange: '$35-50/person', links: [] },
+    ],
+  },
+  {
+    businessType: 'brewery',
+    checklistName: 'Brewery Startup Checklist',
+    description: 'Guide to opening a craft brewery with taproom in Cincinnati.',
+    totalSteps: 15,
+    estimatedDays: 270,
+    estimatedCost: '$20,000 - $100,000+',
+    items: [
+      { step: 1, title: 'Find Industrial/Commercial Location', description: 'Breweries allowed in MG, ML, CC-M, DD zones. Need adequate power, water, drainage. Consider delivery access.', category: 'planning', required: true, estimatedDays: 60, feeRange: null, links: [] },
+      { step: 2, title: 'Federal TTB Brewer\'s Notice', description: 'Apply to Alcohol and Tobacco Tax and Trade Bureau (TTB) for federal Brewer\'s Notice. This takes 90-120 days.', category: 'federal', required: true, estimatedDays: 120, feeRange: '$0 (no fee)', links: [] },
+      { step: 3, title: 'Ohio A-1-A Permit', description: 'Apply to Ohio Division of Liquor Control for A-1-A craft brewery permit (up to 31,000 barrels/year).', category: 'liquor', required: true, estimatedDays: 90, feeRange: '$1,562/year', links: [] },
+      { step: 4, title: 'Register Your Business', description: 'Ohio Secretary of State, EIN, city business license.', category: 'business', required: true, estimatedDays: 7, feeRange: '$50-200', links: [] },
+      { step: 5, title: 'Building Permits', description: 'Apply for permits for brewery buildout: plumbing (floor drains, glycol), electrical (high amperage), HVAC.', category: 'building', required: true, estimatedDays: 45, feeRange: '$2,000-15,000', links: [] },
+      { step: 6, title: 'Wastewater Pre-Treatment', description: 'Contact MSD about industrial wastewater pre-treatment requirements. May need pH adjustment, BOD limits.', category: 'environment', required: true, estimatedDays: 30, feeRange: '$1,000-10,000', links: [] },
+      { step: 7, title: 'Fire Safety Systems', description: 'Install fire suppression, alarm systems, emergency exits. Grain dust and CO2 considerations.', category: 'fire', required: true, estimatedDays: 21, feeRange: '$5,000-15,000', links: [] },
+      { step: 8, title: 'Taproom Food License', description: 'If serving food in taproom, apply for appropriate food license (Type 1-3 depending on menu).', category: 'health', required: false, estimatedDays: 21, feeRange: '$75-250', links: [] },
+      { step: 9, title: 'Equipment Installation', description: 'Install brewing equipment: brew house, fermenters, bright tanks, glycol system, CO2, keg washer.', category: 'building', required: true, estimatedDays: 30, feeRange: null, links: [] },
+      { step: 10, title: 'Final Building Inspection', description: 'Pass final inspection for all permitted work.', category: 'building', required: true, estimatedDays: 7, feeRange: null, links: [] },
+      { step: 11, title: 'TTB Brewer\'s Bond (if over 6,000 bbl)', description: 'If planning to produce over 6,000 barrels, post federal brewer\'s bond.', category: 'federal', required: false, estimatedDays: 14, feeRange: 'Varies', links: [] },
+      { step: 12, title: 'Label Approval (COLA)', description: 'Submit beer labels to TTB for Certificate of Label Approval before interstate sale.', category: 'federal', required: true, estimatedDays: 14, feeRange: '$0', links: [] },
+      { step: 13, title: 'Taproom Setup', description: 'Set up taproom: bar installation, tap system, seating, point of sale. Ensure ADA compliance.', category: 'building', required: true, estimatedDays: 14, feeRange: null, links: [] },
+      { step: 14, title: 'Staff Training', description: 'Train staff in responsible alcohol service (TIPS/ServSafe Alcohol). Train brewers in safety.', category: 'training', required: true, estimatedDays: 7, feeRange: '$35-50/person', links: [] },
+      { step: 15, title: 'Certificate of Occupancy', description: 'Obtain C of O for taproom/tasting room area.', category: 'building', required: true, estimatedDays: 3, feeRange: '$50-100', links: [] },
+    ],
+  },
+  {
+    businessType: 'cottage',
+    checklistName: 'Cottage Food Business Checklist',
+    description: 'Simple guide to starting a home-based cottage food business in Ohio.',
+    totalSteps: 6,
+    estimatedDays: 7,
+    estimatedCost: '$0 - $100',
+    items: [
+      { step: 1, title: 'Verify Eligible Products', description: 'Cottage food law covers: baked goods, candy, jams, jellies, honey, dry mixes, popcorn. NOT allowed: foods needing refrigeration, meat, dairy, canned vegetables.', category: 'planning', required: true, estimatedDays: 1, feeRange: null, links: [] },
+      { step: 2, title: 'Understand Sales Limits', description: 'Annual sales cannot exceed $75,000. Must sell direct to consumers only (no wholesale to stores).', category: 'planning', required: true, estimatedDays: 1, feeRange: null, links: [] },
+      { step: 3, title: 'Create Compliant Labels', description: 'Labels must include: product name, ingredients, net weight, allergen info, your name and address, and "Made in a home kitchen not inspected by Ohio Dept of Agriculture."', category: 'compliance', required: true, estimatedDays: 3, feeRange: '$20-50', links: [] },
+      { step: 4, title: 'Register Your Business', description: 'Optional but recommended: register business name with county, get EIN for taxes.', category: 'business', required: false, estimatedDays: 3, feeRange: '$25-50', links: [] },
+      { step: 5, title: 'Set Up Sales Channels', description: 'Farmers markets (check if they require liability insurance), online with in-person delivery, craft fairs, direct sales.', category: 'planning', required: true, estimatedDays: 7, feeRange: 'Varies', links: [] },
+      { step: 6, title: 'Keep Records', description: 'Track all sales for tax purposes and to ensure you stay under $75,000 limit.', category: 'compliance', required: true, estimatedDays: 1, feeRange: null, links: [] },
+    ],
+  },
+  {
+    businessType: 'catering',
+    checklistName: 'Catering Business Checklist',
+    description: 'Guide to starting a catering business in Cincinnati.',
+    totalSteps: 10,
+    estimatedDays: 60,
+    estimatedCost: '$2,000 - $10,000',
+    items: [
+      { step: 1, title: 'Choose Kitchen Option', description: 'Options: build out commercial kitchen, rent space in commissary kitchen, or use church/community kitchen (with permission).', category: 'planning', required: true, estimatedDays: 30, feeRange: null, links: [] },
+      { step: 2, title: 'Register Your Business', description: 'Ohio Secretary of State, EIN, city business license.', category: 'business', required: true, estimatedDays: 7, feeRange: '$50-200', links: [] },
+      { step: 3, title: 'Apply for Catering License', description: 'Apply to Health Department for catering food license. Includes kitchen inspection.', category: 'health', required: true, estimatedDays: 21, feeRange: '$250', links: [] },
+      { step: 4, title: 'Food Safety Certification', description: 'At least one person must have ServSafe or equivalent certification.', category: 'training', required: true, estimatedDays: 7, feeRange: '$150-200', links: [] },
+      { step: 5, title: 'Food Transport Equipment', description: 'Acquire insulated food carriers, hot/cold holding equipment. Must maintain safe temperatures during transport.', category: 'equipment', required: true, estimatedDays: 14, feeRange: '$500-2,000', links: [] },
+      { step: 6, title: 'Vehicle Setup (if needed)', description: 'If using vehicle for transport, may need commercial registration. Keep vehicle clean and temperature-controlled.', category: 'equipment', required: false, estimatedDays: 7, feeRange: 'Varies', links: [] },
+      { step: 7, title: 'Liability Insurance', description: 'Get general liability insurance. Many venues require proof of insurance to book.', category: 'business', required: true, estimatedDays: 7, feeRange: '$500-2,000/year', links: [] },
+      { step: 8, title: 'Temporary Event Permits', description: 'Learn how to get temporary food event permits for venues without licensed kitchens.', category: 'license', required: true, estimatedDays: 7, feeRange: '$50/event', links: [] },
+      { step: 9, title: 'Liquor Permit (if serving)', description: 'For events with alcohol: obtain F-2 temporary permit or have venue provide licensed server.', category: 'liquor', required: false, estimatedDays: 30, feeRange: '$50/event', links: [] },
+      { step: 10, title: 'Build Venue Relationships', description: 'Connect with wedding venues, corporate clients, event planners. Join catering associations.', category: 'planning', required: true, estimatedDays: 30, feeRange: null, links: [] },
+    ],
+  },
+];
+
 async function seedFoodBusinessData() {
   console.log('Starting Food Business data seed...\n');
 
@@ -251,6 +382,40 @@ async function seedFoodBusinessData() {
   }
   console.log(`✓ Seeded ${questionCount} food business common questions\n`);
 
+  // Seed Business Checklists
+  console.log('Seeding Business Checklists...');
+  let checklistCount = 0;
+  for (const checklist of BUSINESS_CHECKLISTS) {
+    await prisma.businessChecklist.upsert({
+      where: {
+        jurisdictionId_businessType: {
+          jurisdictionId: jurisdiction.id,
+          businessType: checklist.businessType,
+        },
+      },
+      update: {
+        checklistName: checklist.checklistName,
+        description: checklist.description,
+        totalSteps: checklist.totalSteps,
+        estimatedDays: checklist.estimatedDays,
+        estimatedCost: checklist.estimatedCost,
+        items: checklist.items,
+      },
+      create: {
+        jurisdictionId: jurisdiction.id,
+        businessType: checklist.businessType,
+        checklistName: checklist.checklistName,
+        description: checklist.description,
+        totalSteps: checklist.totalSteps,
+        estimatedDays: checklist.estimatedDays,
+        estimatedCost: checklist.estimatedCost,
+        items: checklist.items,
+      },
+    });
+    checklistCount++;
+  }
+  console.log(`✓ Seeded ${checklistCount} business checklists\n`);
+
   console.log('='.repeat(50));
   console.log('Food Business data seed completed successfully!');
   console.log('='.repeat(50));
@@ -259,6 +424,7 @@ Summary:
   - Permit Requirements: ${permitCount}
   - Building Code Chunks: ${codeCount}
   - Common Questions: ${questionCount}
+  - Business Checklists: ${checklistCount}
 `);
 }
 
