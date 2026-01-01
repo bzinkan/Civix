@@ -11,8 +11,12 @@ const prisma = new PrismaClient();
  */
 
 // Valid user types
-type UserType = 'homeowner' | 'contractor' | 'realtor' | 'title' | 'legal' | 'developer' | 'small_business' | 'food_business';
+type UserType = 'homeowner' | 'contractor' | 'realtor' | 'title' | 'legal' | 'developer' | 'small_business' | 'food_business' | 'beauty_personal_care' | 'pet_industry' | 'fitness_wellness' | 'childcare_education';
 type FoodBusinessType = 'restaurant' | 'food_truck' | 'cottage' | 'ghost_kitchen' | 'bar' | 'farmers_market' | 'catering' | 'brewery';
+type BeautyBusinessType = 'hair_salon' | 'barbershop' | 'nail_salon' | 'spa' | 'tattoo_shop' | 'massage_establishment' | 'esthetician' | 'mobile_beauty';
+type PetBusinessType = 'pet_grooming' | 'pet_boarding' | 'pet_daycare' | 'vet_clinic' | 'pet_store' | 'dog_training' | 'pet_sitting' | 'mobile_grooming';
+type FitnessBusinessType = 'gym' | 'yoga_studio' | 'crossfit_gym' | 'swimming_pool' | 'martial_arts' | 'dance_studio' | 'personal_training' | 'wellness_center';
+type ChildcareBusinessType = 'daycare_center' | 'home_daycare' | 'preschool' | 'private_school' | 'tutoring_center' | 'after_school' | 'summer_camp' | 'enrichment';
 type SubscriptionPlan = 'free' | 'pro' | 'business' | 'enterprise';
 
 // Plan limits
@@ -71,6 +75,30 @@ const USER_TYPE_CONFIG = {
     label: 'Food Business',
     description: 'Restaurant, food truck, bar, or food production',
     features: ['property_lookup', 'food_license_wizard', 'liquor_license', 'health_inspection', 'zoning_check', 'permit_checklist'],
+    defaultPlan: 'pro'
+  },
+  beauty_personal_care: {
+    label: 'Beauty & Personal Care',
+    description: 'Salon, spa, tattoo, or personal services',
+    features: ['property_lookup', 'license_wizard', 'health_inspection', 'zoning_check', 'permit_checklist', 'state_board_info'],
+    defaultPlan: 'pro'
+  },
+  pet_industry: {
+    label: 'Pet Industry',
+    description: 'Grooming, boarding, veterinary, or pet services',
+    features: ['property_lookup', 'license_wizard', 'kennel_license', 'zoning_check', 'permit_checklist', 'oda_requirements'],
+    defaultPlan: 'pro'
+  },
+  fitness_wellness: {
+    label: 'Fitness & Wellness',
+    description: 'Gym, studio, pool, or wellness facility',
+    features: ['property_lookup', 'license_wizard', 'pool_license', 'zoning_check', 'permit_checklist', 'health_club_act'],
+    defaultPlan: 'pro'
+  },
+  childcare_education: {
+    label: 'Childcare & Education',
+    description: 'Daycare, preschool, tutoring, or educational services',
+    features: ['property_lookup', 'license_wizard', 'odjfs_licensing', 'zoning_check', 'permit_checklist', 'staff_requirements'],
     defaultPlan: 'pro'
   }
 };
@@ -166,7 +194,14 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userType, name, companyName, licenseNumber, foodBusinessType, foodBusinessData } = body;
+    const {
+      userType, name, companyName, licenseNumber,
+      foodBusinessType, foodBusinessData,
+      beautyBusinessType, beautyBusinessData,
+      petBusinessType, petBusinessData,
+      fitnessBusinessType, fitnessBusinessData,
+      childcareBusinessType, childcareBusinessData
+    } = body;
 
     // Validate user type
     if (userType && !USER_TYPE_CONFIG[userType as keyof typeof USER_TYPE_CONFIG]) {
@@ -177,6 +212,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Build update data object
+    // Note: We use foodBusinessType/foodBusinessData fields generically for all industry sub-types
     const updateData: {
       name?: string;
       userType?: string;
@@ -193,8 +229,20 @@ export async function PUT(request: NextRequest) {
     if (userType !== undefined) updateData.userType = userType;
     if (companyName !== undefined) updateData.companyName = companyName;
     if (licenseNumber !== undefined) updateData.licenseNumber = licenseNumber;
+
+    // Store sub-business type (using foodBusinessType field for all industries)
     if (foodBusinessType !== undefined) updateData.foodBusinessType = foodBusinessType;
+    if (beautyBusinessType !== undefined) updateData.foodBusinessType = beautyBusinessType;
+    if (petBusinessType !== undefined) updateData.foodBusinessType = petBusinessType;
+    if (fitnessBusinessType !== undefined) updateData.foodBusinessType = fitnessBusinessType;
+    if (childcareBusinessType !== undefined) updateData.foodBusinessType = childcareBusinessType;
+
+    // Store business-specific data (using foodBusinessData field for all industries)
     if (foodBusinessData !== undefined) updateData.foodBusinessData = foodBusinessData;
+    if (beautyBusinessData !== undefined) updateData.foodBusinessData = beautyBusinessData;
+    if (petBusinessData !== undefined) updateData.foodBusinessData = petBusinessData;
+    if (fitnessBusinessData !== undefined) updateData.foodBusinessData = fitnessBusinessData;
+    if (childcareBusinessData !== undefined) updateData.foodBusinessData = childcareBusinessData;
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },

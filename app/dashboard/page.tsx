@@ -31,7 +31,7 @@ interface UsageData {
   };
 }
 
-type UserType = 'homeowner' | 'contractor' | 'realtor' | 'title' | 'legal' | 'developer' | 'small_business';
+type UserType = 'homeowner' | 'contractor' | 'realtor' | 'title' | 'legal' | 'developer' | 'small_business' | 'food_business' | 'beauty_personal_care' | 'pet_industry' | 'fitness_wellness' | 'childcare_education';
 
 interface DashboardData {
   userType: UserType;

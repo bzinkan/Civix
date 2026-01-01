@@ -29,6 +29,30 @@ const USER_TYPES = [
     description: 'Restaurant, truck, bar'
   },
   {
+    id: 'beauty_personal_care',
+    icon: '💇',
+    label: 'Beauty & Personal Care',
+    description: 'Salon, spa, tattoo'
+  },
+  {
+    id: 'pet_industry',
+    icon: '🐾',
+    label: 'Pet Industry',
+    description: 'Grooming, boarding, vet'
+  },
+  {
+    id: 'fitness_wellness',
+    icon: '💪',
+    label: 'Fitness & Wellness',
+    description: 'Gym, yoga, pool'
+  },
+  {
+    id: 'childcare_education',
+    icon: '👶',
+    label: 'Childcare & Education',
+    description: 'Daycare, tutoring, school'
+  },
+  {
     id: 'small_business',
     icon: '🏪',
     label: 'Small Business',
@@ -53,9 +77,17 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const selectUserType = async (userType: string) => {
-    // Food business goes to sub-selection page
-    if (userType === 'food_business') {
-      router.push('/onboarding/food');
+    // Industry verticals go to sub-selection pages
+    const industryRoutes: Record<string, string> = {
+      'food_business': '/onboarding/food',
+      'beauty_personal_care': '/onboarding/beauty',
+      'pet_industry': '/onboarding/pet',
+      'fitness_wellness': '/onboarding/fitness',
+      'childcare_education': '/onboarding/childcare'
+    };
+
+    if (industryRoutes[userType]) {
+      router.push(industryRoutes[userType]);
       return;
     }
 
