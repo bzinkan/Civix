@@ -34,6 +34,7 @@ model Jurisdiction {
   overlayDistricts   OverlayDistrict[]   @relation(name: "JurisdictionOverlays")
   permitExemptions   PermitExemption[]
   commonQuestions    CommonQuestion[]
+  businessChecklists BusinessChecklist[]
 }
 
 model ZoningDistrict {
@@ -205,9 +206,13 @@ model User {
   stripeId              String?
 
   // User type and role
-  userType              String         @default("homeowner")  // homeowner, contractor, realtor, title, legal, developer, small_business
+  userType              String         @default("homeowner")  // homeowner, contractor, realtor, title, legal, developer, small_business, food_business
   companyName           String?
   licenseNumber         String?        // For contractors
+
+  // Food business specific
+  foodBusinessType      String?        // restaurant, food_truck, cottage, ghost_kitchen, bar, farmers_market, catering, brewery
+  foodBusinessData      Json?          // Wizard data (stage, hasLiquor, etc.)
 
   // Subscription
   subscriptionStatus    String         @default("none")
@@ -222,6 +227,7 @@ model User {
   conversations         Conversation[]
   savedProperties       SavedProperty[]
   generatedReports      GeneratedReport[]
+  checklistProgress     UserChecklistProgress[]
 
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
@@ -583,8 +589,8 @@ model PermitRequirement {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
+  @@unique([jurisdictionId, activityType])
   @@index([jurisdictionId])
-  @@index([jurisdictionId, activityType])
   @@index([activityType])
   @@index([category])
 }
@@ -696,4 +702,71 @@ model BuildingCodeChunk {
   @@index([jurisdictionId])
   @@index([codeType])
   @@index([jurisdictionId, codeType])
+}
+
+// ============================================================================
+// BUSINESS CHECKLISTS (step-by-step permit guides)
+// ============================================================================
+
+model BusinessChecklist {
+  id              String       @id @default(cuid())
+  jurisdiction    Jurisdiction @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdictionId  String
+
+  // What type of business this applies to
+  businessType    String       // restaurant, food_truck, bar, brewery, etc.
+  checklistName   String       // e.g., "Restaurant Opening Checklist"
+  description     String?      @db.Text
+
+  // Checklist items stored as JSON array
+  // [{ step: 1, title: "Get Food License", description: "...", category: "health", required: true, estimatedDays: 21, feeRange: "$250-350", links: [...] }]
+  items           Json
+
+  // Metadata
+  totalSteps      Int          @default(0)
+  estimatedDays   Int?         // Total estimated time to complete
+  estimatedCost   String?      // Cost range, e.g., "$1,000 - $5,000"
+
+  // User progress
+  userProgress    UserChecklistProgress[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([jurisdictionId, businessType])
+  @@index([jurisdictionId])
+  @@index([businessType])
+}
+
+// ============================================================================
+// USER CHECKLIST PROGRESS (tracking user's progress on checklists)
+// ============================================================================
+
+model UserChecklistProgress {
+  id              String           @id @default(cuid())
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  checklist       BusinessChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  checklistId     String
+
+  // Which business/project this is for
+  projectName     String?          // e.g., "Joe's Pizza - Main St Location"
+  businessAddress String?
+
+  // Progress tracking - JSON object mapping step numbers to completion status
+  // { 1: { completed: true, completedAt: "2024-01-15", notes: "..." }, 2: { completed: false } }
+  progress        Json             @default("{}")
+
+  // Overall status
+  status          String           @default("not_started") // not_started, in_progress, completed
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([userId, checklistId, projectName])
+  @@index([userId])
+  @@index([checklistId])
+  @@index([status])
 }

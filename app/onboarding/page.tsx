@@ -8,31 +8,37 @@ const USER_TYPES = [
     id: 'homeowner',
     icon: '🏠',
     label: 'Homeowner',
-    description: 'Managing your own property'
+    description: 'Managing my property'
   },
   {
     id: 'contractor',
     icon: '🔨',
     label: 'Contractor',
-    description: 'Building and renovation pro'
+    description: 'Building & renovation'
   },
   {
     id: 'realtor',
     icon: '🏢',
     label: 'Real Estate',
-    description: 'Agent, broker, or investor'
+    description: 'Agent or investor'
+  },
+  {
+    id: 'food_business',
+    icon: '🍽️',
+    label: 'Food Business',
+    description: 'Restaurant, truck, bar'
   },
   {
     id: 'small_business',
     icon: '🏪',
     label: 'Small Business',
-    description: 'Starting or running a business'
+    description: 'Retail, services'
   },
   {
     id: 'legal',
     icon: '⚖️',
     label: 'Legal / Title',
-    description: 'Attorney, title, or escrow'
+    description: 'Attorney, escrow'
   },
   {
     id: 'developer',
@@ -47,6 +53,12 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const selectUserType = async (userType: string) => {
+    // Food business goes to sub-selection page
+    if (userType === 'food_business') {
+      router.push('/onboarding/food');
+      return;
+    }
+
     setLoading(userType);
 
     // Store in localStorage for non-authenticated users
@@ -78,7 +90,7 @@ export default function OnboardingPage() {
         <p className="text-xl text-gray-600">What brings you here today?</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl w-full mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl w-full mb-8">
         {USER_TYPES.map((type) => (
           <button
             key={type.id}

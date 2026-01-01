@@ -11,7 +11,8 @@ const prisma = new PrismaClient();
  */
 
 // Valid user types
-type UserType = 'homeowner' | 'contractor' | 'realtor' | 'title' | 'legal' | 'developer' | 'small_business';
+type UserType = 'homeowner' | 'contractor' | 'realtor' | 'title' | 'legal' | 'developer' | 'small_business' | 'food_business';
+type FoodBusinessType = 'restaurant' | 'food_truck' | 'cottage' | 'ghost_kitchen' | 'bar' | 'farmers_market' | 'catering' | 'brewery';
 type SubscriptionPlan = 'free' | 'pro' | 'business' | 'enterprise';
 
 // Plan limits
@@ -64,6 +65,12 @@ const USER_TYPE_CONFIG = {
     label: 'Small Business Owner',
     description: 'Operating or starting a business',
     features: ['property_lookup', 'license_wizard', 'sign_permit', 'home_occupation', 'location_compliance'],
+    defaultPlan: 'pro'
+  },
+  food_business: {
+    label: 'Food Business',
+    description: 'Restaurant, food truck, bar, or food production',
+    features: ['property_lookup', 'food_license_wizard', 'liquor_license', 'health_inspection', 'zoning_check', 'permit_checklist'],
     defaultPlan: 'pro'
   }
 };
@@ -159,7 +166,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userType, name, companyName, licenseNumber } = body;
+    const { userType, name, companyName, licenseNumber, foodBusinessType, foodBusinessData } = body;
 
     // Validate user type
     if (userType && !USER_TYPE_CONFIG[userType as keyof typeof USER_TYPE_CONFIG]) {
@@ -175,6 +182,8 @@ export async function PUT(request: NextRequest) {
       userType?: string;
       companyName?: string;
       licenseNumber?: string;
+      foodBusinessType?: string;
+      foodBusinessData?: object;
       updatedAt: Date;
     } = {
       updatedAt: new Date()
@@ -184,6 +193,8 @@ export async function PUT(request: NextRequest) {
     if (userType !== undefined) updateData.userType = userType;
     if (companyName !== undefined) updateData.companyName = companyName;
     if (licenseNumber !== undefined) updateData.licenseNumber = licenseNumber;
+    if (foodBusinessType !== undefined) updateData.foodBusinessType = foodBusinessType;
+    if (foodBusinessData !== undefined) updateData.foodBusinessData = foodBusinessData;
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },

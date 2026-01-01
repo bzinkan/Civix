@@ -193,6 +193,8 @@ export default function DashboardPage() {
       return <LegalDashboard data={dashboardData} savedProperties={savedProperties} onLookup={handleLookup} lookupLoading={lookupLoading} lookupAddress={lookupAddress} setLookupAddress={setLookupAddress} usageData={usageData} />;
     case 'developer':
       return <DeveloperDashboard data={dashboardData} savedProperties={savedProperties} onLookup={handleLookup} lookupLoading={lookupLoading} lookupAddress={lookupAddress} setLookupAddress={setLookupAddress} usageData={usageData} />;
+    case 'food_business':
+      return <FoodBusinessDashboard data={dashboardData} onLookup={handleLookup} lookupLoading={lookupLoading} lookupAddress={lookupAddress} setLookupAddress={setLookupAddress} usageData={usageData} />;
     default:
       return <HomeownerDashboard data={dashboardData} homeAddress={homeAddress} setHomeAddress={setHomeAddress} propertyData={propertyData} onLookup={handleLookup} lookupLoading={lookupLoading} usageData={usageData} />;
   }
@@ -887,6 +889,266 @@ function DeveloperDashboard({ data, savedProperties, onLookup, lookupLoading, lo
               <div className="font-semibold text-sm">{tool.label}</div>
             </Link>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Food Business Dashboard
+function FoodBusinessDashboard({ data, onLookup, lookupLoading, lookupAddress, setLookupAddress, usageData }: {
+  data: DashboardData | null;
+  onLookup: (address: string) => void;
+  lookupLoading: boolean;
+  lookupAddress: string;
+  setLookupAddress: (val: string) => void;
+  usageData: UsageData | null;
+}) {
+  const router = useRouter();
+
+  // Get food business type from localStorage
+  const [foodBusinessType, setFoodBusinessType] = useState<string>('restaurant');
+  const [foodBusinessData, setFoodBusinessData] = useState<Record<string, string> | null>(null);
+
+  useEffect(() => {
+    const storedType = localStorage.getItem('civix_foodBusinessType');
+    const storedData = localStorage.getItem('civix_foodBusinessData');
+    if (storedType) setFoodBusinessType(storedType);
+    if (storedData) {
+      try {
+        setFoodBusinessData(JSON.parse(storedData));
+      } catch {
+        // ignore parse errors
+      }
+    }
+  }, []);
+
+  const foodTypeLabels: Record<string, { icon: string; label: string }> = {
+    restaurant: { icon: '🍳', label: 'Restaurant' },
+    food_truck: { icon: '🚚', label: 'Food Truck' },
+    bar: { icon: '🍺', label: 'Bar / Nightclub' },
+    brewery: { icon: '🍺', label: 'Brewery / Distillery' },
+    ghost_kitchen: { icon: '👻', label: 'Ghost Kitchen' },
+    catering: { icon: '🍽️', label: 'Catering' },
+    farmers_market: { icon: '🥬', label: "Farmers Market" },
+    cottage: { icon: '🏠', label: 'Cottage Food' }
+  };
+
+  const currentType = foodTypeLabels[foodBusinessType] || foodTypeLabels.restaurant;
+
+  // Get tools based on food business type
+  const getToolsForType = () => {
+    switch (foodBusinessType) {
+      case 'food_truck':
+        return [
+          { label: 'Mobile Vendor', icon: '🚚', path: '/tools/mobile-vendor', desc: 'City license & zones' },
+          { label: 'Commissary', icon: '🏭', path: '/tools/commissary', desc: 'Find approved kitchens' },
+          { label: 'Health Permit', icon: '🏥', path: '/tools/mobile-health', desc: 'Mobile food license' },
+          { label: 'Parking Rules', icon: '🅿️', path: '/tools/truck-parking', desc: 'Where you can operate' }
+        ];
+      case 'bar':
+        return [
+          { label: 'Liquor License', icon: '🍺', path: '/tools/liquor-license', desc: 'D-1 through D-5 guide' },
+          { label: 'Entertainment', icon: '🎤', path: '/tools/entertainment-permit', desc: 'Music & dancing permits' },
+          { label: 'Noise Limits', icon: '🔊', path: '/tools/noise-ordinance', desc: 'Decibel requirements' },
+          { label: 'Security Plan', icon: '🛡️', path: '/tools/security-plan', desc: 'Late night requirements' }
+        ];
+      case 'brewery':
+        return [
+          { label: 'A-1-A License', icon: '🍺', path: '/tools/brewery-license', desc: 'Craft brewery permit' },
+          { label: 'TTB Permit', icon: '📋', path: '/tools/ttb-federal', desc: 'Federal requirements' },
+          { label: 'Taproom', icon: '🍻', path: '/tools/taproom-permit', desc: 'On-site consumption' },
+          { label: 'Production', icon: '🏭', path: '/tools/production-facility', desc: 'Manufacturing permits' }
+        ];
+      case 'ghost_kitchen':
+        return [
+          { label: 'Food License', icon: '📋', path: '/tools/food-license', desc: 'Commercial kitchen' },
+          { label: 'Shared Kitchen', icon: '🏭', path: '/tools/shared-kitchen', desc: 'Commissary options' },
+          { label: 'Delivery Zone', icon: '🚗', path: '/tools/delivery-zone', desc: 'Service area planning' },
+          { label: 'Health Permit', icon: '🏥', path: '/tools/health-prep', desc: 'Inspection prep' }
+        ];
+      case 'catering':
+        return [
+          { label: 'Catering License', icon: '🍽️', path: '/tools/catering-license', desc: 'Mobile food service' },
+          { label: 'Kitchen Req.', icon: '🏭', path: '/tools/catering-kitchen', desc: 'Facility requirements' },
+          { label: 'Transport', icon: '🚐', path: '/tools/food-transport', desc: 'Vehicle permits' },
+          { label: 'Event Permits', icon: '🎪', path: '/tools/event-catering', desc: 'Temporary permits' }
+        ];
+      case 'farmers_market':
+        return [
+          { label: 'Vendor Permit', icon: '🥬', path: '/tools/market-vendor', desc: 'Sell at markets' },
+          { label: 'Food Sampling', icon: '🍎', path: '/tools/food-sampling', desc: 'Sample rules' },
+          { label: 'Cottage Rules', icon: '🏠', path: '/tools/cottage-food', desc: 'Home production' },
+          { label: 'Find Markets', icon: '📍', path: '/tools/find-markets', desc: 'Local market list' }
+        ];
+      case 'cottage':
+        return [
+          { label: 'Cottage Law', icon: '📋', path: '/tools/cottage-food', desc: 'What you can sell' },
+          { label: 'Labeling', icon: '🏷️', path: '/tools/cottage-labels', desc: 'Required labels' },
+          { label: 'Sales Limits', icon: '💰', path: '/tools/cottage-limits', desc: '$75,000 annual limit' },
+          { label: 'Approved Items', icon: '🍪', path: '/tools/cottage-items', desc: 'Allowed foods list' }
+        ];
+      default: // restaurant
+        return [
+          { label: 'Food License', icon: '📋', path: '/tools/food-license', desc: 'Type 1-4 license guide' },
+          { label: 'Health Inspection', icon: '🏥', path: '/tools/health-prep', desc: 'Pre-inspection checklist' },
+          { label: 'Liquor License', icon: '🍷', path: '/tools/liquor-license', desc: 'D-5 permit guide' },
+          { label: 'Building Permits', icon: '🏗️', path: '/tools/restaurant-buildout', desc: 'Buildout requirements' }
+        ];
+    }
+  };
+
+  const tools = getToolsForType();
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="card">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{currentType.icon}</span>
+            <div>
+              <h1 className="text-xl font-bold">{currentType.label}</h1>
+              <p className="text-gray-500">{foodBusinessData?.businessName || data?.companyName || 'Food business permits & compliance'}</p>
+            </div>
+          </div>
+          <div className="text-sm text-gray-500">Plan: <span className="capitalize">{usageData?.plan || 'Free'}</span></div>
+        </div>
+      </div>
+
+      {/* Usage Stats */}
+      {usageData && (
+        <UsageStats
+          lookups={usageData.lookups}
+          savedProperties={usageData.savedProperties}
+          plan={usageData.plan}
+        />
+      )}
+
+      {/* Location Check */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xl">📍</span>
+          <h2 className="font-bold">Location Check</h2>
+        </div>
+        <p className="text-gray-600 text-sm mb-3">Enter your business address to check zoning, permits, and health department requirements</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            className="input flex-1"
+            placeholder="Enter business address..."
+            value={lookupAddress}
+            onChange={(e) => setLookupAddress(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && router.push(`/lookup?address=${encodeURIComponent(lookupAddress)}`)}
+          />
+          <button
+            className="button"
+            onClick={() => router.push(`/lookup?address=${encodeURIComponent(lookupAddress)}`)}
+            disabled={lookupLoading}
+          >
+            {lookupLoading ? 'Checking...' : 'Check'}
+          </button>
+        </div>
+      </div>
+
+      {/* My Projects / Permits */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold">My Projects</h2>
+          <button className="button-secondary text-sm">+ New Project</button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-sm text-gray-500 border-b">
+                <th className="pb-2">Business</th>
+                <th className="pb-2">Address</th>
+                <th className="pb-2">Status</th>
+                <th className="pb-2">Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              {foodBusinessData?.businessName ? (
+                <tr className="border-b last:border-0">
+                  <td className="py-3">{foodBusinessData.businessName}</td>
+                  <td className="py-3">{foodBusinessData.address || 'Not set'}</td>
+                  <td className="py-3">
+                    <span className="px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800">
+                      {foodBusinessData.stage === 'planning' ? 'Planning' :
+                       foodBusinessData.stage === 'location' ? 'Finding Location' :
+                       foodBusinessData.stage === 'permitting' ? 'Permitting' : 'Operating'}
+                    </span>
+                  </td>
+                  <td className="py-3">
+                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '25%' }}></div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-4 text-center text-gray-500">
+                    No projects yet. Start by checking a location above.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Quick Start - Based on food business type */}
+      <div>
+        <h2 className="font-bold mb-4">Quick Start</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {tools.map((tool, i) => (
+            <Link key={i} href={tool.path} className="card hover:shadow-lg transition-shadow">
+              <div className="text-2xl mb-2">{tool.icon}</div>
+              <div className="font-semibold text-sm">{tool.label}</div>
+              <div className="text-xs text-gray-500 mt-1">{tool.desc}</div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Resources */}
+      <div className="card">
+        <h2 className="font-bold mb-4">Resources</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <a href="https://www.cincinnati-oh.gov/health/environmental-health/food-safety-program/"
+             target="_blank" rel="noopener noreferrer"
+             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border">
+            <span className="text-xl">🏥</span>
+            <div>
+              <div className="font-medium text-sm">Cincinnati Health Dept</div>
+              <div className="text-xs text-gray-500">Food safety & inspections</div>
+            </div>
+          </a>
+          <a href="https://www.com.ohio.gov/liqr/"
+             target="_blank" rel="noopener noreferrer"
+             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border">
+            <span className="text-xl">🍷</span>
+            <div>
+              <div className="font-medium text-sm">Ohio Liquor Control</div>
+              <div className="text-xs text-gray-500">Liquor license applications</div>
+            </div>
+          </a>
+          <Link href="/chat?prompt=food+business+permits"
+             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border">
+            <span className="text-xl">💬</span>
+            <div>
+              <div className="font-medium text-sm">Ask Civix AI</div>
+              <div className="text-xs text-gray-500">Get permit guidance</div>
+            </div>
+          </Link>
+          <Link href="/onboarding/food"
+             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border">
+            <span className="text-xl">🔄</span>
+            <div>
+              <div className="font-medium text-sm">Change Business Type</div>
+              <div className="text-xs text-gray-500">Switch to different food category</div>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
