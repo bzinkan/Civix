@@ -1,0 +1,47 @@
+{
+  "jurisdiction": "cincinnati-oh",
+  "name": "Cincinnati",
+  "state": "OH",
+  "source": "municode",
+  "sourceUrl": "https://library.municode.com/oh/cincinnati/codes/code_of_ordinances",
+  "scrapedAt": "2026-01-02T17:38:44.204Z",
+  "totalChapters": 5,
+  "totalCreditsUsed": 25,
+  "chapters": [
+    {
+      "name": "Title VII: Business Regulations",
+      "url": "https://library.municode.com/oh/cincinnati/codes/code_of_ordinances?nodeId=TITVIIBURE",
+      "textLength": 11891,
+      "creditCost": 5,
+      "error": null
+    },
+    {
+      "name": "Title XI: Business Regulations",
+      "url": "https://library.municode.com/oh/cincinnati/codes/code_of_ordinances?nodeId=TITXIBURE",
+      "textLength": 11891,
+      "creditCost": 5,
+      "error": null
+    },
+    {
+      "name": "Title XIII: Building Code",
+      "url": "https://library.municode.com/oh/cincinnati/codes/code_of_ordinances?nodeId=TITXIIIBUCO",
+      "textLength": 11891,
+      "creditCost": 5,
+      "error": null
+    },
+    {
+      "name": "Title XIV: Zoning Code",
+      "url": "https://library.municode.com/oh/cincinnati/codes/code_of_ordinances?nodeId=TITXIVZOCO",
+      "textLength": 11660,
+      "creditCost": 5,
+      "error": null
+    },
+    {
+      "name": "Title XV: Fire Prevention",
+      "url": "https://library.municode.com/oh/cincinnati/codes/code_of_ordinances?nodeId=TITXVFIPR",
+      "textLength": 11891,
+      "creditCost": 5,
+      "error": null
+    }
+  ]
+}

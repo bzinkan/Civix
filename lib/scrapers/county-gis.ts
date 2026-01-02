@@ -66,7 +66,8 @@ const COUNTY_GIS: Record<string, CountyGISConfig> = {
     state: 'KY',
     parcelService:
       'https://kygeonet.ky.gov/arcgis/rest/services/Parcels/MapServer/0',
-    zoningService: null, // Kentucky zoning is city-level
+    zoningService:
+      'https://maps.linkgis.org/server/rest/services/Covington_Character_Districts/MapServer/3', // LINK-GIS Character Districts
     jurisdictions: [
       'covington-ky',
       'erlanger-ky',

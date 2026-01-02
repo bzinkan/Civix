@@ -1,0 +1,224 @@
+{
+  "scrapedAt": "2026-01-02T17:51:23.842Z",
+  "totalJurisdictions": 27,
+  "totalChapters": 85,
+  "totalCreditsUsed": 425,
+  "jurisdictions": [
+    {
+      "id": "cincinnati-oh",
+      "name": "Cincinnati",
+      "state": "OH",
+      "chaptersScraped": 5,
+      "creditsUsed": 25,
+      "errors": []
+    },
+    {
+      "id": "norwood-oh",
+      "name": "Norwood",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "blue-ash-oh",
+      "name": "Blue Ash",
+      "state": "OH",
+      "chaptersScraped": 4,
+      "creditsUsed": 20,
+      "errors": []
+    },
+    {
+      "id": "sharonville-oh",
+      "name": "Sharonville",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "montgomery-oh",
+      "name": "Montgomery",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "madeira-oh",
+      "name": "Madeira",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "reading-oh",
+      "name": "Reading",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "deer-park-oh",
+      "name": "Deer Park",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "mason-oh",
+      "name": "Mason",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "hamilton-oh",
+      "name": "Hamilton",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "fairfield-oh",
+      "name": "Fairfield",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "middletown-oh",
+      "name": "Middletown",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "loveland-oh",
+      "name": "Loveland",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "lebanon-oh",
+      "name": "Lebanon",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "springdale-oh",
+      "name": "Springdale",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "forest-park-oh",
+      "name": "Forest Park",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "milford-oh",
+      "name": "Milford",
+      "state": "OH",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "covington-ky",
+      "name": "Covington",
+      "state": "KY",
+      "chaptersScraped": 4,
+      "creditsUsed": 20,
+      "errors": []
+    },
+    {
+      "id": "newport-ky",
+      "name": "Newport",
+      "state": "KY",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "florence-ky",
+      "name": "Florence",
+      "state": "KY",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "erlanger-ky",
+      "name": "Erlanger",
+      "state": "KY",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "fort-thomas-ky",
+      "name": "Fort Thomas",
+      "state": "KY",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "fort-mitchell-ky",
+      "name": "Fort Mitchell",
+      "state": "KY",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "independence-ky",
+      "name": "Independence",
+      "state": "KY",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "cold-spring-ky",
+      "name": "Cold Spring",
+      "state": "KY",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "bellevue-ky",
+      "name": "Bellevue",
+      "state": "KY",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    },
+    {
+      "id": "dayton-ky",
+      "name": "Dayton",
+      "state": "KY",
+      "chaptersScraped": 3,
+      "creditsUsed": 15,
+      "errors": []
+    }
+  ]
+}

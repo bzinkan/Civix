@@ -1,0 +1,33 @@
+{
+  "jurisdiction": "bellevue-ky",
+  "name": "Bellevue",
+  "state": "KY",
+  "source": "municode",
+  "sourceUrl": "https://library.municode.com/ky/bellevue/codes/code_of_ordinances",
+  "scrapedAt": "2026-01-02T17:50:52.178Z",
+  "totalChapters": 3,
+  "totalCreditsUsed": 15,
+  "chapters": [
+    {
+      "name": "Chapter 110: Business Licenses",
+      "url": "https://library.municode.com/ky/bellevue/codes/code_of_ordinances?nodeId=COOR_CH110BULI",
+      "textLength": 11065,
+      "creditCost": 5,
+      "error": null
+    },
+    {
+      "name": "Chapter 150: Building Regulations",
+      "url": "https://library.municode.com/ky/bellevue/codes/code_of_ordinances?nodeId=COOR_CH150BURE",
+      "textLength": 11065,
+      "creditCost": 5,
+      "error": null
+    },
+    {
+      "name": "Chapter 155: Zoning",
+      "url": "https://library.municode.com/ky/bellevue/codes/code_of_ordinances?nodeId=COOR_CH155ZO",
+      "textLength": 11065,
+      "creditCost": 5,
+      "error": null
+    }
+  ]
+}

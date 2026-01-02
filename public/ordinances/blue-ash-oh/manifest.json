@@ -1,0 +1,40 @@
+{
+  "jurisdiction": "blue-ash-oh",
+  "name": "Blue Ash",
+  "state": "OH",
+  "source": "municode",
+  "sourceUrl": "https://library.municode.com/oh/blue_ash/codes/code_of_ordinances",
+  "scrapedAt": "2026-01-02T17:39:54.417Z",
+  "totalChapters": 4,
+  "totalCreditsUsed": 20,
+  "chapters": [
+    {
+      "name": "Part Eleven: Business Regulations",
+      "url": "https://library.municode.com/oh/blue_ash/codes/code_of_ordinances?nodeId=PTELBURE",
+      "textLength": 11414,
+      "creditCost": 5,
+      "error": null
+    },
+    {
+      "name": "Part Thirteen: Building Code",
+      "url": "https://library.municode.com/oh/blue_ash/codes/code_of_ordinances?nodeId=PTTHBUCO",
+      "textLength": 11414,
+      "creditCost": 5,
+      "error": null
+    },
+    {
+      "name": "Part Fifteen: Fire Prevention",
+      "url": "https://library.municode.com/oh/blue_ash/codes/code_of_ordinances?nodeId=PTFIFIPR",
+      "textLength": 11414,
+      "creditCost": 5,
+      "error": null
+    },
+    {
+      "name": "Appendix A: Zoning",
+      "url": "https://library.municode.com/oh/blue_ash/codes/code_of_ordinances?nodeId=APXAZO",
+      "textLength": 11414,
+      "creditCost": 5,
+      "error": null
+    }
+  ]
+}
