@@ -1,0 +1,47 @@
+{
+  "jurisdiction": "covington-ky",
+  "source": "amlegal",
+  "sourceUrl": "https://codelibrary.amlegal.com/codes/covington/latest/overview",
+  "scrapedAt": "2026-01-02T15:00:56.098Z",
+  "totalChapters": 3,
+  "relevantChapters": 3,
+  "totalCreditsUsed": 16,
+  "chapters": [
+    {
+      "title": "TITLE V: PUBLIC WORKS",
+      "href": "https://codelibrary.amlegal.com/codes/covington/latest/covington_ky/0-0-0-18683",
+      "isZoning": false,
+      "isBuilding": false,
+      "isBusiness": false,
+      "isHealth": true,
+      "isRelevant": true,
+      "textLength": 2500,
+      "sectionsCount": 0,
+      "error": null
+    },
+    {
+      "title": "TITLE XI: BUSINESS REGULATIONS",
+      "href": "https://codelibrary.amlegal.com/codes/covington/latest/covington_ky/0-0-0-22326",
+      "isZoning": false,
+      "isBuilding": false,
+      "isBusiness": true,
+      "isHealth": false,
+      "isRelevant": true,
+      "textLength": 3212,
+      "sectionsCount": 0,
+      "error": null
+    },
+    {
+      "title": "TITLE XV: LAND USAGE",
+      "href": "https://codelibrary.amlegal.com/codes/covington/latest/covington_ky/0-0-0-25675",
+      "isZoning": true,
+      "isBuilding": false,
+      "isBusiness": false,
+      "isHealth": false,
+      "isRelevant": true,
+      "textLength": 2425,
+      "sectionsCount": 0,
+      "error": null
+    }
+  ]
+}

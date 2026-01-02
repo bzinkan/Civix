@@ -1,14 +1,7 @@
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import type { Browser, Page } from 'puppeteer';
-
-// Use stealth plugin to avoid bot detection
-puppeteer.use(StealthPlugin());
+import * as cheerio from 'cheerio';
+import { scrapeUrlWithRetry } from './scrapingbee-client';
 
 const MUNICODE_BASE = 'https://library.municode.com';
-
-// Browser singleton for reuse
-let browserInstance: Browser | null = null;
 
 /**
  * Known Municode paths for Cincinnati metro cities
@@ -91,6 +84,7 @@ export interface ChapterContent {
     text: string;
   }>;
   scrapedAt: Date;
+  creditCost?: number;
   error?: string;
 }
 
@@ -98,41 +92,12 @@ export interface ScrapeResult {
   jurisdictionId: string;
   municodeUrl: string | null;
   chapters: Array<ChapterInfo & Partial<ChapterContent>>;
+  totalCredits: number;
   scrapedAt: Date;
 }
 
 export interface ProgressCallback {
   (progress: { current: number; total: number; chapter: string }): void;
-}
-
-/**
- * Get or create browser instance
- */
-async function getBrowser(): Promise<Browser> {
-  if (!browserInstance || !browserInstance.connected) {
-    browserInstance = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
-        '--window-size=1920x1080',
-      ],
-    });
-  }
-  return browserInstance;
-}
-
-/**
- * Close browser instance
- */
-export async function closeBrowser(): Promise<void> {
-  if (browserInstance) {
-    await browserInstance.close();
-    browserInstance = null;
-  }
 }
 
 /**
@@ -159,256 +124,185 @@ export function getSupportedJurisdictions(): string[] {
 }
 
 /**
- * Wait for Angular to finish loading
- */
-async function waitForAngular(page: Page): Promise<void> {
-  try {
-    // Wait for Angular to be ready
-    await page.waitForFunction(
-      () => {
-        const angular = (window as any).angular;
-        if (!angular) return true; // Not an Angular app
-        const elem = document.querySelector('[ng-app]');
-        if (!elem) return true;
-        const injector = angular.element(elem).injector();
-        if (!injector) return true;
-        const $http = injector.get('$http');
-        return $http.pendingRequests.length === 0;
-      },
-      { timeout: 15000 }
-    );
-  } catch {
-    // Timeout is okay, continue anyway
-  }
-
-  // Additional wait for content to render
-  await new Promise((r) => setTimeout(r, 2000));
-}
-
-/**
- * Scrape table of contents from Municode using Puppeteer
+ * Scrape table of contents from Municode using ScrapingBee
  */
 export async function scrapeTOC(jurisdictionId: string): Promise<ChapterInfo[]> {
   const url = getMunicodeUrl(jurisdictionId);
   if (!url) throw new Error(`No Municode URL for: ${jurisdictionId}`);
 
-  console.log(`  [Municode] Navigating to: ${url}`);
+  console.log(`  [Municode] Fetching TOC: ${url}`);
 
-  const browser = await getBrowser();
-  const page = await browser.newPage();
+  const result = await scrapeUrlWithRetry(url, {
+    renderJs: true,
+    wait: 5000, // Wait for Angular to render
+    blockResources: false, // Need all resources for Angular
+  });
 
-  try {
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    );
+  if (!result.success) {
+    throw new Error(`Failed to scrape TOC: ${result.error}`);
+  }
 
-    await page.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: 60000,
+  const html = result.html || '';
+  const $ = cheerio.load(html);
+
+  // Check if we got redirected to state page (city not on Municode)
+  const pageTitle = $('title').text();
+  const bodyText = $('body').text();
+
+  if (
+    pageTitle.includes('| Municode Library') &&
+    !pageTitle.includes('Code of Ordinances') &&
+    bodyText.includes('Jumps to municipalities')
+  ) {
+    console.log(`  [Municode] City not available on Municode (redirected to state page)`);
+    return [];
+  }
+
+  const chapters: ChapterInfo[] = [];
+
+  // Find all chapter/title links with nodeId in URL
+  $('a[href*="nodeId="]').each((i, el) => {
+    const title = $(el).text().trim();
+    const href = $(el).attr('href');
+
+    if (!title || !href || title.length < 3) return;
+
+    // Skip duplicate titles
+    if (chapters.some((ch) => ch.title === title)) return;
+
+    // Identify relevant chapters by keywords
+    const titleLower = title.toLowerCase();
+    const isZoning = /zoning|land use|land usage|land development|planning|subdivision/i.test(titleLower);
+    const isBuilding = /building|construction|permit|housing|property maintenance|fire prevention|fire code/i.test(titleLower);
+    const isBusiness = /business|license|occupation|vendor|peddler|commercial/i.test(titleLower);
+    const isHealth = /health|food|sanitation|nuisance|environmental|public works/i.test(titleLower);
+    const isAnimals = /animal/i.test(titleLower);
+
+    chapters.push({
+      title,
+      href: href.startsWith('http') ? href : `${MUNICODE_BASE}${href}`,
+      isZoning,
+      isBuilding,
+      isBusiness,
+      isHealth,
+      isAnimals,
+      isRelevant: isZoning || isBuilding || isBusiness || isHealth || isAnimals,
     });
+  });
 
-    // Wait for page to stabilize
-    await new Promise((r) => setTimeout(r, 3000));
+  // If no nodeId links found, try other selectors
+  if (chapters.length === 0) {
+    $('a[href*="/codes/code_of_ordinances"]').each((i, el) => {
+      const title = $(el).text().trim();
+      const href = $(el).attr('href');
 
-    // Check if we got redirected (city not on Municode)
-    const currentUrl = page.url();
-    if (!currentUrl.includes(jurisdictionId.replace('-', '_').replace('-', '/'))) {
-      // Check if we're on a state listing page (redirect happened)
-      const isStatePage = await page.evaluate(() => {
-        const bodyText = document.body.innerText;
-        return bodyText.includes('Jumps to municipalities') ||
-               !bodyText.includes('Code of Ordinances');
-      });
+      if (!title || !href || title.length < 3) return;
+      if (chapters.some((ch) => ch.title === title)) return;
 
-      if (isStatePage) {
-        console.log(`  [Municode] City not available on Municode (redirected to state page)`);
-        return [];
-      }
-    }
+      const titleLower = title.toLowerCase();
+      const isZoning = /zoning|land use|land usage|land development|planning|subdivision/i.test(titleLower);
+      const isBuilding = /building|construction|permit|housing|property maintenance|fire prevention|fire code/i.test(titleLower);
+      const isBusiness = /business|license|occupation|vendor|peddler|commercial/i.test(titleLower);
+      const isHealth = /health|food|sanitation|nuisance|environmental|public works/i.test(titleLower);
+      const isAnimals = /animal/i.test(titleLower);
 
-    // Click the "Browse table of contents" button to expand the TOC
-    console.log(`  [Municode] Looking for Browse TOC button...`);
-
-    const clicked = await page.evaluate(() => {
-      // Find the button with "Browse table of contents" text
-      const buttons = Array.from(document.querySelectorAll('button'));
-      for (const btn of buttons) {
-        const text = btn.textContent?.toLowerCase() || '';
-        if (text.includes('browse table of contents') || text.includes('browse toc')) {
-          btn.click();
-          return true;
-        }
-      }
-      return false;
-    });
-
-    if (clicked) {
-      console.log(`  [Municode] Clicked Browse TOC button, waiting for content...`);
-      await new Promise((r) => setTimeout(r, 5000));
-    } else {
-      console.log(`  [Municode] No Browse button found, checking for existing TOC...`);
-    }
-
-    // Extract chapters from the rendered page
-    const chapters = await page.evaluate(() => {
-      const results: Array<{
-        title: string;
-        href: string;
-      }> = [];
-
-      // Get all links with nodeId parameter (these are the TOC items)
-      document.querySelectorAll('a').forEach((anchor) => {
-        const href = anchor.href || '';
-        const title = anchor.textContent?.trim() || '';
-
-        // Look for links with nodeId= in the URL (TOC structure)
-        if (
-          title &&
-          href &&
-          href.includes('nodeId=') &&
-          title.length > 3 &&
-          !results.some((r) => r.text === title)
-        ) {
-          results.push({ title, href });
-        }
-      });
-
-      // Deduplicate by title
-      return results.filter(
-        (item, index, self) => self.findIndex((t) => t.title === item.title) === index
-      );
-    });
-
-    console.log(`  [Municode] Found ${chapters.length} TOC links`);
-
-    // Process and categorize chapters
-    return chapters.map((ch) => {
-      const title = ch.title;
-      const isZoning = /zoning|land use|land development|planning|subdivision/i.test(title);
-      const isBuilding = /building|construction|permit|housing|property maintenance|fire prevention/i.test(title);
-      const isBusiness = /business|license|occupation|vendor|peddler/i.test(title);
-      const isHealth = /health|food|sanitation|nuisance|environmental/i.test(title);
-      const isAnimals = /animal/i.test(title);
-
-      return {
+      chapters.push({
         title,
-        href: ch.href,
+        href: href.startsWith('http') ? href : `${MUNICODE_BASE}${href}`,
         isZoning,
         isBuilding,
         isBusiness,
         isHealth,
         isAnimals,
         isRelevant: isZoning || isBuilding || isBusiness || isHealth || isAnimals,
-      };
+      });
     });
-  } finally {
-    await page.close();
   }
+
+  console.log(
+    `  [Municode] Found ${chapters.length} chapters, ${chapters.filter((c) => c.isRelevant).length} relevant`
+  );
+
+  return chapters;
 }
 
 /**
- * Scrape full text of a chapter using Puppeteer
+ * Scrape full text of a chapter using ScrapingBee
  */
 export async function scrapeChapter(chapterUrl: string): Promise<ChapterContent> {
-  console.log(`  [Municode] Scraping chapter: ${chapterUrl.substring(0, 80)}...`);
+  console.log(`  [Municode] Scraping: ${chapterUrl.substring(0, 70)}...`);
 
-  const browser = await getBrowser();
-  const page = await browser.newPage();
+  const result = await scrapeUrlWithRetry(chapterUrl, {
+    renderJs: true,
+    wait: 5000,
+    blockResources: false,
+  });
 
-  try {
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    );
-
-    await page.goto(chapterUrl, {
-      waitUntil: 'networkidle2',
-      timeout: 60000,
-    });
-
-    // Wait for Angular to load
-    await waitForAngular(page);
-
-    // Wait for content to appear
-    await page.waitForSelector(
-      '.chunk-content, .code-content, #codebody, .section-content, [class*="content"]',
-      { timeout: 15000 }
-    ).catch(() => {
-      console.log('  [Municode] Content selector not found, continuing...');
-    });
-
-    // Extract content from the rendered page
-    const content = await page.evaluate(() => {
-      // Get all text content from the code body
-      const contentSelectors = [
-        '.chunk-content',
-        '.code-content',
-        '#codebody',
-        '.section-content',
-        '.codes-content',
-        '.main-content',
-        '[role="main"]',
-        '#content',
-      ];
-
-      let fullText = '';
-      for (const selector of contentSelectors) {
-        const el = document.querySelector(selector);
-        if (el && el.textContent) {
-          fullText = el.textContent.replace(/\s+/g, ' ').trim();
-          if (fullText.length > 100) break;
-        }
-      }
-
-      // If still no content, get body text
-      if (fullText.length < 100) {
-        fullText = document.body.textContent?.replace(/\s+/g, ' ').trim() || '';
-      }
-
-      // Extract sections
-      const sections: Array<{ number: string; title: string; text: string }> = [];
-      const sectionSelectors = [
-        '.section',
-        '[data-section]',
-        '.chunk',
-        '.code-section',
-      ];
-
-      for (const selector of sectionSelectors) {
-        const elements = document.querySelectorAll(selector);
-        if (elements.length > 0) {
-          elements.forEach((el) => {
-            const numEl = el.querySelector('.section-number, .num, .sec-num');
-            const titleEl = el.querySelector('.section-title, .heading, .sec-head');
-            const num = numEl?.textContent?.trim() || '';
-            const title = titleEl?.textContent?.trim() || '';
-            const text = el.textContent?.trim() || '';
-
-            if (num || title || text.length > 50) {
-              sections.push({
-                number: num,
-                title: title,
-                text: text.substring(0, 5000),
-              });
-            }
-          });
-          if (sections.length > 0) break;
-        }
-      }
-
-      return { fullText, sections };
-    });
-
-    console.log(`  [Municode] Extracted ${content.fullText.length} chars, ${content.sections.length} sections`);
-
+  if (!result.success) {
     return {
       url: chapterUrl,
-      fullText: content.fullText.substring(0, 100000), // Limit size
-      sections: content.sections,
+      fullText: '',
+      sections: [],
       scrapedAt: new Date(),
+      error: result.error,
     };
-  } finally {
-    await page.close();
   }
+
+  const $ = cheerio.load(result.html || '');
+
+  // Get main content area
+  const contentSelectors = [
+    '#codebody',
+    '.codes-content',
+    '.chunk-content',
+    '.code-content',
+    '.main-content',
+    '[role="main"]',
+    'main',
+    'article',
+  ];
+
+  let content = '';
+  for (const selector of contentSelectors) {
+    const el = $(selector);
+    if (el.length) {
+      content = el.text().replace(/\s+/g, ' ').trim();
+      if (content.length > 100) break;
+    }
+  }
+
+  if (!content || content.length < 100) {
+    content = $('body').text().replace(/\s+/g, ' ').trim();
+  }
+
+  // Get section structure
+  const sections: Array<{ number: string; title: string; text: string }> = [];
+  $('.section, [data-section], .chunk').each((i, el) => {
+    const $el = $(el);
+    const num = $el.find('.num, .section-number, .secnum').first().text().trim();
+    const title = $el.find('.heading, .section-title, .sectitle').first().text().trim();
+    const text = $el.text().trim();
+
+    if (num || title || text.length > 50) {
+      sections.push({
+        number: num,
+        title,
+        text: text.substring(0, 5000),
+      });
+    }
+  });
+
+  console.log(
+    `  [Municode] Extracted ${content.length} chars, ${sections.length} sections`
+  );
+
+  return {
+    url: chapterUrl,
+    fullText: content.substring(0, 100000), // Limit size
+    sections,
+    scrapedAt: new Date(),
+    creditCost: result.cost,
+  };
 }
 
 /**
@@ -418,28 +312,32 @@ export async function scrapeJurisdiction(
   jurisdictionId: string,
   onProgress?: ProgressCallback
 ): Promise<ScrapeResult> {
-  console.log(`[Municode] Starting scrape for: ${jurisdictionId}`);
+  console.log(`\n[Municode] Starting scrape for: ${jurisdictionId}`);
 
   const toc = await scrapeTOC(jurisdictionId);
-  const relevantChapters = toc.filter((ch) => ch.isRelevant);
+  let relevantChapters = toc.filter((ch) => ch.isRelevant);
 
-  console.log(`[Municode] Found ${toc.length} total chapters, ${relevantChapters.length} relevant`);
+  console.log(
+    `[Municode] Found ${toc.length} total chapters, ${relevantChapters.length} relevant`
+  );
 
-  if (relevantChapters.length === 0) {
+  if (relevantChapters.length === 0 && toc.length > 0) {
     // If no relevant chapters found, try scraping all chapters that look like content
     console.log('[Municode] No relevant chapters found, trying all content chapters...');
-    const allChapters = toc.filter((ch) =>
-      !ch.title.toLowerCase().includes('table of contents') &&
-      !ch.title.toLowerCase().includes('home') &&
-      ch.title.length > 3
+    const allChapters = toc.filter(
+      (ch) =>
+        !ch.title.toLowerCase().includes('table of contents') &&
+        !ch.title.toLowerCase().includes('home') &&
+        ch.title.length > 3
     );
-    relevantChapters.push(...allChapters.slice(0, 20)); // Limit to first 20
+    relevantChapters = allChapters.slice(0, 15); // Limit to first 15
   }
 
   const results: ScrapeResult = {
     jurisdictionId,
     municodeUrl: getMunicodeUrl(jurisdictionId),
     chapters: [],
+    totalCredits: 1, // TOC scrape
     scrapedAt: new Date(),
   };
 
@@ -460,6 +358,7 @@ export async function scrapeJurisdiction(
         ...chapter,
         ...content,
       });
+      results.totalCredits += content.creditCost || 1;
     } catch (error: any) {
       console.log(`  [Municode] Error scraping chapter: ${error.message}`);
       results.chapters.push({
@@ -468,14 +367,13 @@ export async function scrapeJurisdiction(
       });
     }
 
-    // Rate limiting - be nice to Municode
-    await new Promise((r) => setTimeout(r, 3000));
+    // Rate limiting
+    await new Promise((r) => setTimeout(r, 2000));
   }
 
-  // Close browser when done with jurisdiction
-  await closeBrowser();
-
-  console.log(`[Municode] Completed scrape for ${jurisdictionId}: ${results.chapters.length} chapters`);
+  console.log(
+    `[Municode] Completed scrape for ${jurisdictionId}: ${results.chapters.length} chapters (${results.totalCredits} credits)`
+  );
 
   return results;
 }
@@ -498,12 +396,17 @@ export async function scrapeChapterType(
   };
 
   const chapter = toc.find((ch) => ch[typeMap[chapterType]]);
-  if (!chapter) {
-    await closeBrowser();
-    return null;
-  }
+  if (!chapter) return null;
 
-  const content = await scrapeChapter(chapter.href);
-  await closeBrowser();
-  return content;
+  return scrapeChapter(chapter.href);
+}
+
+/**
+ * List all available jurisdictions with their URLs
+ */
+export function listAvailableJurisdictions(): Array<{ id: string; url: string | null }> {
+  return Object.keys(MUNICODE_PATHS).map((id) => ({
+    id,
+    url: getMunicodeUrl(id),
+  }));
 }

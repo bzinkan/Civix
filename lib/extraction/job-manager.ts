@@ -1,5 +1,9 @@
 import { prisma } from '@/lib/db';
-import { scrapeJurisdiction } from '../scrapers/municode';
+import {
+  scrapeJurisdiction,
+  getKnownSource,
+  getSourceUrl,
+} from '../scrapers/unified-scraper';
 import {
   getZoningDistricts,
   getCountyForJurisdiction,
@@ -111,19 +115,22 @@ export async function runExtraction(jobId: string) {
     await updateJob(jobId, { status: 'scraping', startedAt: new Date() });
 
     // ========================================
-    // STEP 1: Scrape Municode
+    // STEP 1: Scrape Code Source (Municode, AmLegal, eCode360, etc.)
     // ========================================
-    console.log(`[${jurisdictionId}] Step 1: Scraping Municode...`);
+    const codeSource = getKnownSource(jurisdictionId);
+    const sourceUrl = getSourceUrl(jurisdictionId);
+    console.log(`[${jurisdictionId}] Step 1: Scraping ${codeSource}...`);
+    if (sourceUrl) {
+      console.log(`  Source URL: ${sourceUrl}`);
+    }
 
     let scrapedData = null;
     try {
-      scrapedData = await scrapeJurisdiction(jurisdictionId, (progress) => {
-        console.log(
-          `  Scraping ${progress.current}/${progress.total}: ${progress.chapter}`
-        );
-      });
+      scrapedData = await scrapeJurisdiction(jurisdictionId);
+      console.log(`  Source: ${(scrapedData as any)?.source || 'unknown'}`);
+      console.log(`  Chapters found: ${(scrapedData as any)?.chapters?.length || 0}`);
     } catch (e: any) {
-      console.log(`  Municode scrape failed: ${e.message}`);
+      console.log(`  Scrape failed: ${e.message}`);
     }
 
     await updateJob(jobId, {
@@ -183,12 +190,26 @@ export async function runExtraction(jobId: string) {
     const buildingChapter = (scrapedData as any)?.chapters?.find(
       (ch: any) => ch.isBuilding
     );
+    const businessChapter = (scrapedData as any)?.chapters?.find(
+      (ch: any) => ch.isBusiness
+    );
+    const healthChapter = (scrapedData as any)?.chapters?.find(
+      (ch: any) => ch.isHealth
+    );
+
+    // Combine all relevant chapters for permit extraction
+    const permitText = [
+      buildingChapter?.fullText || '',
+      businessChapter?.fullText || '',
+      healthChapter?.fullText || '',
+    ].filter(t => t.length > 100).join('\n\n---\n\n');
+
     let permits: ExtractedPermit[] = [];
 
-    if (buildingChapter?.fullText) {
+    if (permitText.length > 100) {
       const result = await extractPermitRequirements(
         jurisdictionId,
-        buildingChapter.fullText
+        permitText
       );
       if (Array.isArray(result)) {
         permits = result;
@@ -206,11 +227,14 @@ export async function runExtraction(jobId: string) {
     // ========================================
     console.log(`[${jurisdictionId}] Step 5: Extracting building codes...`);
 
+    // Use building chapter if available, otherwise try business/health chapters
+    const codeText = buildingChapter?.fullText || businessChapter?.fullText || healthChapter?.fullText || '';
+
     let codes: ExtractedCode[] = [];
-    if (buildingChapter?.fullText) {
+    if (codeText.length > 100) {
       const result = await extractBuildingCodes(
         jurisdictionId,
-        buildingChapter.fullText,
+        codeText,
         'local'
       );
       if (Array.isArray(result)) {
@@ -241,12 +265,7 @@ export async function runExtraction(jobId: string) {
     ];
     const allIndustryPermits: any[] = [];
 
-    const businessChapter = (scrapedData as any)?.chapters?.find(
-      (ch: any) => ch.isBusiness
-    );
-    const healthChapter = (scrapedData as any)?.chapters?.find(
-      (ch: any) => ch.isHealth
-    );
+    // Reuse businessChapter and healthChapter from Step 4
     const combinedText = [
       buildingChapter?.fullText || '',
       businessChapter?.fullText || '',
