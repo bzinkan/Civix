@@ -189,10 +189,17 @@ async function scrapeWithKnownSource(
       return null;
     }
 
+    // Handle different property names across scrapers
+    const sourceUrl = 'sourceUrl' in result
+      ? result.sourceUrl
+      : 'municodeUrl' in result
+        ? result.municodeUrl
+        : null;
+
     return {
       jurisdictionId,
       source,
-      sourceUrl: result.sourceUrl || result.municodeUrl || null,
+      sourceUrl,
       chapters: result.chapters,
       totalCredits: result.totalCredits,
       scrapedAt: result.scrapedAt,
