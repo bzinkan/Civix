@@ -132,7 +132,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Regular chat - no attachments
-    const response = await handleChatMessage(message, propertyContext, conversation_id, toolContext);
+    const { propertyId } = body;
+    const response = await handleChatMessage(message, propertyContext, conversation_id, toolContext, propertyId);
     return NextResponse.json(response);
 
   } catch (error: any) {
@@ -626,7 +627,8 @@ async function handleChatMessage(
   message: string,
   propertyContext: PropertyContext | null,
   conversationId?: string,
-  toolContext?: { toolId: string; systemContext: string; category: string }
+  toolContext?: { toolId: string; systemContext: string; category: string },
+  propertyId?: string
 ): Promise<any> {
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
@@ -643,33 +645,20 @@ Setbacks: Front ${propertyContext.development_standards?.setbacks.front_ft || '?
 Max Height: ${propertyContext.development_standards?.max_height_ft || 'Unknown'}ft
 Max Lot Coverage: ${propertyContext.development_standards?.max_lot_coverage ? (propertyContext.development_standards.max_lot_coverage * 100) + '%' : 'Unknown'}` : '';
 
-  // Use tool-specific system prompt if provided, otherwise use default
-  let systemPrompt: string;
-
-  if (toolContext?.systemContext) {
-    systemPrompt = `${toolContext.systemContext}
-
-${propertyInfo}
-
-Important Guidelines:
-1. Be helpful, specific, and accurate about Cincinnati/Ohio regulations
-2. When referencing specific codes or regulations, cite the relevant section
-3. If the user provides an address, use the property context information above
-4. Provide contact numbers when relevant: Building permits (513) 352-3276, Historic (513) 352-4822, Zoning (513) 352-3270
-5. If you're unsure about specific details, recommend they verify with the appropriate city department
-6. Format responses clearly with bullet points or numbered lists when appropriate`;
-  } else {
-    systemPrompt = `You are a helpful Cincinnati municipal regulations assistant. You help residents, contractors, and professionals understand zoning, permits, and city regulations.
+  const systemPrompt = `You are Civix, a helpful Cincinnati regulatory assistant. You help residents, contractors, and professionals understand zoning, permits, and city regulations.
 
 ${propertyInfo || 'No property context provided.'}
 
 Guidelines:
-1. Be helpful and specific
-2. If the user wants to check if a project is compliant, ask them to upload a site plan or provide measurements
+1. Be helpful, specific, and accurate about Cincinnati/Ohio regulations
+2. When citing specific codes or regulations, use this format: [SOURCE: CMC Section.Number]
 3. Always mention if a property is in a historic district - this affects what they can do
 4. Provide contact numbers when relevant: Building permits (513) 352-3276, Historic (513) 352-4822
-5. If you're unsure, recommend they verify with the city`;
-  }
+5. If you're unsure about specific details, recommend they verify with the appropriate city department
+6. Keep responses concise but complete
+7. Format responses clearly with bullet points when appropriate
+
+IMPORTANT: You are a regulatory assistant. Only answer questions about permits, zoning, building codes, licenses, and regulations. If someone asks about restaurants, entertainment, or other lifestyle recommendations, politely redirect them to the regulatory aspects or suggest they use Google/Yelp for recommendations.`;
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -679,11 +668,144 @@ Guidelines:
   });
 
   const content = response.content[0];
+  const responseText = content.type === 'text' ? content.text : 'I apologize, I could not generate a response.';
+
+  // Parse citations from response text [SOURCE: CMC xxx]
+  const citations = parseCitations(responseText);
+
+  // Match relevant attachments (permit forms) based on content
+  const attachments = matchAttachments(message, responseText);
+
+  // Create or update conversation
+  let newConversationId = conversationId;
+  try {
+    if (!conversationId) {
+      // Create new conversation
+      const conversation = await prisma.conversation.create({
+        data: {
+          propertyId: propertyId || null,
+          title: message.slice(0, 50) + (message.length > 50 ? '...' : ''),
+          jurisdictionId: 'cincinnati-oh',
+          jurisdictionName: 'Cincinnati',
+          jurisdictionState: 'OH',
+        },
+      });
+      newConversationId = conversation.id;
+    }
+
+    // Save messages
+    if (newConversationId) {
+      await prisma.message.createMany({
+        data: [
+          {
+            conversationId: newConversationId,
+            role: 'user',
+            content: message,
+          },
+          {
+            conversationId: newConversationId,
+            role: 'assistant',
+            content: responseText,
+            citations: citations.length > 0 ? citations : undefined,
+            attachments: attachments.length > 0 ? attachments : undefined,
+            propertyContext: propertyContext ? JSON.parse(JSON.stringify(propertyContext)) : undefined,
+          },
+        ],
+      });
+    }
+  } catch (e) {
+    console.error('Failed to save conversation:', e);
+  }
 
   return {
     type: 'chat',
-    message: content.type === 'text' ? content.text : 'I apologize, I could not generate a response.',
+    answer: responseText,
+    message: responseText, // Keep for backwards compatibility
+    citations,
+    attachments,
+    conversationId: newConversationId,
     property: propertyContext,
-    toolId: toolContext?.toolId
   };
+}
+
+/**
+ * Parse citations from response text
+ */
+function parseCitations(text: string): Array<{ code: string; title?: string; url?: string }> {
+  const citations: Array<{ code: string; title?: string; url?: string }> = [];
+  const regex = /\[SOURCE:\s*([^\]]+)\]/gi;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    const code = match[1].trim();
+    if (!citations.find(c => c.code === code)) {
+      citations.push({
+        code,
+        title: getCodeTitle(code),
+        url: getCodeUrl(code),
+      });
+    }
+  }
+
+  return citations;
+}
+
+function getCodeTitle(code: string): string {
+  if (code.includes('CMC')) return 'Cincinnati Municipal Code';
+  if (code.includes('ORC')) return 'Ohio Revised Code';
+  if (code.includes('OBC')) return 'Ohio Building Code';
+  return 'Municipal Regulation';
+}
+
+function getCodeUrl(code: string): string | undefined {
+  if (code.includes('CMC')) {
+    return 'https://library.municode.com/oh/cincinnati/codes/code_of_ordinances';
+  }
+  return undefined;
+}
+
+/**
+ * Match relevant attachments based on content
+ */
+function matchAttachments(question: string, response: string): Array<{ name: string; type: string; url: string; description: string }> {
+  const attachments: Array<{ name: string; type: string; url: string; description: string }> = [];
+  const combined = (question + ' ' + response).toLowerCase();
+
+  // Map keywords to forms
+  const formMappings = [
+    {
+      keywords: ['deck', 'building permit'],
+      form: { name: 'Building Permit Application', type: 'pdf', url: '/forms/building-permit.pdf', description: 'General building permit application form' }
+    },
+    {
+      keywords: ['fence'],
+      form: { name: 'Fence Permit Application', type: 'pdf', url: '/forms/fence-permit.pdf', description: 'Fence construction permit application' }
+    },
+    {
+      keywords: ['historic', 'certificate of appropriateness'],
+      form: { name: 'Certificate of Appropriateness', type: 'pdf', url: '/forms/coa-application.pdf', description: 'Required for changes in historic districts' }
+    },
+    {
+      keywords: ['food', 'restaurant', 'food service'],
+      form: { name: 'Food Service License Application', type: 'pdf', url: '/forms/food-service.pdf', description: 'Health department food service license' }
+    },
+    {
+      keywords: ['home occupation', 'home business'],
+      form: { name: 'Home Occupation Permit', type: 'pdf', url: '/forms/home-occupation.pdf', description: 'Permit for home-based businesses' }
+    },
+    {
+      keywords: ['variance'],
+      form: { name: 'Variance Application', type: 'pdf', url: '/forms/variance.pdf', description: 'Request variance from zoning requirements' }
+    },
+  ];
+
+  for (const mapping of formMappings) {
+    if (mapping.keywords.some(kw => combined.includes(kw))) {
+      if (!attachments.find(a => a.name === mapping.form.name)) {
+        attachments.push(mapping.form);
+      }
+    }
+  }
+
+  return attachments;
 }

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { generateQueryEmbedding, cosineSimilarity } from '@/lib/ordinances/embeddings';
-import { callAI } from '@/lib/ai/providers';
+import Anthropic from '@anthropic-ai/sdk';
 
 const prisma = new PrismaClient();
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 /**
  * Ordinance Query API
@@ -149,18 +150,19 @@ ${c.content}
 
 Answer the question based ONLY on the ordinance sections above. Include specific citations in your answer.`;
 
-    const aiResponse = await callAI(
-      [{ role: 'user', content: userPrompt }],
-      {
-        systemPrompt,
-        temperature: 0.1, // Low temperature for deterministic answers
-        maxTokens: 2000,
-      }
-    );
+    const aiResponse = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const responseContent = aiResponse.content[0];
+    const answerText = responseContent.type === 'text' ? responseContent.text : 'Unable to generate response';
 
     // Step 7: Format response
     return NextResponse.json({
-      answer: aiResponse.content,
+      answer: answerText,
       sources: topChunks.map(chunk => ({
         citation: `${jurisdiction.name} Code §${chunk.chapter}${chunk.section ? `-${chunk.section}` : ''}`,
         title: chunk.title,
@@ -178,8 +180,8 @@ Answer the question based ONLY on the ordinance sections above. Include specific
         question,
         chunksSearched: chunks.length,
         topChunksUsed: topK,
-        provider: aiResponse.provider,
-        tokensUsed: aiResponse.tokensUsed,
+        provider: 'anthropic',
+        tokensUsed: aiResponse.usage?.output_tokens || 0,
       },
     });
 

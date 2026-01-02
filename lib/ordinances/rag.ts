@@ -6,7 +6,9 @@
  */
 
 import { searchForRAG, SearchOptions } from './search';
-import { callAI } from '../ai/providers';
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export interface RAGAnswer {
   answer: string;
@@ -78,17 +80,16 @@ ${context}
 Please provide a clear, accurate answer with specific citations to the sections above.`;
 
   // Step 3: Generate answer using AI
-  const response = await callAI(
-    [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: userPrompt },
-    ],
-    {
-      temperature: 0.1, // Low temperature for factual accuracy
-      maxTokens: 800,
-      useProModel: false, // Use fast model (Gemini Flash)
-    }
-  );
+  const aiResponse = await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 800,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: userPrompt }],
+  });
+
+  const response = {
+    content: aiResponse.content[0].type === 'text' ? aiResponse.content[0].text : '',
+  };
 
   // Step 4: Determine confidence and whether to suggest lawyer
   const confidence = determineConfidence(results, response.content);

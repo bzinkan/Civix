@@ -1,167 +1,318 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useState, useCallback } from 'react';
+import AddressBar from '../components/AddressBar';
+import PropertyCard, { PropertyData } from '../components/PropertyCard';
+import ChatMessages from '../components/ChatMessages';
+import ChatInput from '../components/ChatInput';
+import EmptyState from '../components/EmptyState';
+import { ChatMessageProps } from '../components/ChatMessage';
+
+interface UnsupportedCity {
+  city: string;
+  state: string;
+  jurisdictionId: string;
+  address: string;
+  waitlistCount: number;
+}
 
 export default function HomePage() {
-  const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const [messages, setMessages] = useState<ChatMessageProps[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [property, setProperty] = useState<PropertyData | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [unsupportedCity, setUnsupportedCity] = useState<UnsupportedCity | null>(null);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
 
-  useEffect(() => {
-    // Check if user has already onboarded
-    const userType = localStorage.getItem('civix_userType');
-    if (userType) {
-      router.push('/dashboard');
-    } else {
-      setChecking(false);
+  const handleAddressSelect = useCallback(async (address: string, propertyData?: any) => {
+    // Reset states
+    setUnsupportedCity(null);
+    setWaitlistSubmitted(false);
+
+    // If propertyData is provided from AddressBar (Google Places)
+    if (propertyData) {
+      if (propertyData.supported === false) {
+        setUnsupportedCity({
+          city: propertyData.city,
+          state: propertyData.state,
+          jurisdictionId: propertyData.jurisdictionId,
+          address: propertyData.address,
+          waitlistCount: propertyData.waitlistCount || 0,
+        });
+        setProperty(null);
+        return;
+      }
+
+      if (propertyData.property) {
+        setProperty(propertyData.property);
+        return;
+      }
     }
-  }, [router]);
 
-  // Show loading while checking
-  if (checking) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    );
-  }
+    // Fallback: do our own lookup
+    try {
+      const res = await fetch(`/api/property/lookup?address=${encodeURIComponent(address)}`);
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.supported === false) {
+          setUnsupportedCity({
+            city: data.city,
+            state: data.state,
+            jurisdictionId: data.jurisdictionId,
+            address: data.address,
+            waitlistCount: data.waitlistCount || 0,
+          });
+          setProperty(null);
+        } else if (data.property) {
+          setProperty(data.property);
+        }
+      } else {
+        // Still set basic address even if lookup fails
+        setProperty({
+          address: address,
+          city: 'Cincinnati',
+        });
+      }
+    } catch (error) {
+      // Set basic address on error
+      setProperty({
+        address: address,
+        city: 'Cincinnati',
+      });
+    }
+  }, []);
+
+  const handlePropertyLookup = useCallback((propertyData: any) => {
+    // This is called by AddressBar after property lookup
+    if (propertyData.supported === false) {
+      setUnsupportedCity({
+        city: propertyData.city,
+        state: propertyData.state,
+        jurisdictionId: propertyData.jurisdictionId,
+        address: propertyData.address,
+        waitlistCount: propertyData.waitlistCount || 0,
+      });
+      setProperty(null);
+    } else if (propertyData.property) {
+      setProperty(propertyData.property);
+      setUnsupportedCity(null);
+    }
+  }, []);
+
+  const handleWaitlistSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!unsupportedCity || !waitlistEmail) return;
+
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: waitlistEmail,
+          jurisdictionId: unsupportedCity.jurisdictionId,
+          cityName: unsupportedCity.city,
+          stateCode: unsupportedCity.state,
+          addressSearched: unsupportedCity.address,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setWaitlistSubmitted(true);
+        if (data.waitlistCount) {
+          setUnsupportedCity(prev => prev ? { ...prev, waitlistCount: data.waitlistCount } : null);
+        }
+      }
+    } catch (error) {
+      console.error('Waitlist error:', error);
+    }
+  }, [unsupportedCity, waitlistEmail]);
+
+  const handleSaveProperty = useCallback(async () => {
+    if (!property) return;
+
+    try {
+      const res = await fetch('/api/properties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: property.address }),
+      });
+
+      if (res.ok) {
+        console.log('Property saved');
+      }
+    } catch (error) {
+      console.error('Failed to save property:', error);
+    }
+  }, [property]);
+
+  const handleClearProperty = useCallback(() => {
+    setProperty(null);
+    setUnsupportedCity(null);
+  }, []);
+
+  const handleSendMessage = useCallback(async (message: string) => {
+    // Add user message to UI immediately
+    const userMessage: ChatMessageProps = {
+      role: 'user',
+      content: message,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          conversationId,
+          address: property?.address,
+          propertyContext: property,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.conversationId) {
+        setConversationId(data.conversationId);
+      }
+
+      // Add assistant message
+      const assistantMessage: ChatMessageProps = {
+        role: 'assistant',
+        content: data.answer || data.message || 'Sorry, I could not process your request.',
+        citations: data.citations,
+        attachments: data.attachments,
+        createdAt: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      // Add error message
+      const errorMessage: ChatMessageProps = {
+        role: 'assistant',
+        content: 'Sorry, there was an error processing your request. Please try again.',
+        createdAt: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [conversationId, property]);
+
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    handleSendMessage(suggestion);
+  }, [handleSendMessage]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
-      {/* Hero Section */}
-      <section className="text-center mb-16">
-        <h1 className="text-5xl font-bold mb-4">Civix Compliance Intelligence</h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-          Navigate regulatory compliance with confidence. Get instant answers to permits,
-          zoning, and local regulations for any property.
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Link href="/onboarding" className="button text-lg px-8 py-3">
-            Get Started
-          </Link>
-          <Link href="/lookup" className="button-secondary text-lg px-8 py-3">
-            Try a Lookup
-          </Link>
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Address Bar */}
+      <div className="p-4 bg-white border-b border-gray-200">
+        <div className="max-w-3xl mx-auto">
+          <AddressBar
+            onAddressSelect={handleAddressSelect}
+            onPropertyLookup={handlePropertyLookup}
+            placeholder="Enter an address or ask a question..."
+          />
         </div>
-      </section>
+      </div>
 
-      {/* User Types Section */}
-      <section className="mb-16">
-        <h2 className="text-3xl font-bold text-center mb-8">Built for Everyone</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="card text-center">
-            <div className="text-4xl mb-4">🏠</div>
-            <h3 className="text-xl font-bold mb-2">Homeowners</h3>
-            <p className="text-gray-600">
-              Check permits, find your trash day, understand what you can build
-            </p>
-          </div>
-          <div className="card text-center">
-            <div className="text-4xl mb-4">🔨</div>
-            <h3 className="text-xl font-bold mb-2">Contractors</h3>
-            <p className="text-gray-600">
-              Quick compliance checks, fee estimates, bulk property lookups
-            </p>
-          </div>
-          <div className="card text-center">
-            <div className="text-4xl mb-4">🏢</div>
-            <h3 className="text-xl font-bold mb-2">Real Estate Pros</h3>
-            <p className="text-gray-600">
-              Zoning reports, development potential, client-ready documents
-            </p>
+      {/* Property Card */}
+      {property && (
+        <div className="px-4 py-3 bg-white border-b border-gray-200">
+          <div className="max-w-3xl mx-auto">
+            <PropertyCard
+              property={property}
+              onSave={handleSaveProperty}
+              onClose={handleClearProperty}
+            />
           </div>
         </div>
-      </section>
+      )}
 
-      {/* How It Works */}
-      <section className="card bg-blue-50 mb-16">
-        <h2 className="text-2xl font-bold mb-6 text-center">How It Works</h2>
-        <div className="grid md:grid-cols-3 gap-6 text-center">
-          <div>
-            <div className="text-3xl mb-3">1️⃣</div>
-            <h3 className="font-semibold mb-2">Enter an Address</h3>
-            <p className="text-sm text-gray-700">Any property in supported jurisdictions</p>
-          </div>
-          <div>
-            <div className="text-3xl mb-3">2️⃣</div>
-            <h3 className="font-semibold mb-2">Get Instant Info</h3>
-            <p className="text-sm text-gray-700">Zoning, overlays, permits, and more</p>
-          </div>
-          <div>
-            <div className="text-3xl mb-3">3️⃣</div>
-            <h3 className="font-semibold mb-2">Ask Questions</h3>
-            <p className="text-sm text-gray-700">AI-powered answers with citations</p>
-          </div>
-        </div>
-      </section>
+      {/* Unsupported City - Coming Soon */}
+      {unsupportedCity && (
+        <div className="px-4 py-3 bg-white border-b border-gray-200">
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">🚧</span>
+                    <h3 className="font-semibold text-amber-800 text-lg">
+                      {unsupportedCity.city}, {unsupportedCity.state} is coming soon!
+                    </h3>
+                  </div>
+                  <p className="text-amber-700 text-sm mb-4">
+                    We're expanding to {unsupportedCity.city}. Get notified when ready:
+                  </p>
 
-      {/* Features Grid */}
-      <section className="mb-16">
-        <h2 className="text-3xl font-bold text-center mb-8">Powerful Features</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="card">
-            <div className="flex items-start gap-4">
-              <div className="text-3xl">🔍</div>
-              <div>
-                <h3 className="font-bold mb-1">Property Lookup</h3>
-                <p className="text-gray-600">
-                  Instantly get zoning, overlays, historic status, and development standards
-                </p>
+                  {waitlistSubmitted ? (
+                    <div className="flex items-center gap-2 text-green-700 bg-green-50 px-4 py-3 rounded-lg">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>You're on the list! We'll notify you when {unsupportedCity.city} launches.</span>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleWaitlistSubmit} className="flex gap-2">
+                      <input
+                        type="email"
+                        value={waitlistEmail}
+                        onChange={(e) => setWaitlistEmail(e.target.value)}
+                        placeholder="you@email.com"
+                        className="flex-1 px-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                        required
+                      />
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
+                      >
+                        Notify Me
+                      </button>
+                    </form>
+                  )}
+
+                  {unsupportedCity.waitlistCount > 0 && (
+                    <p className="text-amber-600 text-sm mt-3 flex items-center gap-1">
+                      <span>📊</span>
+                      {unsupportedCity.waitlistCount} {unsupportedCity.waitlistCount === 1 ? 'person' : 'people'} waiting for {unsupportedCity.city}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleClearProperty}
+                  className="p-1 text-amber-400 hover:text-amber-600 hover:bg-amber-100 rounded ml-4"
+                  title="Clear"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="flex items-start gap-4">
-              <div className="text-3xl">📄</div>
-              <div>
-                <h3 className="font-bold mb-1">Document Upload</h3>
-                <p className="text-gray-600">
-                  Upload site plans and get AI-powered compliance checks
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="flex items-start gap-4">
-              <div className="text-3xl">💬</div>
-              <div>
-                <h3 className="font-bold mb-1">AI Chat</h3>
-                <p className="text-gray-600">
-                  Ask questions about permits, regulations, and requirements
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="flex items-start gap-4">
-              <div className="text-3xl">📊</div>
-              <div>
-                <h3 className="font-bold mb-1">Reports & Exports</h3>
-                <p className="text-gray-600">
-                  Generate professional reports for clients and stakeholders
-                </p>
-              </div>
+
+              <p className="text-amber-600 text-sm mt-4 pt-4 border-t border-amber-200">
+                You can still ask general questions about {unsupportedCity.state} regulations.
+              </p>
             </div>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* CTA Section */}
-      <section className="text-center">
-        <div className="card bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12">
-          <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
-          <p className="text-lg mb-6 opacity-90">
-            Join thousands of professionals using Civix for compliance
-          </p>
-          <Link
-            href="/onboarding"
-            className="inline-block bg-white text-blue-600 font-bold px-8 py-3 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            Start Free
-          </Link>
-        </div>
-      </section>
+      {/* Chat Area */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {messages.length === 0 ? (
+          <EmptyState onSuggestionClick={handleSuggestionClick} />
+        ) : (
+          <ChatMessages messages={messages} isLoading={isLoading} />
+        )}
+      </div>
+
+      {/* Chat Input */}
+      <ChatInput onSend={handleSendMessage} disabled={isLoading} />
     </div>
   );
 }

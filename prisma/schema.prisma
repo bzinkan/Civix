@@ -12,6 +12,10 @@ model Jurisdiction {
   name      String
   state     String
   type      String
+  county    String?
+  population Int?
+  status    String           @default("planned") // planned, in_progress, live
+  dataCompleteness Int       @default(0)         // 0-100 percentage
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
@@ -35,6 +39,26 @@ model Jurisdiction {
   permitExemptions   PermitExemption[]
   commonQuestions    CommonQuestion[]
   businessChecklists BusinessChecklist[]
+  waitlist           Waitlist[]
+
+  @@index([status])
+}
+
+// Waitlist for unsupported cities
+model Waitlist {
+  id              String       @id @default(cuid())
+  email           String
+  jurisdictionId  String?
+  jurisdiction    Jurisdiction? @relation(fields: [jurisdictionId], references: [id])
+  cityName        String?
+  stateCode       String?
+  addressSearched String?
+  source          String       @default("address_lookup")
+  createdAt       DateTime     @default(now())
+  notifiedAt      DateTime?
+
+  @@index([jurisdictionId])
+  @@index([email])
 }
 
 model ZoningDistrict {
@@ -228,6 +252,7 @@ model User {
   savedProperties       SavedProperty[]
   generatedReports      GeneratedReport[]
   checklistProgress     UserChecklistProgress[]
+  savedItems            SavedItem[]
 
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
@@ -243,20 +268,27 @@ model User {
 
 model SavedProperty {
   id              String    @id @default(cuid())
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?
 
   address         String
+  cityId          String?
   parcelId        String?
   jurisdictionId  String?
   nickname        String?   // "Main St Flip" or "Client Smith Property"
 
   // Cached data
   zoneCode        String?
+  zoneName        String?
+  zoneType        String?   // residential, commercial, industrial, downtown, etc.
   zoneDescription String?
   isHistoric      Boolean   @default(false)
   historicDistrict String?
+  overlays        Json      @default("[]")
   overlayData     Json?
+  lotSize         Int?
+  yearBuilt       Int?
+  propertyData    Json?     // All property details cached
 
   // Alerts
   alertOnPermits  Boolean   @default(false)
@@ -267,6 +299,11 @@ model SavedProperty {
 
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  lastAccessed    DateTime  @default(now())
+
+  // Relations
+  conversations   Conversation[]
+  savedItems      SavedItem[]
 
   @@index([userId])
   @@index([address])
@@ -368,6 +405,11 @@ model Conversation {
   userId          String?
   fingerprint     String?
 
+  // Property context (null = general chat)
+  property        SavedProperty? @relation(fields: [propertyId], references: [id])
+  propertyId      String?
+  title           String?
+
   // Ordinance query context
   jurisdictionId  String?
   jurisdictionName String?
@@ -391,6 +433,7 @@ model Conversation {
   @@index([fingerprint])
   @@index([status])
   @@index([jurisdictionId])
+  @@index([propertyId])
 }
 
 model Message {
@@ -403,6 +446,9 @@ model Message {
 
   // For assistant messages: ordinance sources/citations
   sources         Json?
+  citations       Json?         // [{code, title, excerpt, url}]
+  attachments     Json?         // [{name, type, url, description}]
+  propertyContext Json?         // property data used for this response
 
   provider        String?
   tokensUsed      Int?
@@ -410,8 +456,35 @@ model Message {
 
   createdAt       DateTime      @default(now())
 
+  savedItems      SavedItem[]
+
   @@index([conversationId])
   @@index([createdAt])
+}
+
+// ============================================================================
+// SAVED ITEMS (bookmarked answers/docs)
+// ============================================================================
+
+model SavedItem {
+  id              String        @id @default(cuid())
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  property        SavedProperty? @relation(fields: [propertyId], references: [id])
+  propertyId      String?
+
+  itemType        String        // 'answer', 'document', 'citation'
+  title           String?
+  content         String?       @db.Text
+  url             String?
+  sourceMessage   Message?      @relation(fields: [sourceMessageId], references: [id])
+  sourceMessageId String?
+
+  createdAt       DateTime      @default(now())
+
+  @@index([userId])
+  @@index([propertyId])
+  @@index([itemType])
 }
 
 model AnonymousUsage {
