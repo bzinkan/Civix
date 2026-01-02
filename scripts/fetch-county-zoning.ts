@@ -86,11 +86,16 @@ const METRO_COUNTIES: Record<string, {
     name: 'Butler County',
     state: 'OH',
     fips: '39017',
-    zoningUrl: 'https://ww1.bucoks.com/bucogis1/rest/services/BuCoKsGIS_Zoning_NC/MapServer/5',
+    // Butler County uses parcel-level land use codes (LUC) instead of dedicated zoning districts
+    // LUC codes: 100s=Agricultural, 300s=Industrial, 400s=Commercial, 500s=Residential, 600s=Exempt
+    // CLASS: A=Agricultural, C=Commercial, I=Industrial, R=Residential, E=Exempt, U=Utility
+    zoningUrl: 'https://maps.butlercountyauditor.org/arcgis/rest/services/PARCELSEARCH/MapServer/0',
     fieldMappings: {
-      zoneCode: ['ZONE', 'ZONING', 'ZONE_CODE'],
-      zoneDesc: ['ZONE_NAME', 'ZONE_DESC', 'DESCRIPTION'],
-      objectId: ['OBJECTID', 'FID'],
+      zoneCode: ['LUC', 'CLASS'],
+      zoneDesc: ['CLASS'],  // We'll map CLASS to a description
+      objectId: ['OBJECTID', 'PIN'],
+      city: ['LOCATION'],  // Address field that may contain city info
+      acres: ['ACRES'],
     }
   },
   'clermont': {
