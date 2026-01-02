@@ -230,6 +230,7 @@ model User {
   stripeId              String?
 
   // User type and role
+  role                  String         @default("user")  // user, reviewer, admin, super_admin
   userType              String         @default("homeowner")  // homeowner, contractor, realtor, title, legal, developer, small_business, food_business
   companyName           String?
   licenseNumber         String?        // For contractors
@@ -842,4 +843,102 @@ model UserChecklistProgress {
   @@index([userId])
   @@index([checklistId])
   @@index([status])
+}
+
+// ============================================================================
+// AI EXTRACTION PIPELINE
+// ============================================================================
+
+model ExtractionJob {
+  id              String    @id @default(cuid())
+  jurisdictionId  String
+
+  // Job info
+  jobType         String    @default("full")  // 'full', 'zoning', 'permits', 'fees'
+  status          String    @default("pending") // 'pending', 'scraping', 'extracting', 'review', 'approved', 'failed'
+  progress        Int       @default(0)        // 0-100
+
+  // Source URLs
+  municodeUrl     String?
+  gisUrl          String?
+  feeScheduleUrl  String?
+
+  // Scraped raw data
+  scrapedData     Json?     // Raw HTML/text from sources
+
+  // Extracted structured data
+  extractedZones      Json?  // Array of zone objects
+  extractedPermits    Json?  // Array of permit objects
+  extractedFees       Json?  // Array of fee objects
+  extractedCodes      Json?  // Array of building code chunks
+  extractedQuestions  Json?  // Array of Q&A
+
+  // Stats
+  itemsFound       Int       @default(0)
+  itemsNeedReview  Int       @default(0)
+  confidenceScore  Float?    // 0.00 - 1.00
+
+  // Review
+  reviewedBy      String?   // User ID
+  reviewedAt      DateTime?
+  reviewNotes     String?   @db.Text
+
+  // Errors
+  errorMessage    String?
+  errorDetails    Json?
+
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  // Relations
+  items           ExtractionItem[]
+
+  @@index([jurisdictionId])
+  @@index([status])
+}
+
+model ExtractionItem {
+  id              String    @id @default(cuid())
+  jobId           String
+  job             ExtractionJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  // Item info
+  itemType        String    // 'zone', 'permit', 'fee', 'code', 'question'
+  itemKey         String?   // 'SF-6', 'deck_permit', etc.
+
+  // Extracted data
+  extractedData   Json
+  sourceText      String?   @db.Text  // Original text AI extracted from
+
+  // Confidence
+  confidence      String?   // 'high', 'medium', 'low'
+  needsReview     Boolean   @default(false)
+
+  // Review
+  reviewStatus    String    @default("pending") // 'pending', 'approved', 'edited', 'rejected'
+  editedData      Json?     // If admin made changes
+  reviewedBy      String?   // User ID
+  reviewedAt      DateTime?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([jobId])
+  @@index([itemType])
+  @@index([needsReview, reviewStatus])
+}
+
+model AdminActivityLog {
+  id          String    @id @default(cuid())
+  userId      String?
+  action      String    // 'started_extraction', 'approved_job', 'edited_item'
+  targetType  String?   // 'job', 'item', 'jurisdiction'
+  targetId    String?
+  details     Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
