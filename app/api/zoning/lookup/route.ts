@@ -54,84 +54,118 @@ export async function POST(request: NextRequest) {
 
     const { latitude, longitude, city, state } = geocodeResult;
 
-    // Step 2: Find the jurisdiction
+    // Step 2: Find the county that contains this point using county-level zoning polygons
+    // This is the new preferred approach - query by coordinates across all counties
+    const countyZoningResult = await findCountyZoning(latitude, longitude);
+
+    // Step 3: Find the jurisdiction (for ordinance lookups)
     const jurisdiction = await prisma.jurisdiction.findFirst({
       where: {
         name: { contains: city, mode: 'insensitive' },
         state: { equals: state, mode: 'insensitive' },
       },
-    });
-
-    if (!jurisdiction) {
-      return NextResponse.json(
-        {
-          error: `We don't have zoning data for ${city}, ${state} yet`,
-          coordinates: { latitude, longitude },
-          suggestion: 'Cincinnati, OH is currently the only supported city'
-        },
-        { status: 404 }
-      );
-    }
-
-    // Step 3: Get all zoning parcels with geometry for this jurisdiction
-    const parcels = await prisma.zoningParcel.findMany({
-      where: {
-        jurisdictionId: jurisdiction.id,
-      },
-      select: {
-        id: true,
-        zoneCode: true,
-        zoneDescription: true,
-        geometry: true,
+      include: {
+        countyRef: true,
       },
     });
 
-    // Filter to only parcels with geometry
-    const parcelsWithGeometry = parcels.filter(p => p.geometry !== null);
+    // Step 4: Check overlay districts (if we have a jurisdiction)
+    const overlays = jurisdiction
+      ? await findOverlays(jurisdiction.id, latitude, longitude)
+      : { historic_district: null, hillside: false, urban_design: null, landslide_risk: null };
 
-    // Step 4: Find which polygon contains the point
-    const matchingParcel = findContainingPolygon(latitude, longitude, parcelsWithGeometry);
-
-    // Step 5: Check overlay districts
-    const overlays = await findOverlays(jurisdiction.id, latitude, longitude);
-
-    // Step 6: Determine required permits based on overlays
+    // Step 5: Determine required permits based on overlays
     const permitsRequired = getRequiredPermits(overlays);
 
-    if (!matchingParcel) {
+    // If we found county-level zoning data, use that (preferred)
+    if (countyZoningResult) {
+      const developmentStandards = getDevelopmentStandards(countyZoningResult.zoneCode);
+
       return NextResponse.json({
         address,
         coordinates: { latitude, longitude },
-        zoning: null,
+        zoning: {
+          code: countyZoningResult.zoneCode,
+          description: countyZoningResult.zoneDescription || getZoneDescription(countyZoningResult.zoneCode),
+          development_standards: developmentStandards,
+        },
         overlays,
         permits_required: permitsRequired,
-        jurisdiction: {
+        county: {
+          id: countyZoningResult.county.id,
+          name: countyZoningResult.county.name,
+          state: countyZoningResult.county.state,
+        },
+        jurisdiction: jurisdiction ? {
           id: jurisdiction.id,
           name: jurisdiction.name,
           state: jurisdiction.state,
-        },
-        message: 'Address geocoded but no matching zoning polygon found. The address may be outside the covered area.',
+        } : null,
+        data_source: 'county',
       });
     }
 
-    // Get development standards for this zone
-    const developmentStandards = getDevelopmentStandards(matchingParcel.zoneCode);
+    // Fallback: Try legacy jurisdiction-level ZoningParcel data
+    if (jurisdiction) {
+      const parcels = await prisma.zoningParcel.findMany({
+        where: {
+          jurisdictionId: jurisdiction.id,
+        },
+        select: {
+          id: true,
+          zoneCode: true,
+          zoneDescription: true,
+          geometry: true,
+        },
+      });
 
+      const parcelsWithGeometry = parcels.filter(p => p.geometry !== null);
+      const matchingParcel = findContainingPolygon(latitude, longitude, parcelsWithGeometry);
+
+      if (matchingParcel) {
+        const developmentStandards = getDevelopmentStandards(matchingParcel.zoneCode);
+
+        return NextResponse.json({
+          address,
+          coordinates: { latitude, longitude },
+          zoning: {
+            code: matchingParcel.zoneCode,
+            description: matchingParcel.zoneDescription || getZoneDescription(matchingParcel.zoneCode),
+            development_standards: developmentStandards,
+          },
+          overlays,
+          permits_required: permitsRequired,
+          county: jurisdiction.countyRef ? {
+            id: jurisdiction.countyRef.id,
+            name: jurisdiction.countyRef.name,
+            state: jurisdiction.countyRef.state,
+          } : null,
+          jurisdiction: {
+            id: jurisdiction.id,
+            name: jurisdiction.name,
+            state: jurisdiction.state,
+          },
+          data_source: 'jurisdiction',
+        });
+      }
+    }
+
+    // No zoning data found
     return NextResponse.json({
       address,
       coordinates: { latitude, longitude },
-      zoning: {
-        code: matchingParcel.zoneCode,
-        description: matchingParcel.zoneDescription || getZoneDescription(matchingParcel.zoneCode),
-        development_standards: developmentStandards,
-      },
+      zoning: null,
       overlays,
       permits_required: permitsRequired,
-      jurisdiction: {
+      county: null,
+      jurisdiction: jurisdiction ? {
         id: jurisdiction.id,
         name: jurisdiction.name,
         state: jurisdiction.state,
-      },
+      } : null,
+      message: jurisdiction
+        ? 'Address geocoded but no matching zoning polygon found. The address may be outside the covered area.'
+        : `We don't have zoning data for ${city}, ${state} yet. Cincinnati metro area is currently supported.`,
     });
 
   } catch (error: any) {
@@ -141,6 +175,109 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// ============================================================================
+// COUNTY-LEVEL ZONING LOOKUP (NEW - PREFERRED)
+// ============================================================================
+
+interface CountyZoningResult {
+  zoneCode: string;
+  zoneDescription: string | null;
+  county: {
+    id: string;
+    name: string;
+    state: string;
+  };
+}
+
+/**
+ * Find zoning by querying county-level ZoningPolygon data
+ * This searches across all counties to find the polygon containing the point
+ */
+async function findCountyZoning(
+  lat: number,
+  lon: number
+): Promise<CountyZoningResult | null> {
+  // Get all counties with zoning polygons
+  const counties = await prisma.county.findMany({
+    where: {
+      zoningPolygons: {
+        some: {},
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      state: true,
+    },
+  });
+
+  // For each county, check if the point falls within any zoning polygon
+  // We use bounding box pre-filtering for performance
+  for (const county of counties) {
+    // Get polygons for this county that might contain the point
+    // Use bbox filtering if available for performance
+    const polygons = await prisma.zoningPolygon.findMany({
+      where: {
+        countyId: county.id,
+      },
+      select: {
+        id: true,
+        zoneCode: true,
+        zoneDescription: true,
+        geometry: true,
+        bbox: true,
+      },
+    });
+
+    // Check each polygon
+    for (const polygon of polygons) {
+      if (!polygon.geometry) continue;
+
+      // Quick bounding box check first (if available)
+      if (polygon.bbox) {
+        const bbox = polygon.bbox as number[];
+        if (bbox.length === 4) {
+          const [minX, minY, maxX, maxY] = bbox;
+          // Note: bbox is [minLon, minLat, maxLon, maxLat]
+          if (lon < minX || lon > maxX || lat < minY || lat > maxY) {
+            continue; // Point is outside bounding box, skip detailed check
+          }
+        }
+      }
+
+      const geometry = polygon.geometry as any;
+      if (!geometry.type) continue;
+
+      let rings: number[][][] = [];
+
+      if (geometry.type === 'Polygon') {
+        rings = [geometry.coordinates[0]];
+      } else if (geometry.type === 'MultiPolygon') {
+        rings = geometry.coordinates.map((poly: number[][][]) => poly[0]);
+      } else {
+        continue;
+      }
+
+      // Check if point is in any of the polygon rings
+      for (const ring of rings) {
+        if (pointInPolygon(lat, lon, ring)) {
+          return {
+            zoneCode: polygon.zoneCode,
+            zoneDescription: polygon.zoneDescription,
+            county: {
+              id: county.id,
+              name: county.name,
+              state: county.state,
+            },
+          };
+        }
+      }
+    }
+  }
+
+  return null;
 }
 
 /**
