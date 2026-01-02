@@ -1,0 +1,402 @@
+{
+  "fetchedAt": "2026-01-02T20:32:04.827Z",
+  "totalJurisdictions": 58,
+  "successful": 14,
+  "partial": 0,
+  "failed": 44,
+  "totalPolygons": 25513,
+  "results": [
+    {
+      "jurisdictionId": "alexandria-ky",
+      "name": "Alexandria",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "amberley-village-oh",
+      "name": "Amberley Village",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "batavia-oh",
+      "name": "Batavia",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "bellevue-ky",
+      "name": "Bellevue",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "blue-ash-oh",
+      "name": "Blue Ash",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "burlington-ky",
+      "name": "Burlington",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "cmjtegbhx0000mm2kzoehlezj",
+      "name": "Cincinnati",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "cincinnati-oh",
+      "name": "Cincinnati",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "cold-spring-ky",
+      "name": "Cold Spring",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "covington-ky",
+      "name": "Covington",
+      "polygons": 57,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "crestview-hills-ky",
+      "name": "Crestview Hills",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "dayton-ky",
+      "name": "Dayton",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "deer-park-oh",
+      "name": "Deer Park",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "edgewood-ky",
+      "name": "Edgewood",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "elsmere-ky",
+      "name": "Elsmere",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "erlanger-ky",
+      "name": "Erlanger",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "evendale-oh",
+      "name": "Evendale",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "fairfield-oh",
+      "name": "Fairfield",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "florence-ky",
+      "name": "Florence",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "forest-park-oh",
+      "name": "Forest Park",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "fort-mitchell-ky",
+      "name": "Fort Mitchell",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "fort-thomas-ky",
+      "name": "Fort Thomas",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "franklin-oh",
+      "name": "Franklin",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "glendale-oh",
+      "name": "Glendale",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "golf-manor-oh",
+      "name": "Golf Manor",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "hamilton-oh",
+      "name": "Hamilton",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "hebron-ky",
+      "name": "Hebron",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "highland-heights-ky",
+      "name": "Highland Heights",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "independence-ky",
+      "name": "Independence",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "indian-hill-oh",
+      "name": "Indian Hill",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "lakeside-park-ky",
+      "name": "Lakeside Park",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "lebanon-oh",
+      "name": "Lebanon",
+      "polygons": 252,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "lincoln-heights-oh",
+      "name": "Lincoln Heights",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "lockland-oh",
+      "name": "Lockland",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "loveland-oh",
+      "name": "Loveland",
+      "polygons": 252,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "madeira-oh",
+      "name": "Madeira",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "mariemont-oh",
+      "name": "Mariemont",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "mason-oh",
+      "name": "Mason",
+      "polygons": 252,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "middletown-oh",
+      "name": "Middletown",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "milford-oh",
+      "name": "Milford",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "monroe-oh",
+      "name": "Monroe",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "montgomery-oh",
+      "name": "Montgomery",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "newport-ky",
+      "name": "Newport",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No features returned"
+    },
+    {
+      "jurisdictionId": "norwood-oh",
+      "name": "Norwood",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "oxford-oh",
+      "name": "Oxford",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "reading-oh",
+      "name": "Reading",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "sharonville-oh",
+      "name": "Sharonville",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "silverton-oh",
+      "name": "Silverton",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "southgate-ky",
+      "name": "Southgate",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "springboro-oh",
+      "name": "Springboro",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "springdale-oh",
+      "name": "Springdale",
+      "polygons": 2470,
+      "status": "success"
+    },
+    {
+      "jurisdictionId": "taylor-mill-ky",
+      "name": "Taylor Mill",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "trenton-oh",
+      "name": "Trenton",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "union-ky",
+      "name": "Union",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "villa-hills-ky",
+      "name": "Villa Hills",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "walton-ky",
+      "name": "Walton",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "woodlawn-oh",
+      "name": "Woodlawn",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    },
+    {
+      "jurisdictionId": "wyoming-oh",
+      "name": "Wyoming",
+      "polygons": 0,
+      "status": "failed",
+      "error": "No zoning service configured"
+    }
+  ]
+}

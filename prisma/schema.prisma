@@ -12,7 +12,9 @@ model Jurisdiction {
   name      String
   state     String
   type      String
-  county    String?
+  county    String?          // Legacy string field
+  countyRef County?          @relation("CountyJurisdictions", fields: [countyId], references: [id])
+  countyId  String?          // New FK to County model
   population Int?
   status    String           @default("planned") // planned, in_progress, live
   dataCompleteness Int       @default(0)         // 0-100 percentage
@@ -556,9 +558,78 @@ model OrdinanceChunk {
 }
 
 // ============================================================================
+// COUNTY MODEL (for county-level GIS data)
+// ============================================================================
+
+model County {
+  id              String       @id @default(cuid())
+  name            String       // e.g., "Hamilton County"
+  state           String       // e.g., "OH"
+  fips            String?      // FIPS county code
+
+  // GIS service URLs
+  zoningServiceUrl   String?   // ArcGIS REST endpoint for zoning
+  parcelServiceUrl   String?   // ArcGIS REST endpoint for parcels
+
+  // Metadata
+  population      Int?
+  lastFetched     DateTime?
+  dataQuality     String?      // "complete", "partial", "unavailable"
+
+  // Relations
+  zoningPolygons  ZoningPolygon[]
+  jurisdictions   Jurisdiction[] @relation("CountyJurisdictions")
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([name, state])
+  @@index([state])
+}
+
+// ============================================================================
 // ZONING DATA MODELS
 // ============================================================================
 
+// County-level zoning polygons (new - preferred approach)
+model ZoningPolygon {
+  id              String       @id @default(cuid())
+  county          County       @relation(fields: [countyId], references: [id], onDelete: Cascade)
+  countyId        String
+
+  // Source identification
+  sourceObjectId  String?      // Original OBJECTID from GIS
+
+  // Zoning information
+  zoneCode        String       // e.g., "R-1", "C-2", "B5"
+  zoneDescription String?      // e.g., "Single Family Residential"
+
+  // Additional fields from source (varies by county)
+  township        String?      // For county-level data like Warren
+  city            String?      // If available in source
+  acres           Float?
+
+  // Geographic data
+  latitude        Float?       // Centroid
+  longitude       Float?       // Centroid
+  geometry        Json?        // GeoJSON polygon
+  bbox            Json?        // Bounding box [minX, minY, maxX, maxY]
+
+  // Metadata
+  sourceUrl       String?
+  rawProperties   Json?        // All original properties from GIS
+  lastVerified    DateTime     @default(now())
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([countyId, sourceObjectId])
+  @@index([countyId])
+  @@index([countyId, zoneCode])
+  @@index([zoneCode])
+}
+
+// Legacy jurisdiction-level parcels (kept for backwards compatibility)
 model ZoningParcel {
   id              String       @id @default(cuid())
   jurisdiction    Jurisdiction @relation(name: "JurisdictionParcels", fields: [jurisdictionId], references: [id], onDelete: Cascade)

@@ -1,0 +1,17 @@
+{
+  "fetchedAt": "2026-01-02T21:23:08.234Z",
+  "totalCounties": 1,
+  "successful": 1,
+  "failed": 0,
+  "totalPolygons": 2565,
+  "results": [
+    {
+      "countyKey": "boone",
+      "name": "Boone County",
+      "status": "success",
+      "polygons": 2565,
+      "skipped": 0,
+      "errors": 0
+    }
+  ]
+}
