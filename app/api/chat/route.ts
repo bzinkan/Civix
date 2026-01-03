@@ -657,14 +657,40 @@ Guidelines:
 5. If you're unsure about specific details, recommend they verify with the appropriate city department
 6. Keep responses concise but complete
 7. Format responses clearly with bullet points when appropriate
+8. Remember the conversation context - users may ask follow-up questions that reference previous messages
 
 IMPORTANT: You are a regulatory assistant. Only answer questions about permits, zoning, building codes, licenses, and regulations. If someone asks about restaurants, entertainment, or other lifestyle recommendations, politely redirect them to the regulatory aspects or suggest they use Google/Yelp for recommendations.`;
+
+  // Retrieve conversation history if continuing an existing conversation
+  let conversationMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
+  if (conversationId) {
+    try {
+      const previousMessages = await prisma.message.findMany({
+        where: { conversationId },
+        orderBy: { createdAt: 'asc' },
+        select: { role: true, content: true },
+        take: 20, // Limit to last 20 messages to avoid token limits
+      });
+
+      // Convert to Claude's message format
+      conversationMessages = previousMessages.map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+      }));
+    } catch (e) {
+      console.error('Failed to retrieve conversation history:', e);
+    }
+  }
+
+  // Add current message to conversation
+  conversationMessages.push({ role: 'user', content: message });
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1024,
     system: systemPrompt,
-    messages: [{ role: 'user', content: message }]
+    messages: conversationMessages,
   });
 
   const content = response.content[0];

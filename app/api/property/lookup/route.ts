@@ -13,6 +13,74 @@ function classifyZone(zone: string): string {
   return 'commercial';
 }
 
+// Point-in-polygon using ray casting algorithm
+function pointInPolygon(lat: number, lon: number, geometry: any): boolean {
+  if (!geometry || !geometry.coordinates) return false;
+
+  // Handle both Polygon and MultiPolygon
+  const polygons = geometry.type === 'MultiPolygon'
+    ? geometry.coordinates
+    : [geometry.coordinates];
+
+  for (const polygon of polygons) {
+    const ring = polygon[0]; // Outer ring
+    if (!ring) continue;
+
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0], yi = ring[i][1];
+      const xj = ring[j][0], yj = ring[j][1];
+
+      const intersect = ((yi > lat) !== (yj > lat))
+        && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+
+      if (intersect) inside = !inside;
+    }
+
+    if (inside) return true;
+  }
+
+  return false;
+}
+
+// Get human-readable zone name from code
+function getZoneName(zoneCode: string): string {
+  const zoneNames: Record<string, string> = {
+    'SF-20': 'Single Family Residential (20,000 sq ft min)',
+    'SF-10': 'Single Family Residential (10,000 sq ft min)',
+    'SF-6': 'Single Family Residential (6,000 sq ft min)',
+    'SF-4': 'Single Family Residential (4,000 sq ft min)',
+    'SF-2': 'Single Family Residential (2,000 sq ft min)',
+    'RM-0.7': 'Multi-Family Residential (Low Density)',
+    'RM-1.2': 'Multi-Family Residential (Medium Density)',
+    'RM-2.0': 'Multi-Family Residential (High Density)',
+    'RMX': 'Residential Mixed Use',
+    'CN-P': 'Neighborhood Commercial (Pedestrian)',
+    'CN-M': 'Neighborhood Commercial (Mixed)',
+    'CC-P': 'Community Commercial (Pedestrian)',
+    'CC-M': 'Community Commercial (Mixed)',
+    'CC-A': 'Community Commercial (Auto-Oriented)',
+    'DD-A': 'Downtown Development (Core)',
+    'DD-B': 'Downtown Development (Mixed)',
+    'DD-C': 'Downtown Development (Edge)',
+    'MG': 'General Industrial',
+    'ML': 'Light Industrial',
+    'OL': 'Office/Limited',
+    'PF': 'Public Facilities',
+    'PR': 'Parks and Recreation',
+    'PD': 'Planned Development',
+  };
+
+  // Try exact match first
+  if (zoneNames[zoneCode]) return zoneNames[zoneCode];
+
+  // Try base code (e.g., SF-4-T -> SF-4)
+  const baseCode = zoneCode.split('-').slice(0, 2).join('-');
+  if (zoneNames[baseCode]) return zoneNames[baseCode];
+
+  return zoneCode;
+}
+
 // Development standards by zone type
 const ZONE_STANDARDS: Record<string, any> = {
   'SF-20': { minLot: 20000, frontSetback: 40, sideSetback: 10, rearSetback: 25, maxHeight: 35, maxCoverage: 0.35 },
@@ -37,17 +105,72 @@ const ZONE_STANDARDS: Record<string, any> = {
 };
 
 // List of supported jurisdictions (live or in_progress)
+// Covers 7 counties: Hamilton, Butler, Clermont, Warren (OH) and Boone, Campbell, Kenton (KY)
 const SUPPORTED_JURISDICTIONS = [
+  // Hamilton County, OH
   'cincinnati-oh',
-  'loveland-oh',
-  'mason-oh',
-  'covington-ky',
-  'newport-ky',
-  'florence-ky',
   'blue-ash-oh',
   'norwood-oh',
-  'fairfield-oh',
+  'madeira-oh',
+  'deer-park-oh',
+  'springdale-oh',
+  'reading-oh',
+  'sharonville-oh',
+  'montgomery-oh',
+  'forest-park-oh',
+  'indian-hill-oh',
+  'mariemont-oh',
+  'wyoming-oh',
+  'glendale-oh',
+  'evendale-oh',
+  'silverton-oh',
+  'golf-manor-oh',
+  'lincoln-heights-oh',
+  'lockland-oh',
+  'woodlawn-oh',
+  'amberley-village-oh',
+  // Butler County, OH
   'hamilton-oh',
+  'fairfield-oh',
+  'middletown-oh',
+  'oxford-oh',
+  'trenton-oh',
+  'monroe-oh',
+  // Warren County, OH
+  'mason-oh',
+  'loveland-oh',
+  'lebanon-oh',
+  'franklin-oh',
+  'springboro-oh',
+  // Clermont County, OH
+  'milford-oh',
+  'batavia-oh',
+  // Boone County, KY
+  'florence-ky',
+  'union-ky',
+  'walton-ky',
+  'burlington-ky',
+  'hebron-ky',
+  // Campbell County, KY
+  'newport-ky',
+  'fort-thomas-ky',
+  'bellevue-ky',
+  'dayton-ky',
+  'highland-heights-ky',
+  'cold-spring-ky',
+  'alexandria-ky',
+  // Kenton County, KY
+  'covington-ky',
+  'erlanger-ky',
+  'independence-ky',
+  'edgewood-ky',
+  'fort-mitchell-ky',
+  'villa-hills-ky',
+  'crestview-hills-ky',
+  'lakeside-park-ky',
+  'taylor-mill-ky',
+  'elsmere-ky',
+  'southgate-ky',
 ];
 
 export async function GET(request: Request) {
@@ -131,39 +254,107 @@ export async function GET(request: Request) {
       });
     }
 
-    // Step 4: Look up zoning from database
+    // Step 4: Look up zoning from database using point-in-polygon
     let zoneCode = 'SF-4';
     let zoneName = 'Single Family Residential';
     let zoneType = 'residential';
     let parcelId: string | null = null;
+    let zoneSource = 'default';
+    let countyName: string | null = null;
 
     try {
-      // Try to find parcel in database
-      const parcel = await prisma.zoningParcel.findFirst({
-        where: {
-          address: {
-            contains: address.split(',')[0], // Match street address part
-            mode: 'insensitive',
-          },
-        },
-      });
+      if (lat && lon) {
+        // First try: Look up in jurisdiction-level ZoningParcel table
+        // Use raw SQL because Prisma doesn't support filtering JSON for non-null
+        const zonePolygons = await prisma.$queryRaw<Array<{
+          id: string;
+          zoneCode: string;
+          zoneDescription: string | null;
+          parcelId: string | null;
+          geometry: any;
+        }>>`
+          SELECT id, "zoneCode", "zoneDescription", "parcelId", geometry
+          FROM "ZoningParcel"
+          WHERE "jurisdictionId" = ${jurisdictionId}
+            AND geometry IS NOT NULL
+        `;
 
-      if (parcel) {
-        zoneCode = parcel.zoneCode;
-        zoneName = parcel.zoneDescription || zoneCode;
-        zoneType = classifyZone(zoneCode);
-        parcelId = parcel.parcelId;
-      } else {
-        // Try to look up zoning district
+        // Find which polygon contains this point
+        for (const polygon of zonePolygons) {
+          if (polygon.geometry && pointInPolygon(lat, lon, polygon.geometry)) {
+            zoneCode = polygon.zoneCode;
+            zoneName = polygon.zoneDescription || getZoneName(zoneCode);
+            zoneType = classifyZone(zoneCode);
+            parcelId = polygon.parcelId;
+            zoneSource = 'jurisdiction';
+            break;
+          }
+        }
+
+        // Second try: Look up in county-level ZoningPolygon table if no match found
+        if (zoneSource === 'default') {
+          // Find county by name from geocoding result
+          const countyRecord = county ? await prisma.county.findFirst({
+            where: {
+              OR: [
+                { name: { contains: county.replace(' County', ''), mode: 'insensitive' } },
+                { name: county },
+              ],
+            },
+          }) : null;
+
+          if (countyRecord) {
+            countyName = countyRecord.name;
+
+            // Use raw SQL to query county polygons with bounding box filter
+            // This avoids loading 175K polygons into memory
+            const tolerance = 0.01; // ~1km bounding box filter
+            const countyPolygons = await prisma.$queryRaw<Array<{
+              id: string;
+              zoneCode: string;
+              zoneDescription: string | null;
+              geometry: any;
+            }>>`
+              SELECT id, "zoneCode", "zoneDescription", geometry
+              FROM "ZoningPolygon"
+              WHERE "countyId" = ${countyRecord.id}
+                AND latitude IS NOT NULL
+                AND longitude IS NOT NULL
+                AND latitude BETWEEN ${lat - tolerance} AND ${lat + tolerance}
+                AND longitude BETWEEN ${lon - tolerance} AND ${lon + tolerance}
+            `;
+
+            // Check each polygon with point-in-polygon
+            for (const polygon of countyPolygons) {
+              if (polygon.geometry && pointInPolygon(lat, lon, polygon.geometry)) {
+                zoneCode = polygon.zoneCode;
+                zoneName = polygon.zoneDescription || getZoneName(zoneCode);
+                zoneType = classifyZone(zoneCode);
+                zoneSource = 'county';
+                break;
+              }
+            }
+          }
+        }
+
+        // Log if still no match found
+        if (zoneSource === 'default') {
+          console.log(`No zone polygon found for coordinates: ${lat}, ${lon} (county: ${county || 'unknown'})`);
+        }
+      }
+
+      // Fallback: Try to look up zoning district for zone name
+      if (zoneSource !== 'default') {
         const district = await prisma.zoningDistrict.findFirst({
           where: {
+            jurisdictionId,
             code: zoneCode,
           },
         });
 
         if (district) {
-          zoneName = district.name || zoneCode;
-          zoneType = district.category || classifyZone(zoneCode);
+          zoneName = district.name || zoneName;
+          zoneType = district.category || zoneType;
         }
       }
     } catch (e) {
@@ -213,15 +404,20 @@ export async function GET(request: Request) {
       address: formattedAddress,
       city,
       state: stateShort,
+      county: county || countyName,
       cityId: jurisdictionId,
       parcelId,
       zone: zoneCode,
       zoneName,
       zoneType,
+      zoneSource, // 'jurisdiction' = from jurisdiction data, 'county' = from county data, 'default' = fallback
+      outsideCityLimits: zoneSource === 'county', // True if zone came from county-level data (not jurisdiction)
+      coordinates: lat && lon ? { lat, lon } : null,
       overlays,
       constraints: constraints.length > 0 ? constraints : ['None'],
       councilDistrict: 'District 1', // Would look this up in production
       councilRep: 'Council Member', // Would look this up in production
+      schoolDistrict: getSchoolDistrict(city, county || countyName), // Lookup school district
       lotSize: null, // Would come from parcel data
       yearBuilt: null, // Would come from county assessor
       isVacant: false,
@@ -311,4 +507,70 @@ function getConditionalUses(zoneType: string): string[] {
     default:
       return [];
   }
+}
+
+// School district lookup based on city and county
+// In production, this would query a proper school district boundary database
+function getSchoolDistrict(city: string, county?: string | null): string {
+  const cityLower = city.toLowerCase();
+  const countyLower = county?.toLowerCase() || '';
+
+  // Ohio school districts
+  if (countyLower.includes('hamilton')) {
+    if (cityLower === 'cincinnati') return 'Cincinnati Public Schools';
+    if (cityLower === 'blue ash' || cityLower === 'deer park' || cityLower === 'silverton') return 'Deer Park Community Schools';
+    if (cityLower === 'norwood') return 'Norwood City Schools';
+    if (cityLower === 'madeira') return 'Madeira City Schools';
+    if (cityLower === 'indian hill') return 'Indian Hill Exempted Village Schools';
+    if (cityLower === 'mariemont') return 'Mariemont City Schools';
+    if (cityLower === 'wyoming') return 'Wyoming City Schools';
+    if (cityLower === 'reading') return 'Reading Community City Schools';
+    if (cityLower === 'sharonville' || cityLower === 'springdale') return 'Princeton City Schools';
+    if (cityLower === 'montgomery') return 'Sycamore Community Schools';
+    if (cityLower === 'forest park') return 'Winton Woods City Schools';
+    return 'Cincinnati Public Schools';
+  }
+
+  if (countyLower.includes('butler')) {
+    if (cityLower === 'hamilton') return 'Hamilton City Schools';
+    if (cityLower === 'fairfield') return 'Fairfield City Schools';
+    if (cityLower === 'middletown') return 'Middletown City Schools';
+    if (cityLower === 'oxford') return 'Talawanda School District';
+    return 'Butler County Schools';
+  }
+
+  if (countyLower.includes('warren')) {
+    if (cityLower === 'mason') return 'Mason City Schools';
+    if (cityLower === 'loveland') return 'Loveland City Schools';
+    if (cityLower === 'lebanon') return 'Lebanon City Schools';
+    if (cityLower === 'springboro') return 'Springboro Community Schools';
+    return 'Warren County Schools';
+  }
+
+  if (countyLower.includes('clermont')) {
+    if (cityLower === 'milford') return 'Milford Exempted Village Schools';
+    if (cityLower === 'batavia') return 'Batavia Local Schools';
+    return 'Clermont County Schools';
+  }
+
+  // Kentucky school districts
+  if (countyLower.includes('boone')) {
+    return 'Boone County Schools';
+  }
+
+  if (countyLower.includes('campbell')) {
+    if (cityLower === 'newport') return 'Newport Independent Schools';
+    if (cityLower === 'fort thomas') return 'Fort Thomas Independent Schools';
+    if (cityLower === 'bellevue') return 'Bellevue Independent Schools';
+    if (cityLower === 'dayton') return 'Dayton Independent Schools';
+    return 'Campbell County Schools';
+  }
+
+  if (countyLower.includes('kenton')) {
+    if (cityLower === 'covington') return 'Covington Independent Schools';
+    if (cityLower === 'erlanger' || cityLower === 'elsmere') return 'Erlanger-Elsmere Independent Schools';
+    return 'Kenton County Schools';
+  }
+
+  return 'Check county records';
 }
