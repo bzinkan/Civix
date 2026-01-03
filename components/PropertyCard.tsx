@@ -1,14 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PropertyCardItem from './PropertyCardItem';
 import dynamic from 'next/dynamic';
+import HelpTooltip from './HelpTooltip';
+import { useHelp } from '../contexts/HelpContext';
 
-// Dynamically import map components to avoid SSR issues
-const MiniMapPreview = dynamic(
-  () => import('./ZoningMap').then((mod) => mod.MiniMapPreview),
-  { ssr: false, loading: () => <div className="h-32 bg-gray-100 rounded-lg animate-pulse" /> }
-);
+// Dynamically import map modal to avoid SSR issues
 const MapModal = dynamic(
   () => import('./ZoningMap').then((mod) => mod.MapModal),
   { ssr: false }
@@ -79,55 +77,18 @@ function classifyZone(zone?: string): string {
   return 'commercial';
 }
 
-// localStorage key for map preference (per-conversation, not global)
-const MAP_COLLAPSED_KEY = 'civix-map-collapsed';
-
 export default function PropertyCard({ property, onSave, onClose, isSaved = false, showCloseButton = true, addressLabel }: PropertyCardProps) {
   const [showMapModal, setShowMapModal] = useState(false);
-  const [mapVisible, setMapVisible] = useState(false);
-  const [userCollapsed, setUserCollapsed] = useState(false);
   const zoneType = property.zoneType || classifyZone(property.zone);
+  const { showHelpIcons, hideHelpIcons } = useHelp();
 
   const hasCoordinates = property.coordinates?.lat && property.coordinates?.lon;
 
-  // Check for conditions that justify auto-opening the map
+  // Check for special conditions to display as flags
   const hasFloodplain = property.floodplain && property.floodplain !== 'Zone X';
   const hasHistoric = !!property.historicDistrict;
   const hasOverlays = property.overlays && property.overlays.length > 0;
   const isOutsideCityLimits = property.outsideCityLimits || property.zoneSource === 'county';
-
-  // Map should auto-open when justified (floodplain, historic, overlays, boundary cases)
-  const shouldAutoOpen = hasFloodplain || hasHistoric || hasOverlays;
-
-  // Determine if map should be visible
-  // - Hidden by default
-  // - Auto-opens for special cases (unless user collapsed it)
-  // - User can always toggle it
-  useEffect(() => {
-    // Check if user previously collapsed the map for this session
-    const collapsed = sessionStorage.getItem(MAP_COLLAPSED_KEY);
-    if (collapsed === 'true') {
-      setUserCollapsed(true);
-      setMapVisible(false);
-    } else if (shouldAutoOpen && !userCollapsed) {
-      // Auto-open for justified cases
-      setMapVisible(true);
-    }
-  }, [shouldAutoOpen, userCollapsed]);
-
-  // Toggle map visibility
-  const toggleMap = () => {
-    const newVisible = !mapVisible;
-    setMapVisible(newVisible);
-    if (!newVisible) {
-      // User collapsed it - remember for this session
-      setUserCollapsed(true);
-      sessionStorage.setItem(MAP_COLLAPSED_KEY, 'true');
-    } else {
-      setUserCollapsed(false);
-      sessionStorage.removeItem(MAP_COLLAPSED_KEY);
-    }
-  };
 
   // Zone icons by type
   const zoneIcons: Record<string, string> = {
@@ -263,43 +224,26 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
         />
       </div>
 
-      {/* Map Section */}
+      {/* Map Section - just a button to open full modal */}
       {hasCoordinates && (
         <div className="mt-3 pt-3 border-t border-blue-200">
-          {mapVisible ? (
-            <>
-              {/* Map visible - show mini preview with collapse option */}
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-500">Zoning Map <span className="text-gray-400">(click to expand for layering)</span></span>
-                <button
-                  onClick={toggleMap}
-                  className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                  </svg>
-                  Collapse
-                </button>
-              </div>
-              <MiniMapPreview
-                lat={property.coordinates!.lat}
-                lon={property.coordinates!.lon}
-                currentZone={property.zone}
-                onToggleExpand={() => setShowMapModal(true)}
-              />
-            </>
-          ) : (
-            /* Map hidden - show "View map" link */
+          <div className="flex items-center gap-2">
             <button
-              onClick={toggleMap}
+              onClick={() => setShowMapModal(true)}
               className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
-              View map
+              View zoning map
             </button>
-          )}
+            <HelpTooltip
+              text="Opens an interactive map showing zoning boundaries around this property. Click on different zones to see their codes and descriptions."
+              showIcons={showHelpIcons}
+              onHideIcons={hideHelpIcons}
+              position="right"
+            />
+          </div>
         </div>
       )}
 

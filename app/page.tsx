@@ -8,6 +8,9 @@ import ChatInput from '../components/ChatInput';
 import EmptyState from '../components/EmptyState';
 import { ChatMessageProps } from '../components/ChatMessage';
 import { generateLabel, shortenAddress, LabeledAddress } from '../components/MultiAddressBar';
+import HelpTooltip from '../components/HelpTooltip';
+import { useHelp } from '../contexts/HelpContext';
+import { useLocation } from '../contexts/LocationContext';
 
 interface UnsupportedCity {
   city: string;
@@ -26,6 +29,8 @@ export default function HomePage() {
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
+  const { showHelpIcons, hideHelpIcons } = useHelp();
+  const { activeLocation } = useLocation();
 
   // Listen for new chat event from sidebar
   useEffect(() => {
@@ -186,6 +191,15 @@ export default function HomePage() {
           // Include all addresses for multi-address comparison
           allAddresses: allAddressesContext.length > 1 ? allAddressesContext : undefined,
           compareMode: compareMode && allAddressesContext.length > 1,
+          // Include active location for general queries (only when no address)
+          locationContext: !property && activeLocation ? {
+            label: activeLocation.label,
+            scopeType: activeLocation.scopeType,
+            state: activeLocation.state,
+            city: activeLocation.city,
+            county: activeLocation.county,
+            metroCounties: activeLocation.metroCounties,
+          } : undefined,
         }),
       });
 
@@ -215,7 +229,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, property, addresses, compareMode]);
+  }, [conversationId, property, addresses, compareMode, activeLocation]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     handleSendMessage(suggestion);
@@ -227,11 +241,23 @@ export default function HomePage() {
       <div className="p-4 bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto space-y-3">
           {/* Always-visible address input */}
-          <AddressInput
-            onAddressSelect={handleAddAddress}
-            onPropertyLookup={handlePropertyLookup}
-            placeholder={addresses.length === 0 ? "Enter an address for property-specific answers..." : "Add another address to compare..."}
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <AddressInput
+                onAddressSelect={handleAddAddress}
+                onPropertyLookup={handlePropertyLookup}
+                placeholder={addresses.length === 0 ? "Enter an address for property-specific answers..." : "Add another address to compare..."}
+              />
+            </div>
+            {addresses.length === 0 && (
+              <HelpTooltip
+                text="Enter any address to get property-specific information like zoning, permits, and regulations. You can add multiple addresses to compare them."
+                showIcons={showHelpIcons}
+                onHideIcons={hideHelpIcons}
+                position="left"
+              />
+            )}
+          </div>
 
           {/* Address chips row - only show when there are addresses */}
           {addresses.length > 0 && (
@@ -276,20 +302,28 @@ export default function HomePage() {
 
               {/* Compare mode toggle - only show with 2+ addresses */}
               {addresses.length >= 2 && (
-                <button
-                  onClick={() => setCompareMode(!compareMode)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
-                    compareMode
-                      ? 'bg-purple-100 text-purple-800 ring-2 ring-purple-400'
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                  }`}
-                  title={compareMode ? "Compare mode on" : "Enable compare mode"}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  <span className="font-medium">Compare</span>
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCompareMode(!compareMode)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                      compareMode
+                        ? 'bg-purple-100 text-purple-800 ring-2 ring-purple-400'
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                    title={compareMode ? "Compare mode on" : "Enable compare mode"}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span className="font-medium">Compare</span>
+                  </button>
+                  <HelpTooltip
+                    text="Compare mode lets you ask questions about multiple addresses at once. Toggle this on, then ask something like 'Which property has better zoning for a restaurant?'"
+                    showIcons={showHelpIcons}
+                    onHideIcons={hideHelpIcons}
+                    position="bottom"
+                  />
+                </div>
               )}
             </div>
           )}

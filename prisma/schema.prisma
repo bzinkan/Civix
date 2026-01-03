@@ -256,6 +256,8 @@ model User {
   generatedReports      GeneratedReport[]
   checklistProgress     UserChecklistProgress[]
   savedItems            SavedItem[]
+  savedLocations        SavedLocation[]
+  activeLocationId      String?        // Currently active location for general queries
 
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
@@ -263,6 +265,43 @@ model User {
   @@index([email])
   @@index([subscriptionStatus])
   @@index([userType])
+}
+
+// ============================================================================
+// SAVED LOCATIONS (for general queries without address)
+// ============================================================================
+
+model SavedLocation {
+  id              String       @id @default(cuid())
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+
+  // User-friendly label
+  label           String       // e.g., "Cincinnati, OH" or "Hamilton County"
+
+  // Scope type determines query behavior
+  scopeType       String       // "city" | "county" | "metro" | "state"
+
+  // Scope identification
+  state           String       // Required: "OH", "KY", "IN"
+  city            String?      // For city scope
+  county          String?      // For county scope
+  fips            String?      // FIPS code for county (most reliable)
+
+  // For metro scope - stored as JSON array of county FIPS or {county, state} pairs
+  metroCounties   Json?        // [{"county": "Hamilton", "state": "OH", "fips": "39061"}, ...]
+
+  // Jurisdiction IDs if resolved
+  jurisdictionIds Json?        // Array of jurisdiction IDs this scope resolves to
+
+  // Display order
+  sortOrder       Int          @default(0)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([userId, sortOrder])
 }
 
 // ============================================================================

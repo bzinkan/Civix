@@ -82,7 +82,8 @@ export async function POST(request: NextRequest) {
       attachments = [],
       conversation_id,
       confirm_extracted,
-      toolContext
+      toolContext,
+      locationContext // Active location for general queries (city/county/metro)
     } = body;
 
     if (!message || typeof message !== 'string') {
@@ -133,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     // Regular chat - no attachments
     const { propertyId } = body;
-    const response = await handleChatMessage(message, propertyContext, conversation_id, toolContext, propertyId);
+    const response = await handleChatMessage(message, propertyContext, conversation_id, toolContext, propertyId, locationContext);
     return NextResponse.json(response);
 
   } catch (error: any) {
@@ -620,6 +621,15 @@ function getDevelopmentStandards(zoneCode: string): {
   return standards[zoneCode] || { max_height_ft: null, setbacks: { front_ft: null, side_ft: null, rear_ft: null }, max_lot_coverage: null };
 }
 
+interface LocationContext {
+  label: string;
+  scopeType: 'city' | 'county' | 'metro' | 'state';
+  state: string;
+  city?: string;
+  county?: string;
+  metroCounties?: Array<{ county: string; state: string; fips?: string }>;
+}
+
 /**
  * Handle regular chat messages (no attachments)
  */
@@ -628,7 +638,8 @@ async function handleChatMessage(
   propertyContext: PropertyContext | null,
   conversationId?: string,
   toolContext?: { toolId: string; systemContext: string; category: string },
-  propertyId?: string
+  propertyId?: string,
+  locationContext?: LocationContext | null
 ): Promise<any> {
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
@@ -645,9 +656,58 @@ Setbacks: Front ${propertyContext.development_standards?.setbacks.front_ft || '?
 Max Height: ${propertyContext.development_standards?.max_height_ft || 'Unknown'}ft
 Max Lot Coverage: ${propertyContext.development_standards?.max_lot_coverage ? (propertyContext.development_standards.max_lot_coverage * 100) + '%' : 'Unknown'}` : '';
 
+  // Build location context string (used when no specific address)
+  let locationInfo = '';
+  if (!propertyContext && locationContext) {
+    if (locationContext.scopeType === 'city') {
+      locationInfo = `
+General location context (no specific address):
+Using: ${locationContext.label}
+Scope: City of ${locationContext.city}, ${locationContext.state}
+
+NOTE: You are answering for this city in general. Mention that rules may vary by specific location within the city. Suggest adding an address for property-specific answers when relevant.`;
+    } else if (locationContext.scopeType === 'county') {
+      locationInfo = `
+General location context (no specific address):
+Using: ${locationContext.label}
+Scope: ${locationContext.county} County, ${locationContext.state}
+
+NOTE: This is a COUNTY scope. Rules vary significantly by municipality within the county. When answering:
+- Provide general county-level information when available
+- Note that cities/townships within the county may have different rules
+- Recommend adding a specific address or selecting a city for definitive answers
+- If asked "where can I...", group results by municipality when possible`;
+    } else if (locationContext.scopeType === 'metro') {
+      locationInfo = `
+General location context (no specific address):
+Using: ${locationContext.label}
+Scope: Metro area covering ${locationContext.metroCounties?.map(c => `${c.county} County, ${c.state}`).join('; ') || 'multiple counties'}
+
+NOTE: This is a MULTI-COUNTY metro scope across state lines. When answering:
+- Group results by state (OH vs KY regulations differ)
+- Note jurisdiction differences between counties and cities
+- For licensing questions, separate OH and KY requirements
+- Recommend adding a specific address for property-specific answers`;
+    } else if (locationContext.scopeType === 'state') {
+      locationInfo = `
+General location context (no specific address):
+Using: ${locationContext.state} (state-level)
+
+NOTE: Answering at STATE level only. Local rules vary significantly. Always recommend checking with the specific city/county.`;
+    }
+  }
+
+  // If no property AND no location context, add guidance
+  const noContextNote = !propertyContext && !locationContext ? `
+NOTE: No address or location is set. If the user's question is location-specific and you cannot determine the location from context, politely ask them to either:
+1. Enter an address in the search bar above, OR
+2. Set a general location in Settings (sidebar → Settings → Locations)
+
+Only ask for location if it's truly needed to answer the question. Many general questions about Ohio/Kentucky regulations can be answered without a specific location.` : '';
+
   const systemPrompt = `You are Civix, a knowledgeable Greater Cincinnati regulatory assistant covering Cincinnati and the surrounding tri-state area (OH, KY, IN). You help residents, businesses, and professionals navigate ALL local government regulations, not just zoning.
 
-${propertyInfo || 'No property context provided.'}
+${propertyInfo || locationInfo || noContextNote}
 
 SCOPE - Answer questions about ANY local regulation including:
 
