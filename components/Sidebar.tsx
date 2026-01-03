@@ -90,7 +90,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className={`bg-gray-900 text-white flex flex-col h-full transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
+    <aside className={`bg-gray-900 text-white flex flex-col h-full overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
       {/* Logo */}
       <div className="p-4 border-b border-gray-700 flex items-center justify-between">
         <Link href="/" className={`text-xl font-bold text-blue-400 ${isCollapsed ? 'hidden' : 'block'}`}>
@@ -155,21 +155,21 @@ export default function Sidebar() {
                 <p className="text-xs text-gray-500 px-3 py-2">No saved properties</p>
               ) : (
                 properties.map((prop) => (
-                  <div key={prop.id} className="flex items-center gap-1">
+                  <div key={prop.id} className="flex items-start gap-1">
                     <Link
                       href={`/properties/${prop.id}`}
-                      className={`flex-1 block px-3 py-2 rounded-lg text-sm transition-colors ${
+                      className={`flex-1 min-w-0 block px-3 py-2 rounded-lg text-sm transition-colors ${
                         pathname === `/properties/${prop.id}` ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800'
                       }`}
                     >
-                      <div className="truncate">{prop.nickname || prop.address}</div>
+                      <div className="break-words leading-tight">{prop.nickname || prop.address}</div>
                       {prop.zoneCode && (
-                        <div className="text-xs text-gray-500">{prop.zoneCode}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{prop.zoneCode}</div>
                       )}
                     </Link>
                     <button
                       onClick={(e) => handleDeleteProperty(e, prop.id, prop.nickname || prop.address)}
-                      className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                      className="flex-shrink-0 p-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-700 rounded transition-colors mt-1"
                       title="Remove property"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
