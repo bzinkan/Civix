@@ -1,15 +1,15 @@
 {
-  "fetchedAt": "2026-01-02T21:23:08.234Z",
+  "fetchedAt": "2026-01-03T00:24:34.939Z",
   "totalCounties": 1,
   "successful": 1,
   "failed": 0,
-  "totalPolygons": 2565,
+  "totalPolygons": 167535,
   "results": [
     {
-      "countyKey": "boone",
-      "name": "Boone County",
+      "countyKey": "butler",
+      "name": "Butler County",
       "status": "success",
-      "polygons": 2565,
+      "polygons": 167535,
       "skipped": 0,
       "errors": 0
     }

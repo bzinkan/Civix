@@ -77,10 +77,19 @@ async function findZoningByCoordinates(lat: number, lon: number) {
   console.log(`  Searching ${counties.length} counties...`);
 
   for (const county of counties) {
-    // Get polygons for this county
+    // First, filter polygons by bounding box at the database level
+    // This avoids loading all 167k Butler County parcels into memory
     const polygons = await prisma.zoningPolygon.findMany({
       where: {
         countyId: county.id,
+        // Only get polygons where the point is within the bbox
+        // Using raw JSON path queries for bbox [minX, minY, maxX, maxY]
+        AND: [
+          { bbox: { path: ['0'], lte: lon } },  // minX <= lon
+          { bbox: { path: ['2'], gte: lon } },  // maxX >= lon
+          { bbox: { path: ['1'], lte: lat } },  // minY <= lat
+          { bbox: { path: ['3'], gte: lat } },  // maxY >= lat
+        ],
       },
       select: {
         id: true,
@@ -89,22 +98,12 @@ async function findZoningByCoordinates(lat: number, lon: number) {
         geometry: true,
         bbox: true,
       },
+      take: 100, // Limit results since we're doing point-in-polygon anyway
     });
 
     // Check each polygon
     for (const polygon of polygons) {
       if (!polygon.geometry) continue;
-
-      // Quick bounding box check
-      if (polygon.bbox) {
-        const bbox = polygon.bbox as number[];
-        if (bbox.length === 4) {
-          const [minX, minY, maxX, maxY] = bbox;
-          if (lon < minX || lon > maxX || lat < minY || lat > maxY) {
-            continue;
-          }
-        }
-      }
 
       const geometry = polygon.geometry as any;
       if (!geometry.type) continue;
