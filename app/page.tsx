@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import MultiAddressBar, { LabeledAddress, generateLabel, shortenAddress } from '../components/MultiAddressBar';
+import { useState, useCallback, useEffect } from 'react';
+import AddressInput from '../components/AddressInput';
 import PropertyCard, { PropertyData } from '../components/PropertyCard';
 import ChatMessages from '../components/ChatMessages';
 import ChatInput from '../components/ChatInput';
 import EmptyState from '../components/EmptyState';
 import { ChatMessageProps } from '../components/ChatMessage';
+import { generateLabel, shortenAddress, LabeledAddress } from '../components/MultiAddressBar';
 
 interface UnsupportedCity {
   city: string;
@@ -24,6 +25,23 @@ export default function HomePage() {
   const [unsupportedCity, setUnsupportedCity] = useState<UnsupportedCity | null>(null);
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+
+  // Listen for new chat event from sidebar
+  useEffect(() => {
+    const handleNewChat = () => {
+      setMessages([]);
+      setAddresses([]);
+      setConversationId(null);
+      setUnsupportedCity(null);
+      setWaitlistEmail('');
+      setWaitlistSubmitted(false);
+      setCompareMode(false);
+    };
+
+    window.addEventListener('civix-new-chat', handleNewChat);
+    return () => window.removeEventListener('civix-new-chat', handleNewChat);
+  }, []);
 
   // Get the currently active address/property
   const activeAddress = addresses.find(a => a.isActive);
@@ -63,7 +81,9 @@ export default function HomePage() {
       // Re-label A, B, C, etc.
       return filtered.map((a, i) => ({ ...a, label: generateLabel(i) }));
     });
-  }, []);
+    // Turn off compare mode if less than 2 addresses
+    setCompareMode(prev => prev && addresses.length > 2);
+  }, [addresses.length]);
 
   // Set active address
   const handleSetActiveAddress = useCallback((id: string) => {
@@ -165,6 +185,7 @@ export default function HomePage() {
           propertyContext: property,
           // Include all addresses for multi-address comparison
           allAddresses: allAddressesContext.length > 1 ? allAddressesContext : undefined,
+          compareMode: compareMode && allAddressesContext.length > 1,
         }),
       });
 
@@ -194,7 +215,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, property, addresses]);
+  }, [conversationId, property, addresses, compareMode]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     handleSendMessage(suggestion);
@@ -202,16 +223,76 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      {/* Multi-Address Bar */}
+      {/* Address Input Bar - Always visible */}
       <div className="p-4 bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto">
-          <MultiAddressBar
-            addresses={addresses}
-            onAddAddress={handleAddAddress}
-            onRemoveAddress={handleRemoveAddress}
-            onSetActiveAddress={handleSetActiveAddress}
+        <div className="max-w-3xl mx-auto space-y-3">
+          {/* Always-visible address input */}
+          <AddressInput
+            onAddressSelect={handleAddAddress}
             onPropertyLookup={handlePropertyLookup}
+            placeholder={addresses.length === 0 ? "Enter an address for property-specific answers..." : "Add another address to compare..."}
           />
+
+          {/* Address chips row - only show when there are addresses */}
+          {addresses.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {addresses.map((addr) => (
+                <button
+                  key={addr.id}
+                  onClick={() => handleSetActiveAddress(addr.id)}
+                  className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                    addr.isActive
+                      ? 'bg-blue-100 text-blue-800 ring-2 ring-blue-400'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {/* Location pin icon */}
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="font-medium">{addr.shortAddress}</span>
+                  {/* Label badge */}
+                  <span className={`ml-1 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold ${
+                    addr.isActive ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                  }`}>
+                    {addr.label}
+                  </span>
+                  {/* Remove button (visible on hover) */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveAddress(addr.id);
+                    }}
+                    className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-gray-300 rounded-full"
+                    title="Remove address"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </button>
+              ))}
+
+              {/* Compare mode toggle - only show with 2+ addresses */}
+              {addresses.length >= 2 && (
+                <button
+                  onClick={() => setCompareMode(!compareMode)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                    compareMode
+                      ? 'bg-purple-100 text-purple-800 ring-2 ring-purple-400'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                  title={compareMode ? "Compare mode on" : "Enable compare mode"}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <span className="font-medium">Compare</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -237,7 +318,6 @@ export default function HomePage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">🚧</span>
                     <h3 className="font-semibold text-amber-800 text-lg">
                       {unsupportedCity.city}, {unsupportedCity.state} is coming soon!
                     </h3>
@@ -273,8 +353,7 @@ export default function HomePage() {
                   )}
 
                   {unsupportedCity.waitlistCount > 0 && (
-                    <p className="text-amber-600 text-sm mt-3 flex items-center gap-1">
-                      <span>📊</span>
+                    <p className="text-amber-600 text-sm mt-3">
                       {unsupportedCity.waitlistCount} {unsupportedCity.waitlistCount === 1 ? 'person' : 'people'} waiting for {unsupportedCity.city}
                     </p>
                   )}

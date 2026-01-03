@@ -47,8 +47,13 @@ export default function Sidebar() {
   }, []);
 
   const handleNewChat = () => {
-    // Navigate to home and trigger new chat
-    window.location.href = '/';
+    // Dispatch event to clear state, then navigate
+    window.dispatchEvent(new CustomEvent('civix-new-chat'));
+    // If already on home page, just clear state (event handles it)
+    // If on another page, navigate to home
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+    }
   };
 
   return (

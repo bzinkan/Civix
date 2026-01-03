@@ -36,6 +36,49 @@ const getZoneColor = (zoneCode: string): string => {
   return '#d9d9d9'; // Unknown - light gray
 };
 
+// Check if zone is a large overlay type (parks, open space) that should render behind
+const isBackgroundZone = (zoneCode: string): boolean => {
+  return /^PR|^OS|^PARK|^GREEN/i.test(zoneCode);
+};
+
+// Calculate approximate polygon area for sorting (larger areas render first/behind)
+const getPolygonArea = (geometry: ZoningPolygon['geometry']): number => {
+  try {
+    let coords: number[][];
+    if (geometry.type === 'Polygon') {
+      coords = geometry.coordinates[0] as number[][];
+    } else if (geometry.type === 'MultiPolygon') {
+      coords = (geometry.coordinates[0] as number[][][])[0];
+    } else {
+      return 0;
+    }
+
+    // Simple shoelace formula for approximate area
+    let area = 0;
+    for (let i = 0; i < coords.length - 1; i++) {
+      area += coords[i][0] * coords[i + 1][1];
+      area -= coords[i + 1][0] * coords[i][1];
+    }
+    return Math.abs(area / 2);
+  } catch {
+    return 0;
+  }
+};
+
+// Sort polygons: largest/background zones first so they render behind
+const sortPolygons = (polygons: ZoningPolygon[]): ZoningPolygon[] => {
+  return [...polygons].sort((a, b) => {
+    // Background zones always go first (render behind)
+    const aIsBackground = isBackgroundZone(a.zoneCode);
+    const bIsBackground = isBackgroundZone(b.zoneCode);
+    if (aIsBackground && !bIsBackground) return -1;
+    if (!aIsBackground && bIsBackground) return 1;
+
+    // Then sort by area (larger first)
+    return getPolygonArea(b.geometry) - getPolygonArea(a.geometry);
+  });
+};
+
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
@@ -124,7 +167,7 @@ export function MiniMapPreview({ lat, lon, currentZone, onToggleExpand }: Zoning
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
 
-        {/* Render zoning polygons */}
+        {/* Render zoning polygons - simple rendering for preview (no sorting) */}
         {polygons.map((polygon) => {
           const positions = convertToLeafletCoords(polygon.geometry);
           const isCurrentZone = polygon.zoneCode === currentZone;
@@ -137,7 +180,7 @@ export function MiniMapPreview({ lat, lon, currentZone, onToggleExpand }: Zoning
                 color: isCurrentZone ? '#1d4ed8' : getZoneColor(polygon.zoneCode),
                 weight: isCurrentZone ? 3 : 1,
                 fillColor: getZoneColor(polygon.zoneCode),
-                fillOpacity: isCurrentZone ? 0.4 : 0.2,
+                fillOpacity: isCurrentZone ? 0.35 : 0.2,
               }}
             />
           );
@@ -147,7 +190,7 @@ export function MiniMapPreview({ lat, lon, currentZone, onToggleExpand }: Zoning
       {/* Expand overlay */}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
         <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700 shadow">
-          Click to expand
+          Expand for details
         </div>
       </div>
 
@@ -251,11 +294,12 @@ export function MapModal({ lat, lon, currentZone, onClose }: ZoningMapProps) {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             />
 
-            {/* Render zoning polygons */}
-            {polygons.map((polygon) => {
+            {/* Render zoning polygons - sorted so large/background zones render first */}
+            {sortPolygons(polygons).map((polygon) => {
               const positions = convertToLeafletCoords(polygon.geometry);
               const isCurrentZone = polygon.zoneCode === currentZone;
               const isSelected = selectedZone?.id === polygon.id;
+              const isBackground = isBackgroundZone(polygon.zoneCode);
 
               return (
                 <Polygon
@@ -265,7 +309,7 @@ export function MapModal({ lat, lon, currentZone, onClose }: ZoningMapProps) {
                     color: isSelected ? '#dc2626' : isCurrentZone ? '#1d4ed8' : getZoneColor(polygon.zoneCode),
                     weight: isSelected ? 3 : isCurrentZone ? 2 : 1,
                     fillColor: getZoneColor(polygon.zoneCode),
-                    fillOpacity: isSelected ? 0.5 : isCurrentZone ? 0.4 : 0.25,
+                    fillOpacity: isSelected ? 0.45 : isCurrentZone ? 0.35 : isBackground ? 0.1 : 0.2,
                   }}
                   eventHandlers={{
                     click: () => setSelectedZone(polygon),

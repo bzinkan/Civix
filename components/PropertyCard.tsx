@@ -270,7 +270,7 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
             <>
               {/* Map visible - show mini preview with collapse option */}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-500">Zoning Map</span>
+                <span className="text-xs text-gray-500">Zoning Map <span className="text-gray-400">(click to expand for layering)</span></span>
                 <button
                   onClick={toggleMap}
                   className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
