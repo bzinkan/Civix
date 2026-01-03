@@ -26,6 +26,17 @@ export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showHelpIcons, enableHelpIcons } = useHelp();
 
+  const fetchProperties = () => {
+    fetch('/api/properties')
+      .then(res => res.json())
+      .then(data => {
+        if (data.properties) {
+          setProperties(data.properties.slice(0, 5));
+        }
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
     // Fetch conversations
     fetch('/api/conversations')
@@ -38,14 +49,14 @@ export default function Sidebar() {
       .catch(() => {});
 
     // Fetch saved properties
-    fetch('/api/properties')
-      .then(res => res.json())
-      .then(data => {
-        if (data.properties) {
-          setProperties(data.properties.slice(0, 5));
-        }
-      })
-      .catch(() => {});
+    fetchProperties();
+
+    // Listen for property saved event to refresh list
+    const handlePropertySaved = () => {
+      fetchProperties();
+    };
+    window.addEventListener('civix-property-saved', handlePropertySaved);
+    return () => window.removeEventListener('civix-property-saved', handlePropertySaved);
   }, []);
 
   const handleNewChat = () => {
@@ -87,21 +98,13 @@ export default function Sidebar() {
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
-        {/* Chats Section */}
-        {!isCollapsed && (
+        {/* Chats Section - only show if there are conversations */}
+        {!isCollapsed && conversations.length > 0 && (
           <div className="px-3 py-2">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-              <span>Chats</span>
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              Recent Chats
             </h3>
             <div className="space-y-1">
-              <Link
-                href="/"
-                className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                  pathname === '/' ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800'
-                }`}
-              >
-                General
-              </Link>
               {conversations.map((conv) => (
                 <Link
                   key={conv.id}

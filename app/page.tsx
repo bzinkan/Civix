@@ -135,7 +135,7 @@ export default function HomePage() {
   }, [unsupportedCity, waitlistEmail]);
 
   const handleSaveProperty = useCallback(async () => {
-    if (!property) return;
+    if (!property || !activeAddress) return;
 
     try {
       const res = await fetch('/api/properties', {
@@ -145,12 +145,17 @@ export default function HomePage() {
       });
 
       if (res.ok) {
-        console.log('Property saved');
+        // Mark this address as saved
+        setAddresses(prev => prev.map(a =>
+          a.id === activeAddress.id ? { ...a, isSaved: true } : a
+        ));
+        // Dispatch event to refresh sidebar properties list
+        window.dispatchEvent(new CustomEvent('civix-property-saved'));
       }
     } catch (error) {
       console.error('Failed to save property:', error);
     }
-  }, [property]);
+  }, [property, activeAddress]);
 
   const handleClearProperty = useCallback(() => {
     if (activeAddress) {
@@ -219,10 +224,6 @@ export default function HomePage() {
       setIsLoading(false);
     }
   }, [conversationId, property, addresses, compareMode]);
-
-  const handleSuggestionClick = useCallback((suggestion: string) => {
-    handleSendMessage(suggestion);
-  }, [handleSendMessage]);
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -328,6 +329,7 @@ export default function HomePage() {
               onSave={handleSaveProperty}
               onClose={handleClearProperty}
               addressLabel={activeAddress?.label}
+              isSaved={activeAddress?.isSaved}
             />
           </div>
         </div>
@@ -403,7 +405,7 @@ export default function HomePage() {
       {/* Chat Area */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {messages.length === 0 ? (
-          <EmptyState onSuggestionClick={handleSuggestionClick} />
+          <EmptyState />
         ) : (
           <ChatMessages messages={messages} isLoading={isLoading} />
         )}

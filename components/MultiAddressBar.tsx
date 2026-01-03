@@ -11,6 +11,7 @@ export interface LabeledAddress {
   shortAddress: string; // Condensed version for chip display
   property: PropertyData | null;
   isActive: boolean;
+  isSaved?: boolean; // Whether this property has been saved
 }
 
 interface MultiAddressBarProps {
