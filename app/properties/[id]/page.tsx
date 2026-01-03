@@ -168,31 +168,37 @@ export default function PropertyWorkspacePage() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        {messages.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-center px-4">
-            <div>
-              <div className="text-4xl mb-4">💬</div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                Property Workspace
-              </h2>
-              <p className="text-gray-500 max-w-md">
-                Ask questions about permits, zoning, and regulations specific to this property.
-                All conversations here are saved and scoped to {property.address}.
-              </p>
-            </div>
+      {messages.length === 0 ? (
+        /* No messages - centered layout like Claude/ChatGPT */
+        <div className="flex-1 flex flex-col items-center justify-center px-4">
+          <div className="w-full max-w-2xl text-center">
+            <h1 className="text-3xl font-semibold text-gray-800 mb-2">
+              How can I help you today?
+            </h1>
+            <p className="text-gray-500 text-sm mb-8">
+              Ask questions about permits, zoning, and regulations for this property.
+            </p>
+            <ChatInput
+              onSend={handleSendMessage}
+              disabled={isSending}
+              placeholder={`Ask about ${property.nickname || property.address}...`}
+              centered
+            />
           </div>
-        ) : (
-          <ChatMessages messages={messages} isLoading={isSending} />
-        )}
-      </div>
-
-      {/* Chat Input */}
-      <ChatInput
-        onSend={handleSendMessage}
-        disabled={isSending}
-        placeholder={`Ask about ${property.nickname || property.address}...`}
-      />
+        </div>
+      ) : (
+        /* Active conversation - standard layout */
+        <>
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <ChatMessages messages={messages} isLoading={isSending} />
+          </div>
+          <ChatInput
+            onSend={handleSendMessage}
+            disabled={isSending}
+            placeholder={`Ask about ${property.nickname || property.address}...`}
+          />
+        </>
+      )}
     </div>
   );
 }

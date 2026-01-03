@@ -109,7 +109,7 @@ export default function PropertiesPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">My Properties</h1>
-            <p className="text-gray-500">Saved properties and workspaces</p>
+            <p className="text-gray-500">Your saved properties</p>
           </div>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
@@ -155,7 +155,7 @@ export default function PropertiesPage() {
             <div className="text-4xl mb-4">📍</div>
             <h3 className="text-lg font-medium text-gray-800 mb-2">No saved properties</h3>
             <p className="text-gray-500 mb-4">
-              Save properties to create dedicated workspaces with chat history
+              Save properties to keep track of your permit and zoning research
             </p>
             <button
               onClick={() => setShowAddForm(true)}

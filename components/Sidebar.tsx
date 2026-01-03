@@ -37,9 +37,13 @@ export default function Sidebar() {
       .catch(() => {});
   };
 
-  const handleDeleteProperty = async (e: React.MouseEvent, propertyId: string) => {
+  const handleDeleteProperty = async (e: React.MouseEvent, propertyId: string, propertyName: string) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!confirm(`Remove "${propertyName}" from your saved properties?`)) {
+      return;
+    }
 
     try {
       const res = await fetch(`/api/properties/${propertyId}`, {
@@ -151,10 +155,10 @@ export default function Sidebar() {
                 <p className="text-xs text-gray-500 px-3 py-2">No saved properties</p>
               ) : (
                 properties.map((prop) => (
-                  <div key={prop.id} className="group relative">
+                  <div key={prop.id} className="flex items-center gap-1">
                     <Link
                       href={`/properties/${prop.id}`}
-                      className={`block px-3 py-2 pr-8 rounded-lg text-sm transition-colors ${
+                      className={`flex-1 block px-3 py-2 rounded-lg text-sm transition-colors ${
                         pathname === `/properties/${prop.id}` ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800'
                       }`}
                     >
@@ -164,11 +168,11 @@ export default function Sidebar() {
                       )}
                     </Link>
                     <button
-                      onClick={(e) => handleDeleteProperty(e, prop.id)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-600 rounded transition-all"
-                      title="Delete property"
+                      onClick={(e) => handleDeleteProperty(e, prop.id, prop.nickname || prop.address)}
+                      className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                      title="Remove property"
                     >
-                      <svg className="w-3.5 h-3.5 text-gray-400 hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
