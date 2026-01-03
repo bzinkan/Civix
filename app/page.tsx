@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import AddressBar from '../components/AddressBar';
+import MultiAddressBar, { LabeledAddress, generateLabel, shortenAddress } from '../components/MultiAddressBar';
 import PropertyCard, { PropertyData } from '../components/PropertyCard';
 import ChatMessages from '../components/ChatMessages';
 import ChatInput from '../components/ChatInput';
@@ -19,73 +19,58 @@ interface UnsupportedCity {
 export default function HomePage() {
   const [messages, setMessages] = useState<ChatMessageProps[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [property, setProperty] = useState<PropertyData | null>(null);
+  const [addresses, setAddresses] = useState<LabeledAddress[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [unsupportedCity, setUnsupportedCity] = useState<UnsupportedCity | null>(null);
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
 
-  const handleAddressSelect = useCallback(async (address: string, propertyData?: any) => {
-    // Reset states
+  // Get the currently active address/property
+  const activeAddress = addresses.find(a => a.isActive);
+  const property = activeAddress?.property || null;
+
+  // Add a new address
+  const handleAddAddress = useCallback((address: string, propertyData: PropertyData | null) => {
     setUnsupportedCity(null);
     setWaitlistSubmitted(false);
 
-    // If propertyData is provided from AddressBar (Google Places)
-    if (propertyData) {
-      if (propertyData.supported === false) {
-        setUnsupportedCity({
-          city: propertyData.city,
-          state: propertyData.state,
-          jurisdictionId: propertyData.jurisdictionId,
-          address: propertyData.address,
-          waitlistCount: propertyData.waitlistCount || 0,
-        });
-        setProperty(null);
-        return;
-      }
+    const newId = `addr-${Date.now()}`;
+    const newLabel = generateLabel(addresses.length);
 
-      if (propertyData.property) {
-        setProperty(propertyData.property);
-        return;
-      }
-    }
-
-    // Fallback: do our own lookup
-    try {
-      const res = await fetch(`/api/property/lookup?address=${encodeURIComponent(address)}`);
-      const data = await res.json();
-
-      if (data.success) {
-        if (data.supported === false) {
-          setUnsupportedCity({
-            city: data.city,
-            state: data.state,
-            jurisdictionId: data.jurisdictionId,
-            address: data.address,
-            waitlistCount: data.waitlistCount || 0,
-          });
-          setProperty(null);
-        } else if (data.property) {
-          setProperty(data.property);
-        }
-      } else {
-        // Still set basic address even if lookup fails
-        setProperty({
-          address: address,
-          city: 'Cincinnati',
-        });
-      }
-    } catch (error) {
-      // Set basic address on error
-      setProperty({
+    // Set all existing addresses to inactive, add new one as active
+    setAddresses(prev => [
+      ...prev.map(a => ({ ...a, isActive: false })),
+      {
+        id: newId,
+        label: newLabel,
         address: address,
-        city: 'Cincinnati',
-      });
-    }
+        shortAddress: shortenAddress(address),
+        property: propertyData,
+        isActive: true,
+      },
+    ]);
+  }, [addresses.length]);
+
+  // Remove an address
+  const handleRemoveAddress = useCallback((id: string) => {
+    setAddresses(prev => {
+      const filtered = prev.filter(a => a.id !== id);
+      // If we removed the active one, make the last one active
+      const wasActive = prev.find(a => a.id === id)?.isActive;
+      if (wasActive && filtered.length > 0) {
+        filtered[filtered.length - 1].isActive = true;
+      }
+      // Re-label A, B, C, etc.
+      return filtered.map((a, i) => ({ ...a, label: generateLabel(i) }));
+    });
+  }, []);
+
+  // Set active address
+  const handleSetActiveAddress = useCallback((id: string) => {
+    setAddresses(prev => prev.map(a => ({ ...a, isActive: a.id === id })));
   }, []);
 
   const handlePropertyLookup = useCallback((propertyData: any) => {
-    // This is called by AddressBar after property lookup
     if (propertyData.supported === false) {
       setUnsupportedCity({
         city: propertyData.city,
@@ -94,10 +79,6 @@ export default function HomePage() {
         address: propertyData.address,
         waitlistCount: propertyData.waitlistCount || 0,
       });
-      setProperty(null);
-    } else if (propertyData.property) {
-      setProperty(propertyData.property);
-      setUnsupportedCity(null);
     }
   }, []);
 
@@ -149,9 +130,11 @@ export default function HomePage() {
   }, [property]);
 
   const handleClearProperty = useCallback(() => {
-    setProperty(null);
+    if (activeAddress) {
+      handleRemoveAddress(activeAddress.id);
+    }
     setUnsupportedCity(null);
-  }, []);
+  }, [activeAddress, handleRemoveAddress]);
 
   const handleSendMessage = useCallback(async (message: string) => {
     // Add user message to UI immediately
@@ -164,6 +147,14 @@ export default function HomePage() {
     setIsLoading(true);
 
     try {
+      // Build context with all addresses for comparison questions
+      const allAddressesContext = addresses.map(a => ({
+        label: a.label,
+        address: a.address,
+        property: a.property,
+        isActive: a.isActive,
+      }));
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -172,6 +163,8 @@ export default function HomePage() {
           conversationId,
           address: property?.address,
           propertyContext: property,
+          // Include all addresses for multi-address comparison
+          allAddresses: allAddressesContext.length > 1 ? allAddressesContext : undefined,
         }),
       });
 
@@ -201,7 +194,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, property]);
+  }, [conversationId, property, addresses]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     handleSendMessage(suggestion);
@@ -209,18 +202,20 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      {/* Address Bar */}
+      {/* Multi-Address Bar */}
       <div className="p-4 bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto">
-          <AddressBar
-            onAddressSelect={handleAddressSelect}
+          <MultiAddressBar
+            addresses={addresses}
+            onAddAddress={handleAddAddress}
+            onRemoveAddress={handleRemoveAddress}
+            onSetActiveAddress={handleSetActiveAddress}
             onPropertyLookup={handlePropertyLookup}
-            placeholder="Enter an address or ask a question..."
           />
         </div>
       </div>
 
-      {/* Property Card */}
+      {/* Property Card for active address */}
       {property && (
         <div className="px-4 py-3 bg-white border-b border-gray-200">
           <div className="max-w-3xl mx-auto">
@@ -228,6 +223,7 @@ export default function HomePage() {
               property={property}
               onSave={handleSaveProperty}
               onClose={handleClearProperty}
+              addressLabel={activeAddress?.label}
             />
           </div>
         </div>
@@ -284,7 +280,7 @@ export default function HomePage() {
                   )}
                 </div>
                 <button
-                  onClick={handleClearProperty}
+                  onClick={() => setUnsupportedCity(null)}
                   className="p-1 text-amber-400 hover:text-amber-600 hover:bg-amber-100 rounded ml-4"
                   title="Clear"
                 >

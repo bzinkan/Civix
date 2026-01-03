@@ -64,6 +64,7 @@ interface PropertyCardProps {
   onClose?: () => void;
   isSaved?: boolean;
   showCloseButton?: boolean;
+  addressLabel?: string; // A, B, C label for multi-address mode
 }
 
 function classifyZone(zone?: string): string {
@@ -81,7 +82,7 @@ function classifyZone(zone?: string): string {
 // localStorage key for map preference (per-conversation, not global)
 const MAP_COLLAPSED_KEY = 'civix-map-collapsed';
 
-export default function PropertyCard({ property, onSave, onClose, isSaved = false, showCloseButton = true }: PropertyCardProps) {
+export default function PropertyCard({ property, onSave, onClose, isSaved = false, showCloseButton = true, addressLabel }: PropertyCardProps) {
   const [showMapModal, setShowMapModal] = useState(false);
   const [mapVisible, setMapVisible] = useState(false);
   const [userCollapsed, setUserCollapsed] = useState(false);
@@ -147,7 +148,14 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-semibold text-gray-800">{property.address}</h3>
+          <div className="flex items-center gap-2">
+            {addressLabel && (
+              <span className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">
+                {addressLabel}
+              </span>
+            )}
+            <h3 className="font-semibold text-gray-800">{property.address}</h3>
+          </div>
           <p className="text-sm text-gray-500">
             {property.city}{property.state ? `, ${property.state}` : ''}
             {property.county ? ` (${property.county} County)` : ''}
