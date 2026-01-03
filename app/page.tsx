@@ -10,7 +10,6 @@ import { ChatMessageProps } from '../components/ChatMessage';
 import { generateLabel, shortenAddress, LabeledAddress } from '../components/MultiAddressBar';
 import HelpTooltip from '../components/HelpTooltip';
 import { useHelp } from '../contexts/HelpContext';
-import { useLocation } from '../contexts/LocationContext';
 
 interface UnsupportedCity {
   city: string;
@@ -30,7 +29,6 @@ export default function HomePage() {
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const { showHelpIcons, hideHelpIcons } = useHelp();
-  const { activeLocation } = useLocation();
 
   // Listen for new chat event from sidebar
   useEffect(() => {
@@ -191,15 +189,6 @@ export default function HomePage() {
           // Include all addresses for multi-address comparison
           allAddresses: allAddressesContext.length > 1 ? allAddressesContext : undefined,
           compareMode: compareMode && allAddressesContext.length > 1,
-          // Include active location for general queries (only when no address)
-          locationContext: !property && activeLocation ? {
-            label: activeLocation.label,
-            scopeType: activeLocation.scopeType,
-            state: activeLocation.state,
-            city: activeLocation.city,
-            county: activeLocation.county,
-            metroCounties: activeLocation.metroCounties,
-          } : undefined,
         }),
       });
 
@@ -229,7 +218,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, property, addresses, compareMode, activeLocation]);
+  }, [conversationId, property, addresses, compareMode]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     handleSendMessage(suggestion);
