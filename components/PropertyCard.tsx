@@ -5,6 +5,7 @@ import PropertyCardItem from './PropertyCardItem';
 import dynamic from 'next/dynamic';
 import HelpTooltip from './HelpTooltip';
 import { useHelp } from '../contexts/HelpContext';
+import ParcelInfoModal from './ParcelInfoModal';
 
 // Dynamically import map modal to avoid SSR issues
 const MapModal = dynamic(
@@ -33,6 +34,20 @@ export interface PropertyData {
   floodplain?: string | null; // e.g., "Zone AE", "Zone X"
   historicDistrict?: string | null;
   outsideCityLimits?: boolean;
+  // HOA detection
+  mayHaveHOA?: boolean;
+  hoaIndicators?: string[]; // Reasons why we think there may be an HOA
+  // Utilities
+  utilities?: {
+    sewer?: 'municipal' | 'septic' | 'unknown';
+    sewerProvider?: string;
+    water?: 'municipal' | 'well' | 'unknown';
+    waterProvider?: string;
+    gas?: 'available' | 'not_available' | 'unknown';
+    gasProvider?: string;
+    electric?: string; // Provider name
+    internet?: string[]; // Available providers
+  };
   // Civic info
   councilDistrict?: string;
   councilRep?: string;
@@ -79,6 +94,7 @@ function classifyZone(zone?: string): string {
 
 export default function PropertyCard({ property, onSave, onClose, isSaved = false, showCloseButton = true, addressLabel }: PropertyCardProps) {
   const [showMapModal, setShowMapModal] = useState(false);
+  const [showParcelInfo, setShowParcelInfo] = useState(false);
   const zoneType = property.zoneType || classifyZone(property.zone);
   const { showHelpIcons, hideHelpIcons } = useHelp();
 
@@ -89,6 +105,7 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
   const hasHistoric = !!property.historicDistrict;
   const hasOverlays = property.overlays && property.overlays.length > 0;
   const isOutsideCityLimits = property.outsideCityLimits || property.zoneSource === 'county';
+  const mayHaveHOA = property.mayHaveHOA;
 
   // Zone icons by type
   const zoneIcons: Record<string, string> = {
@@ -135,6 +152,18 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
               {isSaved ? 'Saved' : 'Save'}
             </button>
           )}
+          {/* Parcel Info Button */}
+          {property.parcelId && (
+            <button
+              onClick={() => setShowParcelInfo(true)}
+              className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              title="View parcel details"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          )}
           {showCloseButton && onClose && (
             <button
               onClick={onClose}
@@ -165,8 +194,19 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
       </div>
 
       {/* CONDITIONAL FLAGS - Only show if applicable */}
-      {(hasFloodplain || hasHistoric || isOutsideCityLimits || hasOverlays) && (
+      {(hasFloodplain || hasHistoric || isOutsideCityLimits || hasOverlays || mayHaveHOA) && (
         <div className="flex flex-wrap gap-2 mb-3">
+          {mayHaveHOA && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full cursor-help"
+              title={property.hoaIndicators?.join(', ') || 'Based on property characteristics'}
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              May Have HOA
+            </span>
+          )}
           {hasFloodplain && (
             <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,6 +264,84 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
         />
       </div>
 
+      {/* UTILITIES - Show if available */}
+      {property.utilities && (
+        <div className="mt-3 pt-3 border-t border-blue-200">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Utilities</h4>
+          <div className="space-y-2 text-sm">
+            {/* Water */}
+            <div className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4M12 4v16" />
+              </svg>
+              <div>
+                <span className="text-gray-700 font-medium">Water: </span>
+                <span className="text-gray-600">
+                  {property.utilities.water === 'municipal' ? 'Municipal' : property.utilities.water === 'well' ? 'Private Well' : 'Unknown'}
+                </span>
+                {property.utilities.waterProvider && (
+                  <span className="text-gray-500 text-xs block">{property.utilities.waterProvider}</span>
+                )}
+              </div>
+            </div>
+            {/* Sewer */}
+            <div className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <div>
+                <span className="text-gray-700 font-medium">Sewer: </span>
+                <span className="text-gray-600">
+                  {property.utilities.sewer === 'municipal' ? 'Municipal' : property.utilities.sewer === 'septic' ? 'Private Septic' : 'Unknown'}
+                </span>
+                {property.utilities.sewerProvider && (
+                  <span className="text-gray-500 text-xs block">{property.utilities.sewerProvider}</span>
+                )}
+              </div>
+            </div>
+            {/* Gas */}
+            <div className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              </svg>
+              <div>
+                <span className="text-gray-700 font-medium">Natural Gas: </span>
+                <span className="text-gray-600">
+                  {property.utilities.gas === 'available' ? 'Available' : property.utilities.gas === 'not_available' ? 'Not Available' : 'Unknown'}
+                </span>
+                {property.utilities.gasProvider && property.utilities.gas === 'available' && (
+                  <span className="text-gray-500 text-xs block">{property.utilities.gasProvider}</span>
+                )}
+              </div>
+            </div>
+            {/* Electric */}
+            {property.utilities.electric && (
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <div>
+                  <span className="text-gray-700 font-medium">Electric: </span>
+                  <span className="text-gray-600">{property.utilities.electric}</span>
+                </div>
+              </div>
+            )}
+            {/* Internet */}
+            {property.utilities.internet && property.utilities.internet.length > 0 && (
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                </svg>
+                <div>
+                  <span className="text-gray-700 font-medium">Internet: </span>
+                  <span className="text-gray-600">{property.utilities.internet.join(', ')}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Map Section - just a button to open full modal */}
       {hasCoordinates && (
         <div className="mt-3 pt-3 border-t border-blue-200">
@@ -254,6 +372,17 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
           lon={property.coordinates!.lon}
           currentZone={property.zone}
           onClose={() => setShowMapModal(false)}
+        />
+      )}
+
+      {/* Parcel Info Modal */}
+      {showParcelInfo && property.parcelId && (
+        <ParcelInfoModal
+          parcelId={property.parcelId}
+          address={property.address}
+          county={property.county}
+          state={property.state}
+          onClose={() => setShowParcelInfo(false)}
         />
       )}
     </div>
