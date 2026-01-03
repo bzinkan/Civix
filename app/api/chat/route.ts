@@ -645,21 +645,83 @@ Setbacks: Front ${propertyContext.development_standards?.setbacks.front_ft || '?
 Max Height: ${propertyContext.development_standards?.max_height_ft || 'Unknown'}ft
 Max Lot Coverage: ${propertyContext.development_standards?.max_lot_coverage ? (propertyContext.development_standards.max_lot_coverage * 100) + '%' : 'Unknown'}` : '';
 
-  const systemPrompt = `You are Civix, a helpful Cincinnati regulatory assistant. You help residents, contractors, and professionals understand zoning, permits, and city regulations.
+  const systemPrompt = `You are Civix, a knowledgeable Greater Cincinnati regulatory assistant covering Cincinnati and the surrounding tri-state area (OH, KY, IN). You help residents, businesses, and professionals navigate ALL local government regulations, not just zoning.
 
 ${propertyInfo || 'No property context provided.'}
 
-Guidelines:
-1. Be helpful, specific, and accurate about Cincinnati/Ohio regulations
-2. When citing specific codes or regulations, use this format: [SOURCE: CMC Section.Number]
-3. Always mention if a property is in a historic district - this affects what they can do
-4. Provide contact numbers when relevant: Building permits (513) 352-3276, Historic (513) 352-4822
-5. If you're unsure about specific details, recommend they verify with the appropriate city department
-6. Keep responses concise but complete
-7. Format responses clearly with bullet points when appropriate
-8. Remember the conversation context - users may ask follow-up questions that reference previous messages
+SCOPE - Answer questions about ANY local regulation including:
 
-IMPORTANT: You are a regulatory assistant. Only answer questions about permits, zoning, building codes, licenses, and regulations. If someone asks about restaurants, entertainment, or other lifestyle recommendations, politely redirect them to the regulatory aspects or suggest they use Google/Yelp for recommendations.`;
+**Parking & Vehicles**
+- Street parking time limits (typically 72 hours max in Cincinnati)
+- Parking permits (residential zones, visitor passes)
+- Abandoned vehicle reporting
+- RV/boat/trailer storage rules
+- Snow emergency parking bans
+
+**Licensing & Registration**
+- Business licenses and permits
+- Dog/pet licenses and regulations
+- Boat/watercraft registration (Ohio DNR)
+- Contractor licensing
+- Food service permits
+- Liquor licenses
+- Street vendor permits
+
+**Property & Land Use**
+- Zoning and permitted uses
+- Building permits and inspections
+- Fence/shed/deck requirements
+- Home occupation permits
+- Short-term rental (Airbnb) rules
+- Historic district requirements
+- Sign permits
+
+**Health & Safety**
+- Noise ordinances (quiet hours typically 10pm-7am)
+- Trash/recycling collection rules
+- Property maintenance code (grass height, debris)
+- Swimming pool requirements
+- Fire safety requirements
+- Food handler permits
+
+**Animals**
+- Pet limits per household
+- Leash laws
+- Exotic animal permits
+- Livestock in residential areas
+- Bee keeping regulations
+
+**Utilities & Services**
+- Water/sewer connection
+- Utility easements
+- Tree trimming (public right-of-way)
+- Sidewalk repair responsibility
+
+**Events & Activities**
+- Block party permits
+- Garage sale regulations
+- Solicitor/peddler permits
+- Amplified sound permits
+- Fireworks regulations
+
+RESPONSE GUIDELINES:
+1. Be specific with code citations: [SOURCE: CMC 501-23] for Cincinnati Municipal Code, [SOURCE: ORC 4511.66] for Ohio Revised Code
+2. Include relevant contact info:
+   - Building/Zoning: (513) 352-3276
+   - Health Dept: (513) 946-7800
+   - Animal Services: (513) 541-7387
+   - Parking Services: (513) 352-3543
+   - City Planning: (513) 352-4851
+   - Historic Preservation: (513) 352-4822
+   - Business License: (513) 352-3276
+3. Note jurisdiction differences - Cincinnati rules may differ from suburbs or Kentucky cities
+4. If an address is provided, tailor the answer to that jurisdiction
+5. When unsure of exact details, recommend they verify with the specific department
+6. Format responses with clear bullet points for requirements/steps
+7. Include typical fees or timelines when known
+8. For Kentucky addresses, note when Ohio rules don't apply
+
+REMEMBER: You're a regulatory assistant for government rules and requirements. For subjective questions (best restaurants, entertainment recommendations), redirect to the regulatory aspect or suggest they use Google/Yelp.`;
 
   // Retrieve conversation history if continuing an existing conversation
   let conversationMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
@@ -797,10 +859,11 @@ function matchAttachments(question: string, response: string): Array<{ name: str
   const attachments: Array<{ name: string; type: string; url: string; description: string }> = [];
   const combined = (question + ' ' + response).toLowerCase();
 
-  // Map keywords to forms
+  // Map keywords to forms - covers all regulatory areas
   const formMappings = [
+    // Building & Construction
     {
-      keywords: ['deck', 'building permit'],
+      keywords: ['deck', 'building permit', 'addition', 'renovation'],
       form: { name: 'Building Permit Application', type: 'pdf', url: '/forms/building-permit.pdf', description: 'General building permit application form' }
     },
     {
@@ -812,16 +875,62 @@ function matchAttachments(question: string, response: string): Array<{ name: str
       form: { name: 'Certificate of Appropriateness', type: 'pdf', url: '/forms/coa-application.pdf', description: 'Required for changes in historic districts' }
     },
     {
-      keywords: ['food', 'restaurant', 'food service'],
+      keywords: ['variance', 'setback exception'],
+      form: { name: 'Variance Application', type: 'pdf', url: '/forms/variance.pdf', description: 'Request variance from zoning requirements' }
+    },
+    // Business & Licensing
+    {
+      keywords: ['business license', 'start a business', 'open a business'],
+      form: { name: 'Business License Application', type: 'pdf', url: '/forms/business-license.pdf', description: 'City business license application' }
+    },
+    {
+      keywords: ['food', 'restaurant', 'food service', 'food truck'],
       form: { name: 'Food Service License Application', type: 'pdf', url: '/forms/food-service.pdf', description: 'Health department food service license' }
     },
     {
-      keywords: ['home occupation', 'home business'],
+      keywords: ['home occupation', 'home business', 'work from home'],
       form: { name: 'Home Occupation Permit', type: 'pdf', url: '/forms/home-occupation.pdf', description: 'Permit for home-based businesses' }
     },
     {
-      keywords: ['variance'],
-      form: { name: 'Variance Application', type: 'pdf', url: '/forms/variance.pdf', description: 'Request variance from zoning requirements' }
+      keywords: ['liquor', 'alcohol', 'bar', 'serve alcohol'],
+      form: { name: 'Liquor License Info', type: 'link', url: 'https://com.ohio.gov/divisions-and-programs/liquor-control/liquor-permits', description: 'Ohio Division of Liquor Control permit info' }
+    },
+    {
+      keywords: ['contractor', 'contractor license'],
+      form: { name: 'Contractor Registration', type: 'pdf', url: '/forms/contractor-registration.pdf', description: 'City contractor registration form' }
+    },
+    // Animals
+    {
+      keywords: ['dog license', 'pet license', 'dog tag'],
+      form: { name: 'Dog License Application', type: 'link', url: 'https://www.hamiltoncountyauditor.org/dog-licenses', description: 'Hamilton County dog license info' }
+    },
+    // Parking & Vehicles
+    {
+      keywords: ['parking permit', 'residential parking'],
+      form: { name: 'Residential Parking Permit', type: 'pdf', url: '/forms/parking-permit.pdf', description: 'Residential parking permit application' }
+    },
+    {
+      keywords: ['abandoned vehicle', 'junk car'],
+      form: { name: 'Abandoned Vehicle Report', type: 'link', url: 'https://www.cincinnati-oh.gov/police/report-a-crime/abandoned-vehicles/', description: 'Report an abandoned vehicle online' }
+    },
+    // Events & Activities
+    {
+      keywords: ['block party', 'street closure'],
+      form: { name: 'Block Party Permit', type: 'pdf', url: '/forms/block-party.pdf', description: 'Street closure permit for events' }
+    },
+    {
+      keywords: ['solicitor', 'peddler', 'door to door'],
+      form: { name: 'Solicitor Permit', type: 'pdf', url: '/forms/solicitor-permit.pdf', description: 'Required for door-to-door sales' }
+    },
+    // Short-term Rentals
+    {
+      keywords: ['airbnb', 'short-term rental', 'vrbo', 'vacation rental'],
+      form: { name: 'Short-Term Rental Registration', type: 'pdf', url: '/forms/str-registration.pdf', description: 'Required registration for short-term rentals' }
+    },
+    // Signs
+    {
+      keywords: ['sign permit', 'business sign', 'signage'],
+      form: { name: 'Sign Permit Application', type: 'pdf', url: '/forms/sign-permit.pdf', description: 'Commercial sign permit application' }
     },
   ];
 
