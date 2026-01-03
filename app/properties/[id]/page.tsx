@@ -169,13 +169,13 @@ export default function PropertyWorkspacePage() {
 
       {/* Chat Area */}
       {messages.length === 0 ? (
-        /* No messages - centered layout like Claude/ChatGPT */
-        <div className="flex-1 flex flex-col items-center justify-center px-4">
+        /* No messages - positioned like ChatGPT (upper-middle area) */
+        <div className="flex-1 flex flex-col items-center pt-[10vh] px-4">
           <div className="w-full max-w-2xl text-center">
             <h1 className="text-3xl font-semibold text-gray-800 mb-2">
               How can I help you today?
             </h1>
-            <p className="text-gray-500 text-sm mb-8">
+            <p className="text-gray-500 text-sm mb-6">
               Ask questions about permits, zoning, and regulations for this property.
             </p>
             <ChatInput

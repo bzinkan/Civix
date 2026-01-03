@@ -404,11 +404,11 @@ export default function HomePage() {
 
       {/* Chat Area */}
       {messages.length === 0 ? (
-        /* New chat - centered layout like Claude/ChatGPT */
-        <div className="flex-1 flex flex-col items-center justify-center px-4">
+        /* New chat - positioned like ChatGPT (upper-middle area) */
+        <div className="flex-1 flex flex-col items-center pt-[15vh] px-4">
           <div className="w-full max-w-2xl">
             <EmptyState />
-            <div className="mt-8">
+            <div className="mt-6">
               <ChatInput onSend={handleSendMessage} disabled={isLoading} centered />
             </div>
           </div>
