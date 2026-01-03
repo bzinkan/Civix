@@ -6,9 +6,10 @@ interface ChatInputProps {
   onSend: (message: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  centered?: boolean;
 }
 
-export default function ChatInput({ onSend, disabled = false, placeholder = 'Ask about permits, zoning, regulations...' }: ChatInputProps) {
+export default function ChatInput({ onSend, disabled = false, placeholder = 'Ask about permits, zoning, regulations...', centered = false }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -39,8 +40,8 @@ export default function ChatInput({ onSend, disabled = false, placeholder = 'Ask
   };
 
   return (
-    <div className="border-t border-gray-200 bg-white px-4 py-3">
-      <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
+    <div className={centered ? 'px-4 py-3' : 'border-t border-gray-200 bg-white px-4 py-3'}>
+      <form onSubmit={handleSubmit} className={centered ? '' : 'max-w-3xl mx-auto'}>
         <div className="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
           <textarea
             ref={textareaRef}

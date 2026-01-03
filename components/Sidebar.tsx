@@ -37,6 +37,22 @@ export default function Sidebar() {
       .catch(() => {});
   };
 
+  const handleDeleteProperty = async (e: React.MouseEvent, propertyId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const res = await fetch(`/api/properties/${propertyId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchProperties();
+      }
+    } catch (error) {
+      console.error('Failed to delete property:', error);
+    }
+  };
+
   useEffect(() => {
     // Fetch conversations
     fetch('/api/conversations')
@@ -135,18 +151,28 @@ export default function Sidebar() {
                 <p className="text-xs text-gray-500 px-3 py-2">No saved properties</p>
               ) : (
                 properties.map((prop) => (
-                  <Link
-                    key={prop.id}
-                    href={`/properties/${prop.id}`}
-                    className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                      pathname === `/properties/${prop.id}` ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800'
-                    }`}
-                  >
-                    <div className="truncate">{prop.nickname || prop.address}</div>
-                    {prop.zoneCode && (
-                      <div className="text-xs text-gray-500">{prop.zoneCode}</div>
-                    )}
-                  </Link>
+                  <div key={prop.id} className="group relative">
+                    <Link
+                      href={`/properties/${prop.id}`}
+                      className={`block px-3 py-2 pr-8 rounded-lg text-sm transition-colors ${
+                        pathname === `/properties/${prop.id}` ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <div className="truncate">{prop.nickname || prop.address}</div>
+                      {prop.zoneCode && (
+                        <div className="text-xs text-gray-500">{prop.zoneCode}</div>
+                      )}
+                    </Link>
+                    <button
+                      onClick={(e) => handleDeleteProperty(e, prop.id)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-600 rounded transition-all"
+                      title="Delete property"
+                    >
+                      <svg className="w-3.5 h-3.5 text-gray-400 hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 ))
               )}
             </div>
