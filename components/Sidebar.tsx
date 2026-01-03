@@ -19,6 +19,33 @@ interface SavedProperty {
   zoneCode: string | null;
 }
 
+// Shorten address to just street, city, state, zip
+const shortenAddress = (address: string): string => {
+  const parts = address.split(', ');
+  if (parts.length <= 3) return address;
+
+  // Try to extract: street number + street name, city, state + zip
+  // Skip business district, neighborhood, county references
+  const skipPatterns = [
+    /business district/i,
+    /heights/i,
+    /ridge/i,
+    /banks/i,
+    /county/i,
+    /united states/i,
+  ];
+
+  const filtered = parts.filter(part =>
+    !skipPatterns.some(pattern => pattern.test(part))
+  );
+
+  // Keep first part (street), and last 2-3 relevant parts (city, state, zip)
+  if (filtered.length > 4) {
+    return `${filtered[0]}, ${filtered.slice(-3).join(', ')}`;
+  }
+  return filtered.join(', ');
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -162,7 +189,7 @@ export default function Sidebar() {
                         pathname === `/properties/${prop.id}` ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800'
                       }`}
                     >
-                      <div className="break-all leading-tight text-wrap">{prop.nickname || prop.address}</div>
+                      <div className="break-all leading-tight text-wrap">{prop.nickname || shortenAddress(prop.address)}</div>
                       {prop.zoneCode && (
                         <div className="text-xs text-gray-500 mt-0.5">{prop.zoneCode}</div>
                       )}
