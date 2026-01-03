@@ -158,11 +158,11 @@ export default function Sidebar() {
                   <div key={prop.id} className="flex items-start gap-1">
                     <Link
                       href={`/properties/${prop.id}`}
-                      className={`flex-1 min-w-0 block px-3 py-2 rounded-lg text-sm transition-colors ${
+                      className={`flex-1 min-w-0 block px-3 py-2 rounded-lg text-sm transition-colors overflow-hidden ${
                         pathname === `/properties/${prop.id}` ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800'
                       }`}
                     >
-                      <div className="break-words leading-tight">{prop.nickname || prop.address}</div>
+                      <div className="break-all leading-tight text-wrap">{prop.nickname || prop.address}</div>
                       {prop.zoneCode && (
                         <div className="text-xs text-gray-500 mt-0.5">{prop.zoneCode}</div>
                       )}
