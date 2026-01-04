@@ -7,7 +7,7 @@ export default function EmptyState() {
         How can I help you today?
       </h1>
       <p className="text-gray-500 text-sm max-w-md">
-        Ask about permits, zoning, regulations, or enter an address above for property-specific answers.
+        Enter an address above for property-specific answers.
       </p>
     </div>
   );
