@@ -111,15 +111,23 @@ export default function PropertyWorkspacePage() {
       });
 
       const data = await res.json();
+      console.log('[Property Chat] API response:', data);
+
+      if (!res.ok) {
+        console.error('[Property Chat] API error status:', res.status);
+      }
 
       if (data.conversationId) {
         setConversationId(data.conversationId);
       }
 
       // Add assistant message
+      const responseContent = data.answer || data.message || data.error || 'Sorry, I could not process your request.';
+      console.log('[Property Chat] Response content:', responseContent.substring(0, 100));
+
       const assistantMessage: ChatMessageProps = {
         role: 'assistant',
-        content: data.answer || data.message || 'Sorry, I could not process your request.',
+        content: responseContent,
         citations: data.citations,
         attachments: data.attachments,
         createdAt: new Date().toISOString(),
