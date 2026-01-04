@@ -7,6 +7,7 @@ interface PropertyCardItemProps {
   label: string;
   value: string;
   subtext?: string;
+  compact?: boolean;
 }
 
 const iconMap: Record<string, JSX.Element> = {
@@ -115,8 +116,23 @@ const iconMap: Record<string, JSX.Element> = {
   ),
 };
 
-export default function PropertyCardItem({ icon, label, value, subtext }: PropertyCardItemProps) {
+export default function PropertyCardItem({ icon, label, value, subtext, compact = false }: PropertyCardItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  if (compact) {
+    // Compact horizontal layout for sidebar
+    return (
+      <div className="flex items-center gap-2 p-2 bg-white rounded-lg">
+        <div className="text-blue-600 flex-shrink-0">
+          {iconMap[icon] || iconMap.info}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-xs text-gray-500">{label}</div>
+          <div className="text-sm font-medium text-gray-800 truncate">{value}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <button

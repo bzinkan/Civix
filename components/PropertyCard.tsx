@@ -78,6 +78,7 @@ interface PropertyCardProps {
   isSaved?: boolean;
   showCloseButton?: boolean;
   addressLabel?: string; // A, B, C label for multi-address mode
+  compact?: boolean; // Compact view for sidebar
 }
 
 function classifyZone(zone?: string): string {
@@ -92,7 +93,7 @@ function classifyZone(zone?: string): string {
   return 'commercial';
 }
 
-export default function PropertyCard({ property, onSave, onClose, isSaved = false, showCloseButton = true, addressLabel }: PropertyCardProps) {
+export default function PropertyCard({ property, onSave, onClose, isSaved = false, showCloseButton = true, addressLabel, compact = false }: PropertyCardProps) {
   const [showMapModal, setShowMapModal] = useState(false);
   const [showParcelInfo, setShowParcelInfo] = useState(false);
   const zoneType = property.zoneType || classifyZone(property.zone);
@@ -123,28 +124,30 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
   const hasTrashService = zoneType === 'residential' && property.trashDay;
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-sm">
+    <div className={`bg-blue-50 border border-blue-200 rounded-lg shadow-sm ${compact ? 'p-3' : 'p-4'}`}>
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div>
+      <div className={`flex items-start justify-between ${compact ? 'mb-2' : 'mb-3'}`}>
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             {addressLabel && (
-              <span className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">
+              <span className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold flex-shrink-0">
                 {addressLabel}
               </span>
             )}
-            <h3 className="font-semibold text-gray-800">{property.address}</h3>
+            <h3 className={`font-semibold text-gray-800 ${compact ? 'text-sm leading-tight' : ''} break-words`}>
+              {property.address}
+            </h3>
           </div>
-          <p className="text-sm text-gray-500">
+          <p className={`text-gray-500 ${compact ? 'text-xs' : 'text-sm'}`}>
             {property.city}{property.state ? `, ${property.state}` : ''}
             {property.county ? ` (${property.county} County)` : ''}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
           {onSave && (
             <button
               onClick={onSave}
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+              className={`px-2 py-1 text-xs rounded-lg transition-colors ${
                 isSaved
                   ? 'bg-green-100 text-green-700'
                   : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -160,7 +163,7 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
               className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
               title="View parcel details"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
@@ -171,7 +174,7 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
               className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded"
               title="Clear address"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -180,17 +183,19 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
       </div>
 
       {/* CORE INFO: Zone + Parcel */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className={`grid ${compact ? 'grid-cols-1 gap-2' : 'grid-cols-2 gap-3'} mb-3`}>
         <PropertyCardItem
           icon={zoneIcons[zoneType] || 'building'}
           label="Zoning"
           value={property.zone || 'Unknown'}
           subtext={property.zoneName}
+          compact={compact}
         />
         <PropertyCardItem
           icon="hash"
           label="Parcel"
           value={property.parcelId || 'Not identified'}
+          compact={compact}
         />
       </div>
 
@@ -252,13 +257,14 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
       )}
 
       {/* CIVIC INFO */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className={`grid ${compact ? 'grid-cols-1 gap-2' : 'grid-cols-3 gap-3'}`}>
         {/* Trash - only for residential */}
         {hasTrashService && (
           <PropertyCardItem
             icon="trash"
             label="Trash Day"
             value={property.trashDay!}
+            compact={compact}
           />
         )}
         {/* Council District */}
@@ -266,18 +272,20 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
           icon="landmark"
           label="Council"
           value={property.councilDistrict || 'Unknown'}
-          subtext={property.councilRep}
+          subtext={compact ? undefined : property.councilRep}
+          compact={compact}
         />
         {/* School District */}
         <PropertyCardItem
           icon="school"
           label="School District"
           value={property.schoolDistrict || 'Check county'}
+          compact={compact}
         />
       </div>
 
-      {/* UTILITIES - Show if available */}
-      {property.utilities && (
+      {/* UTILITIES - Show if available (hidden in compact mode) */}
+      {property.utilities && !compact && (
         <div className="mt-3 pt-3 border-t border-blue-200">
           <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Utilities</h4>
           <div className="space-y-2 text-sm">

@@ -163,50 +163,53 @@ export default function PropertyWorkspacePage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      {/* Property Card - Always visible, no close button */}
-      <div className="px-4 py-3 bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto">
-          <PropertyCard
-            property={propertyData}
-            showCloseButton={false}
-            isSaved={true}
-          />
-        </div>
-      </div>
-
-      {/* Chat Area */}
-      {messages.length === 0 ? (
-        /* No messages - positioned like ChatGPT (upper-middle area) */
-        <div className="flex-1 flex flex-col items-center pt-[10vh] px-4">
-          <div className="w-full max-w-2xl text-center">
-            <h1 className="text-3xl font-semibold text-gray-800 mb-2">
-              How can I help you today?
-            </h1>
-            <p className="text-gray-500 text-sm mb-6">
-              Ask questions about permits, zoning, and regulations for this property.
-            </p>
+    <div className="flex h-full bg-gray-50">
+      {/* Main Chat Area - Left/Center */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {messages.length === 0 ? (
+          /* No messages - positioned like ChatGPT (upper-middle area) */
+          <div className="flex-1 flex flex-col items-center pt-[15vh] px-4">
+            <div className="w-full max-w-2xl text-center">
+              <h1 className="text-3xl font-semibold text-gray-800 mb-2">
+                How can I help you today?
+              </h1>
+              <p className="text-gray-500 text-sm mb-6">
+                Ask questions about permits, zoning, and regulations for this property.
+              </p>
+              <ChatInput
+                onSend={handleSendMessage}
+                disabled={isSending}
+                placeholder={`Ask about ${property.nickname || property.address}...`}
+                centered
+              />
+            </div>
+          </div>
+        ) : (
+          /* Active conversation - standard layout */
+          <>
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <ChatMessages messages={messages} isLoading={isSending} />
+            </div>
             <ChatInput
               onSend={handleSendMessage}
               disabled={isSending}
               placeholder={`Ask about ${property.nickname || property.address}...`}
-              centered
             />
-          </div>
-        </div>
-      ) : (
-        /* Active conversation - standard layout */
-        <>
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <ChatMessages messages={messages} isLoading={isSending} />
-          </div>
-          <ChatInput
-            onSend={handleSendMessage}
-            disabled={isSending}
-            placeholder={`Ask about ${property.nickname || property.address}...`}
+          </>
+        )}
+      </div>
+
+      {/* Property Card Sidebar - Right */}
+      <div className="w-80 xl:w-96 flex-shrink-0 border-l border-gray-200 bg-white overflow-y-auto hidden md:block">
+        <div className="p-4">
+          <PropertyCard
+            property={propertyData}
+            showCloseButton={false}
+            isSaved={true}
+            compact
           />
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
