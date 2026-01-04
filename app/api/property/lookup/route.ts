@@ -535,6 +535,30 @@ function detectPotentialHOA(
   const countyLower = (county || '').toLowerCase().replace(' county', '');
   const subdivisionLower = (subdivision || '').toLowerCase();
   const addressLower = (address || '').toLowerCase();
+  const zoneCodeUpper = (zoneCode || '').toUpperCase();
+
+  // ============================================
+  // DOWNTOWN COMMERCIAL EXCLUSION
+  // Downtown buildings (office towers, apartments, hotels, stadiums)
+  // don't have HOAs unless they are condominiums
+  // ============================================
+  const isDowntownZone = /^DD-?[ABC]?$/i.test(zoneCodeUpper) ||
+                         zoneType === 'downtown' ||
+                         /downtown|CBD|central business/i.test(zoneCodeUpper);
+
+  // Check if address indicates a condo (unit ownership vs rental)
+  const isCondoAddress = /\bunit\s*\d|\bcondo\b|\b#\s*\d{1,4}\b|\bph\s*\d|\bpenthouse\b/i.test(addressLower) &&
+                         !/\bapt\b|\bapartment\b|\bste\b|\bsuite\b|\bfloor\b|\bfl\b/i.test(addressLower);
+
+  // Skip HOA detection for downtown zones unless it looks like a condo
+  if (isDowntownZone && !isCondoAddress) {
+    return { mayHaveHOA: false, indicators: [] };
+  }
+
+  // If it's a downtown condo, note that specifically
+  if (isDowntownZone && isCondoAddress) {
+    indicators.push('Downtown condominium - may have condo association fees');
+  }
 
   // ============================================
   // KNOWN HOA COMMUNITIES BY COUNTY

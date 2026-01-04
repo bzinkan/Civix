@@ -106,6 +106,7 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
   const hasOverlays = property.overlays && property.overlays.length > 0;
   const isOutsideCityLimits = property.outsideCityLimits || property.zoneSource === 'county';
   const mayHaveHOA = property.mayHaveHOA;
+  const noPropertyDataFound = property.zoneSource === 'default';
 
   // Zone icons by type
   const zoneIcons: Record<string, string> = {
@@ -194,8 +195,19 @@ export default function PropertyCard({ property, onSave, onClose, isSaved = fals
       </div>
 
       {/* CONDITIONAL FLAGS - Only show if applicable */}
-      {(hasFloodplain || hasHistoric || isOutsideCityLimits || hasOverlays || mayHaveHOA) && (
+      {(hasFloodplain || hasHistoric || isOutsideCityLimits || hasOverlays || mayHaveHOA || noPropertyDataFound) && (
         <div className="flex flex-wrap gap-2 mb-3">
+          {noPropertyDataFound && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full cursor-help"
+              title="No property record found at this address. This may be an empty lot, incorrect address, or new construction not yet in records."
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              No Property Record Found
+            </span>
+          )}
           {mayHaveHOA && (
             <span
               className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full cursor-help"

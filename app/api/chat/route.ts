@@ -71,6 +71,7 @@ interface PropertyContext {
     urban_design: string | null;
     landslide_risk: string | null;
   };
+  propertyRecordFound?: boolean; // True if we found actual property/parcel data
 }
 
 export async function POST(request: NextRequest) {
@@ -86,7 +87,17 @@ export async function POST(request: NextRequest) {
       locationContext // Active location for general queries (city/county/metro)
     } = body;
 
+    console.log('[Chat API] Request received:', {
+      message: message?.substring(0, 50),
+      address,
+      hasAttachments: attachments.length > 0,
+      conversation_id,
+      hasToolContext: !!toolContext,
+      hasLocationContext: !!locationContext
+    });
+
     if (!message || typeof message !== 'string') {
+      console.log('[Chat API] Error: Message is required');
       return NextResponse.json(
         { error: 'Message is required' },
         { status: 400 }
@@ -139,8 +150,25 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Chat API error:', error);
+
+    // Return more helpful error messages
+    let errorMessage = 'Failed to process request';
+    if (error.status === 401) {
+      errorMessage = 'API authentication failed. Please check your Anthropic API key.';
+    } else if (error.status === 429) {
+      errorMessage = 'Rate limit exceeded. Please try again in a moment.';
+    } else if (error.status === 500) {
+      errorMessage = 'The AI service is temporarily unavailable. Please try again.';
+    } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      errorMessage = 'Could not connect to AI service. Please check your internet connection.';
+    }
+
     return NextResponse.json(
-      { error: 'Failed to process request', details: error.message },
+      {
+        error: errorMessage,
+        message: errorMessage, // So the UI shows this message
+        details: error.message
+      },
       { status: 500 }
     );
   }
@@ -484,7 +512,8 @@ async function getPropertyContext(address: string): Promise<PropertyContext | nu
       address,
       zoning: null,
       development_standards: null,
-      overlays: { historic_district: null, hillside: false, urban_design: null, landslide_risk: null }
+      overlays: { historic_district: null, hillside: false, urban_design: null, landslide_risk: null },
+      propertyRecordFound: false
     };
 
     // Find zoning
@@ -516,7 +545,8 @@ async function getPropertyContext(address: string): Promise<PropertyContext | nu
       address,
       zoning,
       development_standards,
-      overlays
+      overlays,
+      propertyRecordFound: zoning !== null // True if we found actual zoning/parcel data
     };
   } catch (error) {
     console.error('Error getting property context:', error);
@@ -646,9 +676,17 @@ async function handleChatMessage(
   });
 
   // Build property context string
+  const noPropertyRecordWarning = propertyContext && propertyContext.propertyRecordFound === false
+    ? `\n⚠️ WARNING: No property record was found at this address. This could mean:
+- The address number doesn't exist on this street
+- It's an empty lot or new construction not yet in records
+- The address was entered incorrectly
+Please inform the user that we couldn't verify this is a valid property address.\n`
+    : '';
+
   const propertyInfo = propertyContext ? `
 Current property context:
-Address: ${propertyContext.address}
+Address: ${propertyContext.address}${noPropertyRecordWarning}
 Zoning: ${propertyContext.zoning?.code || 'Unknown'} - ${propertyContext.zoning?.description || ''}
 Historic District: ${propertyContext.overlays.historic_district || 'None'}
 Hillside: ${propertyContext.overlays.hillside ? 'Yes' : 'No'}
@@ -808,15 +846,25 @@ REMEMBER: You're a regulatory assistant for government rules and requirements. F
   // Add current message to conversation
   conversationMessages.push({ role: 'user', content: message });
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages: conversationMessages,
-  });
+  let responseText: string;
+  try {
+    console.log('[Chat API] Calling Anthropic API with', conversationMessages.length, 'messages');
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: conversationMessages,
+    });
 
-  const content = response.content[0];
-  const responseText = content.type === 'text' ? content.text : 'I apologize, I could not generate a response.';
+    console.log('[Chat API] Anthropic response received, stop_reason:', response.stop_reason);
+    const content = response.content[0];
+    responseText = content.type === 'text' ? content.text : 'I apologize, I could not generate a response.';
+    console.log('[Chat API] Response text length:', responseText.length);
+  } catch (apiError: any) {
+    console.error('[Chat API] Anthropic API error:', apiError.status, apiError.message);
+    // Re-throw with better error info for the outer catch handler
+    throw apiError;
+  }
 
   // Parse citations from response text [SOURCE: CMC xxx]
   const citations = parseCitations(responseText);
