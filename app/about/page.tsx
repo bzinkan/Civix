@@ -95,9 +95,6 @@ export default function AboutPage() {
                 </div>
               </div>
             </div>
-            <p className="text-gray-600 mt-4 text-sm">
-              For property-specific answers, enter an address. For general guidance, set a location in Settings.
-            </p>
           </section>
 
           {/* What Civix Is Not */}

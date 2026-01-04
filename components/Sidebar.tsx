@@ -22,60 +22,52 @@ interface SavedProperty {
 // Shorten address to just: street, city, state zip
 // Example: "6017, Woodmont Avenue, Pleasant Ridge..." -> "6017 Woodmont Avenue, Cincinnati, Ohio 45213"
 const shortenAddress = (address: string): string => {
-  const parts = address.split(', ');
+  const parts = address.split(', ').map(p => p.trim());
   if (parts.length <= 3) return address;
-
-  // Patterns to skip (districts, counties, country)
-  const skipPatterns = [
-    /business district/i,
-    /heights/i,
-    /ridge/i,
-    /banks/i,
-    /county/i,
-    /united states/i,
-    /usa/i,
-  ];
 
   // Find zip code (5 digits)
   let zip = '';
   let zipIndex = -1;
   for (let i = parts.length - 1; i >= 0; i--) {
-    if (/^\d{5}/.test(parts[i].trim())) {
-      zip = parts[i].trim();
+    if (/^\d{5}/.test(parts[i])) {
+      zip = parts[i];
       zipIndex = i;
       break;
     }
   }
 
-  // Find state (right before zip, should be a state name like "Ohio")
+  // Find state (right before zip)
   let state = '';
+  let stateIndex = -1;
   if (zipIndex > 0) {
-    const potentialState = parts[zipIndex - 1].trim();
-    if (/^[A-Za-z\s]+$/.test(potentialState) && !skipPatterns.some(p => p.test(potentialState))) {
+    const potentialState = parts[zipIndex - 1];
+    // State should be letters only, not "County" or "United States"
+    if (/^[A-Za-z]+$/.test(potentialState) && !/county/i.test(potentialState)) {
       state = potentialState;
+      stateIndex = zipIndex - 1;
     }
   }
 
-  // Find city - look for Cincinnati, Cleveland, etc. (skip districts)
+  // Find city - it's right before the county (which is before state)
+  // Pattern: ..., City, County Name County, State, Zip, ...
   let city = '';
-  for (let i = parts.length - 1; i >= 0; i--) {
-    const part = parts[i].trim();
-    // Skip if it's the zip, state, or matches skip patterns
-    if (part === zip || part === state) continue;
-    if (skipPatterns.some(p => p.test(part))) continue;
-    if (/^\d{5}/.test(part)) continue;
-    // City should be a simple name, not too long
-    if (/^[A-Za-z\s]+$/.test(part) && part.length < 20) {
-      city = part;
-      break;
+  if (stateIndex > 0) {
+    // Look for "X County" pattern, city is before that
+    for (let i = stateIndex - 1; i >= 0; i--) {
+      if (/county/i.test(parts[i])) {
+        // Found county, city should be right before it
+        if (i > 0) {
+          city = parts[i - 1];
+        }
+        break;
+      }
     }
   }
 
-  // Build street address - combine first parts if they look like "6017, Woodmont Avenue"
-  let street = parts[0].trim();
-  // If first part is just a number, combine with second part
-  if (/^\d+$/.test(street) && parts.length > 1) {
-    street = `${street} ${parts[1].trim()}`;
+  // Build street address - combine number + street name
+  let street = parts[0];
+  if (/^\d+$/.test(parts[0]) && parts.length > 1) {
+    street = `${parts[0]} ${parts[1]}`;
   }
 
   // Build final address
@@ -83,8 +75,8 @@ const shortenAddress = (address: string): string => {
     return `${street}, ${city}, ${state} ${zip}`;
   } else if (city && state) {
     return `${street}, ${city}, ${state}`;
-  } else if (city) {
-    return `${street}, ${city}`;
+  } else if (street && state && zip) {
+    return `${street}, ${state} ${zip}`;
   }
 
   return street;
