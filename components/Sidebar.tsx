@@ -19,13 +19,13 @@ interface SavedProperty {
   zoneCode: string | null;
 }
 
-// Shorten address to just street, city, state, zip
+// Shorten address to just: street, city, state zip
+// Example: "6017, Woodmont Avenue, Pleasant Ridge..." -> "6017 Woodmont Avenue, Cincinnati, Ohio 45213"
 const shortenAddress = (address: string): string => {
   const parts = address.split(', ');
   if (parts.length <= 3) return address;
 
-  // Try to extract: street number + street name, city, state + zip
-  // Skip business district, neighborhood, county references
+  // Patterns to skip (districts, counties, country)
   const skipPatterns = [
     /business district/i,
     /heights/i,
@@ -33,17 +33,61 @@ const shortenAddress = (address: string): string => {
     /banks/i,
     /county/i,
     /united states/i,
+    /usa/i,
   ];
 
-  const filtered = parts.filter(part =>
-    !skipPatterns.some(pattern => pattern.test(part))
-  );
-
-  // Keep first part (street), and last 2-3 relevant parts (city, state, zip)
-  if (filtered.length > 4) {
-    return `${filtered[0]}, ${filtered.slice(-3).join(', ')}`;
+  // Find zip code (5 digits)
+  let zip = '';
+  let zipIndex = -1;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (/^\d{5}/.test(parts[i].trim())) {
+      zip = parts[i].trim();
+      zipIndex = i;
+      break;
+    }
   }
-  return filtered.join(', ');
+
+  // Find state (right before zip, should be a state name like "Ohio")
+  let state = '';
+  if (zipIndex > 0) {
+    const potentialState = parts[zipIndex - 1].trim();
+    if (/^[A-Za-z\s]+$/.test(potentialState) && !skipPatterns.some(p => p.test(potentialState))) {
+      state = potentialState;
+    }
+  }
+
+  // Find city - look for Cincinnati, Cleveland, etc. (skip districts)
+  let city = '';
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i].trim();
+    // Skip if it's the zip, state, or matches skip patterns
+    if (part === zip || part === state) continue;
+    if (skipPatterns.some(p => p.test(part))) continue;
+    if (/^\d{5}/.test(part)) continue;
+    // City should be a simple name, not too long
+    if (/^[A-Za-z\s]+$/.test(part) && part.length < 20) {
+      city = part;
+      break;
+    }
+  }
+
+  // Build street address - combine first parts if they look like "6017, Woodmont Avenue"
+  let street = parts[0].trim();
+  // If first part is just a number, combine with second part
+  if (/^\d+$/.test(street) && parts.length > 1) {
+    street = `${street} ${parts[1].trim()}`;
+  }
+
+  // Build final address
+  if (city && state && zip) {
+    return `${street}, ${city}, ${state} ${zip}`;
+  } else if (city && state) {
+    return `${street}, ${city}, ${state}`;
+  } else if (city) {
+    return `${street}, ${city}`;
+  }
+
+  return street;
 };
 
 export default function Sidebar() {
